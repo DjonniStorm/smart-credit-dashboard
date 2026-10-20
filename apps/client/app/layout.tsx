@@ -11,6 +11,7 @@ import "@mantine/nprogress/styles.css";
 import "@mantine/spotlight/styles.css";
 import "@mantine/tiptap/styles.css";
 import type { Metadata, Viewport } from "next";
+import { Golos_Text } from "next/font/google";
 
 import { Message, i18n, openGraphLocale, t } from "@repo/i18n";
 
@@ -20,6 +21,12 @@ import { Providers } from "./providers";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 const title = t(i18n.defaultLocale, Message.CabinetTitle);
 const description = t(i18n.defaultLocale, Message.CabinetDescription);
+
+const golos = Golos_Text({
+  subsets: ["latin", "cyrillic"],
+  weight: ["400", "500", "600"],
+  variable: "--font-golos",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -62,7 +69,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang={i18n.defaultLocale} {...mantineHtmlProps}>
+    <html
+      lang={i18n.defaultLocale}
+      {...mantineHtmlProps}
+      className={golos.variable}
+    >
       <head>
         <ColorSchemeScript defaultColorScheme="light" />
       </head>
