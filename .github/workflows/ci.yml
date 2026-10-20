@@ -1,8 +1,11 @@
 name: CI
 
+# push в main/dev и pull request в main/dev.
 on:
   push:
+    branches: [main, dev]
   pull_request:
+    branches: [main, dev]
 
 jobs:
   check:
