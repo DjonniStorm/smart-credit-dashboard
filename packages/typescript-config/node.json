@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "lib": ["es2024"],
+    "target": "ES2024",
+    "types": ["node"],
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": true
+  }
+}

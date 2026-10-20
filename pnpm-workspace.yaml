@@ -1,0 +1,6 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  # Телеметрия swagger-ui-dist, сборка не нужна.
+  '@scarf/scarf': false

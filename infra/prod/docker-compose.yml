@@ -1,0 +1,120 @@
+# Все сервисы в контейнерах. Запуск из корня репозитория:
+#   docker compose -f infra/prod/docker-compose.yml up --build
+# Переменные: infra/prod/.env (шаблон — .env.example), без него работают значения по умолчанию.
+name: alfa-future
+
+x-node-healthcheck: &node-healthcheck
+  interval: 5s
+  timeout: 3s
+  retries: 20
+  start_period: 10s
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-alfa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-alfa}
+      POSTGRES_DB: ${POSTGRES_DB:-alfa}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  mocks:
+    build:
+      context: ../..
+      dockerfile: apps/mocks/Dockerfile
+    restart: unless-stopped
+    environment:
+      HOST: 0.0.0.0
+    healthcheck:
+      <<: *node-healthcheck
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4100/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+
+  scoring:
+    build:
+      context: ../..
+      dockerfile: apps/scoring/Dockerfile
+    restart: unless-stopped
+    healthcheck:
+      <<: *node-healthcheck
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+
+  api:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-alfa}:${POSTGRES_PASSWORD:-alfa}@postgres:5432/${POSTGRES_DB:-alfa}
+      SCORING_URL: http://scoring:8000
+      MOCKS_URL: http://mocks:4100
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mocks:
+        condition: service_healthy
+      scoring:
+        condition: service_healthy
+    healthcheck:
+      <<: *node-healthcheck
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4000/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+
+  client:
+    build:
+      context: ../..
+      dockerfile: apps/client/Dockerfile
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:4000
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      <<: *node-healthcheck
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+
+  backoffice:
+    build:
+      context: ../..
+      dockerfile: apps/backoffice/Dockerfile
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:4000
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      <<: *node-healthcheck
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+      SCHEME: ${SCHEME:-http}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      client:
+        condition: service_healthy
+      backoffice:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

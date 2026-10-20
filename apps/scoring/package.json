@@ -1,0 +1,10 @@
+{
+  "name": "scoring",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "uv run --locked uvicorn app.main:app --reload --host 127.0.0.1 --port 8000",
+    "lint": "uv run --locked ruff check . && uv run --locked ruff format --check .",
+    "check-types": "uv run --locked mypy app"
+  }
+}

@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    name: lint, check-types, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      # Версия pnpm берётся из packageManager в package.json.
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # Для apps/scoring: turbo вызывает `uv run`, Python 3.12 uv ставит сам по .python-version.
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.21"
+          enable-cache: true
+          cache-dependency-glob: apps/scoring/uv.lock
+
+      - run: pnpm install --frozen-lockfile
+
+      # apps не зависят друг от друга, packages не зависят от apps (правила в turbo.json).
+      - run: pnpm turbo boundaries
+
+      - run: pnpm turbo run lint check-types build
