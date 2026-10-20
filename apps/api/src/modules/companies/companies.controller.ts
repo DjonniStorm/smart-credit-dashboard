@@ -1,8 +1,9 @@
 import { Controller, Get, Param } from "@nestjs/common";
 import { ApiOkResponse, ApiParam } from "@nestjs/swagger";
 import { ZodSerializerDto } from "nestjs-zod";
+
 import { CompaniesService } from "./companies.service.ts";
-import { CompanyCheckDto, InnParamDto } from "./company-check.dto.ts";
+import { CompanyCheckDto, InnParamDto } from "./dto/company-check.dto.ts";
 
 @Controller("v1/companies")
 export class CompaniesController {

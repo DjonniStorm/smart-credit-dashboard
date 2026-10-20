@@ -1,9 +1,11 @@
 import { Controller, Get } from "@nestjs/common";
 import { ApiOkResponse } from "@nestjs/swagger";
-import { CheckState, HealthStatus, ServiceName } from "@repo/contracts";
 import { ZodSerializerDto } from "nestjs-zod";
-import { DatabaseService } from "../database.service.ts";
-import { HealthDto } from "./health.dto.ts";
+
+import { CheckState, HealthStatus, ServiceName } from "@repo/contracts";
+
+import { DatabaseService } from "../../common/database/database.service.ts";
+import { HealthDto } from "./dto/health.dto.ts";
 
 @Controller("health")
 export class HealthController {

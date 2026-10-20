@@ -1,4 +1,6 @@
 import { BadGatewayException, Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+
 import type {
   BkiReport,
   CompanyCheckResponse,
@@ -7,7 +9,8 @@ import type {
   ScoreRequest,
   ScoreResponse,
 } from "@repo/contracts";
-import { config } from "../config.ts";
+
+import type { Env } from "../../common/config/env.schema.ts";
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -24,23 +27,24 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 
 @Injectable()
 export class CompaniesService {
+  constructor(private readonly config: ConfigService<Env, true>) {}
+
   async check(inn: string): Promise<CompanyCheckResponse> {
+    const mocksUrl = this.config.getOrThrow("MOCKS_URL", { infer: true });
+    const scoringUrl = this.config.getOrThrow("SCORING_URL", { infer: true });
     const id = encodeURIComponent(inn);
     const [egrul, bki, fns] = await Promise.all([
-      request<EgrulRecord>(`${config.mocksUrl}/egrul/${id}`),
-      request<BkiReport>(`${config.mocksUrl}/bki/${id}`),
-      request<FnsProfile>(`${config.mocksUrl}/fns/${id}`),
+      request<EgrulRecord>(`${mocksUrl}/egrul/${id}`),
+      request<BkiReport>(`${mocksUrl}/bki/${id}`),
+      request<FnsProfile>(`${mocksUrl}/fns/${id}`),
     ]);
 
     const body: ScoreRequest = { inn, egrul, bki, fns };
-    const scoring = await request<ScoreResponse>(
-      `${config.scoringUrl}/v1/score`,
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
+    const scoring = await request<ScoreResponse>(`${scoringUrl}/v1/score`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
 
     return { inn, sources: { egrul, bki, fns }, scoring };
   }

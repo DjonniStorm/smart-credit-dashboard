@@ -1,10 +1,12 @@
-import "reflect-metadata";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+
 import { NestFactory } from "@nestjs/core";
-import { OpenApiDumpModule } from "../src/openapi-dump.module.ts";
-import { buildOpenApiDocument } from "../src/openapi.ts";
+import "reflect-metadata";
+
+import { OpenApiDumpModule } from "../src/common/openapi/openapi-dump.module.ts";
+import { buildOpenApiDocument } from "../src/common/openapi/openapi.ts";
 
 const outDir = join(
   dirname(fileURLToPath(import.meta.url)),

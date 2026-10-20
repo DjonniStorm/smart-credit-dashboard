@@ -1,8 +1,12 @@
 import { Controller, Get, Module, Param } from "@nestjs/common";
 import { ApiOkResponse, ApiOperation, ApiParam } from "@nestjs/swagger";
 import { ZodSerializerDto } from "nestjs-zod";
-import { CompanyCheckDto, InnParamDto } from "./companies/company-check.dto.ts";
-import { HealthDto } from "./health/health.dto.ts";
+
+import {
+  CompanyCheckDto,
+  InnParamDto,
+} from "../../modules/companies/dto/company-check.dto.ts";
+import { HealthDto } from "../../modules/health/dto/health.dto.ts";
 
 @Controller("health")
 class HealthController {
