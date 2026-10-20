@@ -8,3 +8,8 @@ pre-commit:
     eslint:
       glob: "*.{js,jsx,ts,tsx,mjs,cjs}"
       run: pnpm exec eslint --max-warnings 0 --no-warn-ignored {staged_files}
+
+commit-msg:
+  commands:
+    conventional:
+      run: node scripts/check-commit-msg.mjs {1}
