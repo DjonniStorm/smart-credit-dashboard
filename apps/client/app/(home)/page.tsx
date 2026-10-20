@@ -1,9 +1,30 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { CompanyCheckPending } from "@/entities/company";
 import { CompanyCheckPanel } from "@/widgets/company-check-panel";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ inn?: string }>;
+}): Promise<Metadata> {
+  const { inn } = await searchParams;
+  if (!inn) {
+    return {
+      title: "Проверка компании",
+      description:
+        "Введите ИНН, чтобы получить данные ЕГРЮЛ, БКИ, ФНС и оценку скоринга.",
+    };
+  }
+  return {
+    title: `Проверка ИНН ${inn}`,
+    description: `Результат проверки компании с ИНН ${inn}.`,
+    robots: { index: false, follow: true },
+  };
+}
 
 export default async function Home({
   searchParams,
