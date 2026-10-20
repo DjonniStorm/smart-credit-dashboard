@@ -7,7 +7,7 @@ import type {
   ScoreRequest,
   ScoreResponse,
 } from "@repo/contracts";
-import { config } from "../config.js";
+import { config } from "../config.ts";
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {

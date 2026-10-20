@@ -1,7 +1,4 @@
-import type { HealthResponse, ServiceName } from "@repo/contracts";
+import { healthResponseSchema } from "@repo/contracts";
+import { createZodDto } from "nestjs-zod";
 
-export class HealthDto implements HealthResponse {
-  status: "ok" | "degraded";
-  service: ServiceName;
-  checks: Record<string, "up" | "down">;
-}
+export class HealthDto extends createZodDto(healthResponseSchema) {}

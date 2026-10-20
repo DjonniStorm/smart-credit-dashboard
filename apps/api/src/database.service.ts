@@ -1,21 +1,17 @@
-import { Injectable, type OnModuleDestroy } from "@nestjs/common";
-import pg from "pg";
-import { config } from "./config.js";
+import { Injectable } from "@nestjs/common";
+import { InjectDataSource } from "@nestjs/typeorm";
+import { DataSource } from "typeorm";
 
 @Injectable()
-export class DatabaseService implements OnModuleDestroy {
-  readonly pool = new pg.Pool({ connectionString: config.databaseUrl });
+export class DatabaseService {
+  constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
   async ping(): Promise<boolean> {
     try {
-      await this.pool.query("select 1");
+      await this.dataSource.query("select 1");
       return true;
     } catch {
       return false;
     }
-  }
-
-  async onModuleDestroy() {
-    await this.pool.end();
   }
 }

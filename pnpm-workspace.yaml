@@ -4,3 +4,7 @@ packages:
 allowBuilds:
   # Телеметрия swagger-ui-dist, сборка не нужна.
   '@scarf/scarf': false
+peerDependencyRules:
+  allowedVersions:
+    "@nestjs/common": "12"
+    "@nestjs/swagger": "12"

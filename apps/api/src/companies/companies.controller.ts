@@ -1,6 +1,7 @@
 import { Controller, Get, Param } from "@nestjs/common";
-import { CompaniesService } from "./companies.service.js";
-import { CompanyCheckDto } from "./company-check.dto.js";
+import { ZodSerializerDto } from "nestjs-zod";
+import { CompaniesService } from "./companies.service.ts";
+import { CompanyCheckDto, InnParamDto } from "./company-check.dto.ts";
 
 @Controller("v1/companies")
 export class CompaniesController {
@@ -8,7 +9,8 @@ export class CompaniesController {
 
   /** Сквозная проверка: данные из mocks (ЕГРЮЛ, БКИ, ФНС) и оценка scoring. */
   @Get(":inn/check")
-  check(@Param("inn") inn: string): Promise<CompanyCheckDto> {
-    return this.companies.check(inn);
+  @ZodSerializerDto(CompanyCheckDto)
+  check(@Param() params: InnParamDto): Promise<CompanyCheckDto> {
+    return this.companies.check(params.inn);
   }
 }

@@ -1,8 +1,9 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { AppModule } from "./app.module.js";
-import { config } from "./config.js";
+import { cleanupOpenApiDoc } from "nestjs-zod";
+import { AppModule } from "./app.module.ts";
+import { config } from "./config.ts";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,7 +17,7 @@ async function bootstrap() {
       .setVersion("0.1.0")
       .build(),
   );
-  SwaggerModule.setup("docs", app, document);
+  SwaggerModule.setup("docs", app, cleanupOpenApiDoc(document));
 
   await app.listen(config.port);
 }
