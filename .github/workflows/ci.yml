@@ -35,4 +35,5 @@ jobs:
       # apps не зависят друг от друга, packages не зависят от apps (правила в turbo.json).
       - run: pnpm turbo boundaries
 
+      - run: pnpm lint
       - run: pnpm turbo run lint check-types build

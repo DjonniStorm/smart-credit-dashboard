@@ -1,5 +1,10 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "extends": ["//"],
-  "tags": ["app"]
+  "tags": ["app"],
+  "tasks": {
+    "generate": {
+      "outputs": ["../../packages/sdk/openapi.json"]
+    }
+  }
 }

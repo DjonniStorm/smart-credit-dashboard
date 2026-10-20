@@ -1,0 +1,142 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "alfa-future api",
+    "description": "Заявки, статусы, кредитное решение",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "tags": ["Health"],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/companies/{inn}/check": {
+      "get": {
+        "operationId": "CompaniesController_check",
+        "tags": ["Companies"],
+        "parameters": [
+          {
+            "name": "inn",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{10,12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Сквозная проверка: данные из mocks (ЕГРЮЛ, БКИ, ФНС) и оценка scoring.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCheckDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "HealthDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok", "degraded"]
+          },
+          "service": {
+            "type": "string",
+            "enum": ["api", "scoring", "mocks"]
+          },
+          "checks": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "enum": ["up", "down"]
+            }
+          }
+        },
+        "required": ["status", "service"]
+      },
+      "EgrulRecordDto": {
+        "type": "object",
+        "properties": {
+          "inn": { "type": "string" },
+          "ogrn": { "type": "string" },
+          "name": { "type": "string" },
+          "status": { "type": "string" },
+          "registeredAt": { "type": "string" },
+          "okved": { "type": "string" }
+        },
+        "required": ["inn", "ogrn", "name", "status", "registeredAt", "okved"]
+      },
+      "BkiReportDto": {
+        "type": "object",
+        "properties": {
+          "inn": { "type": "string" },
+          "activeLoans": { "type": "integer" },
+          "totalDebtRub": { "type": "number" },
+          "overdueDays": { "type": "integer" }
+        },
+        "required": ["inn", "activeLoans", "totalDebtRub", "overdueDays"]
+      },
+      "FnsProfileDto": {
+        "type": "object",
+        "properties": {
+          "inn": { "type": "string" },
+          "taxDebtRub": { "type": "number" },
+          "employees": { "type": "integer" },
+          "massRegistrationAddress": { "type": "boolean" }
+        },
+        "required": ["inn", "taxDebtRub", "employees", "massRegistrationAddress"]
+      },
+      "ScoreResponseDto": {
+        "type": "object",
+        "properties": {
+          "inn": { "type": "string" },
+          "score": { "type": "number" },
+          "model": { "type": "string" }
+        },
+        "required": ["inn", "score", "model"]
+      },
+      "CompanyCheckDto": {
+        "type": "object",
+        "properties": {
+          "inn": { "type": "string" },
+          "sources": {
+            "type": "object",
+            "properties": {
+              "egrul": { "$ref": "#/components/schemas/EgrulRecordDto" },
+              "bki": { "$ref": "#/components/schemas/BkiReportDto" },
+              "fns": { "$ref": "#/components/schemas/FnsProfileDto" }
+            },
+            "required": ["egrul", "bki", "fns"]
+          },
+          "scoring": { "$ref": "#/components/schemas/ScoreResponseDto" }
+        },
+        "required": ["inn", "sources", "scoring"]
+      }
+    }
+  }
+}
