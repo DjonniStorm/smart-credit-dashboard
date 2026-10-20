@@ -1,0 +1,12 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tags": ["package"],
+  "tasks": {
+    "generate": {
+      "dependsOn": ["api#generate"],
+      "inputs": ["openapi.json", "openapi-ts.config.ts"],
+      "outputs": ["src/generated/**"]
+    }
+  }
+}

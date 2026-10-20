@@ -1,34 +1,33 @@
-import type { HealthResponse } from "@repo/contracts";
-import { Card } from "@repo/ui/card";
-import { StatusBadge } from "@repo/ui/status-badge";
-import { apiGet } from "../lib/api";
+import { healthControllerCheckOptions, withStableQueryKey } from "@repo/sdk";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { serverClient } from "../lib/api.server";
+import { makeQueryClient } from "../lib/query-client";
+import { HealthStatus } from "./health-status";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const health = await apiGet<HealthResponse>("/health").catch(() => null);
+  const queryClient = makeQueryClient();
+
+  try {
+    await queryClient.prefetchQuery(
+      withStableQueryKey(
+        healthControllerCheckOptions({
+          client: serverClient,
+        }),
+      ),
+    );
+  } catch {
+    // Ошибка останется в кэше Query и отрисуется на клиенте.
+  }
 
   return (
-    <main>
-      <h1>АРМ сотрудника банка</h1>
-      <p>Каркас. Здесь будет очередь заявок и карточка решения.</p>
-
-      <Card title="Состояние api">
-        {health ? (
-          <ul>
-            <li>
-              <StatusBadge ok={health.status === "ok"} label="api" />
-            </li>
-            {Object.entries(health.checks ?? {}).map(([name, state]) => (
-              <li key={name}>
-                <StatusBadge ok={state === "up"} label={name} />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <StatusBadge ok={false} label="api недоступен" />
-        )}
-      </Card>
-    </main>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <main>
+        <h1>АРМ сотрудника банка</h1>
+        <p>Каркас. Здесь будет очередь заявок и карточка решения.</p>
+        <HealthStatus />
+      </main>
+    </HydrationBoundary>
   );
 }

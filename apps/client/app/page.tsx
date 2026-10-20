@@ -1,7 +1,11 @@
-import type { CompanyCheckResponse } from "@repo/contracts";
-import { Card } from "@repo/ui/card";
-import { StatusBadge } from "@repo/ui/status-badge";
-import { apiGet } from "../lib/api";
+import {
+  companiesControllerCheckOptions,
+  withStableQueryKey,
+} from "@repo/sdk";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { serverClient } from "../lib/api.server";
+import { makeQueryClient } from "../lib/query-client";
+import { CompanyCheckResult } from "./company-check-result";
 
 export const dynamic = "force-dynamic";
 
@@ -13,43 +17,43 @@ export default async function Home({
   searchParams: Promise<{ inn?: string }>;
 }) {
   const { inn } = await searchParams;
+  const queryClient = makeQueryClient();
 
-  let check: CompanyCheckResponse | null = null;
-  let error: string | null = null;
   if (inn) {
     try {
-      check = await apiGet<CompanyCheckResponse>(
-        `/v1/companies/${encodeURIComponent(inn)}/check`,
+      await queryClient.prefetchQuery(
+        withStableQueryKey(
+          companiesControllerCheckOptions({
+            client: serverClient,
+            path: { inn },
+          }),
+        ),
       );
-    } catch (e) {
-      error = e instanceof Error ? e.message : String(e);
+    } catch {
+      // Ошибка останется в кэше Query и отрисуется на клиенте.
     }
   }
 
   return (
-    <main>
-      <h1>Кабинет предпринимателя</h1>
-      <p>Каркас. Сквозная ручка: client → api → mocks + scoring.</p>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <main>
+        <h1>Кабинет предпринимателя</h1>
+        <p>Каркас. Сквозная ручка: client → api → mocks + scoring.</p>
 
-      <form>
-        <label>
-          ИНН{" "}
-          <input name="inn" defaultValue={inn ?? DEMO_INN} pattern="\d{10,12}" />
-        </label>{" "}
-        <button type="submit">Проверить</button>
-      </form>
+        <form>
+          <label>
+            ИНН{" "}
+            <input
+              name="inn"
+              defaultValue={inn ?? DEMO_INN}
+              pattern="\d{10,12}"
+            />
+          </label>{" "}
+          <button type="submit">Проверить</button>
+        </form>
 
-      {error && (
-        <Card title="Ошибка">
-          <StatusBadge ok={false} label={error} />
-        </Card>
-      )}
-
-      {check && (
-        <Card title={`Результат для ИНН ${check.inn}`}>
-          <pre>{JSON.stringify(check, null, 2)}</pre>
-        </Card>
-      )}
-    </main>
+        {inn ? <CompanyCheckResult inn={inn} /> : null}
+      </main>
+    </HydrationBoundary>
   );
 }

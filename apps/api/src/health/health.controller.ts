@@ -1,4 +1,5 @@
 import { Controller, Get } from "@nestjs/common";
+import { ApiOkResponse } from "@nestjs/swagger";
 import { CheckState, HealthStatus, ServiceName } from "@repo/contracts";
 import { ZodSerializerDto } from "nestjs-zod";
 import { DatabaseService } from "../database.service.ts";
@@ -9,6 +10,7 @@ export class HealthController {
   constructor(private readonly db: DatabaseService) {}
 
   @Get()
+  @ApiOkResponse({ type: HealthDto })
   @ZodSerializerDto(HealthDto)
   async check(): Promise<HealthDto> {
     const dbUp = await this.db.ping();

@@ -8,7 +8,9 @@
     "build": "nest build",
     "start": "node dist/main.js",
     "lint": "eslint . --max-warnings 0",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "generate": "node scripts/ensure-openapi.mjs",
+    "dump-openapi": "tsx --tsconfig tsconfig.json scripts/dump-openapi.ts"
   },
   "dependencies": {
     "@nestjs/common": "12.1.3",
@@ -31,6 +33,7 @@
     "@types/node": "26.4.1",
     "@types/pg": "8.23.1",
     "eslint": "10.9.1",
+    "tsx": "4.21.0",
     "typescript": "6.0.3"
   }
 }
