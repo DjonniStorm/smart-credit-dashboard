@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
+import { Message, createTranslator, i18n } from "@repo/i18n";
+
 import { CompanyCheckPending } from "@/entities/company";
 import { CompanyCheckPanel } from "@/widgets/company-check-panel";
 
@@ -12,16 +14,16 @@ export async function generateMetadata({
   searchParams: Promise<{ inn?: string }>;
 }): Promise<Metadata> {
   const { inn } = await searchParams;
+  const tr = createTranslator(i18n.defaultLocale);
   if (!inn) {
     return {
-      title: "Проверка компании",
-      description:
-        "Введите ИНН, чтобы получить данные ЕГРЮЛ, БКИ, ФНС и оценку скоринга.",
+      title: tr(Message.CabinetCheckTitle),
+      description: tr(Message.CabinetCheckDescription),
     };
   }
   return {
-    title: `Проверка ИНН ${inn}`,
-    description: `Результат проверки компании с ИНН ${inn}.`,
+    title: tr(Message.CabinetCheckTitleInn, { inn }),
+    description: tr(Message.CabinetCheckDescriptionInn, { inn }),
     robots: { index: false, follow: true },
   };
 }

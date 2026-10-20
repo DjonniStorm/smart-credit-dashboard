@@ -26,6 +26,7 @@
     "@mantine/spotlight": "9.7.3",
     "@mantine/tiptap": "9.7.3",
     "@repo/contracts": "workspace:*",
+    "@repo/i18n": "workspace:*",
     "@repo/sdk": "workspace:*",
     "@repo/ui": "workspace:*",
     "@tanstack/react-query": "5.104.5",

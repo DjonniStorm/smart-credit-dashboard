@@ -29,6 +29,7 @@ export default defineConfig([
   {
     files: [
       "packages/contracts/**/*.{js,ts}",
+      "packages/i18n/**/*.{js,ts}",
       "packages/eslint-config/**/*.{js,mjs}",
       "*.{js,mjs}",
     ],

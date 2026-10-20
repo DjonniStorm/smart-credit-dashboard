@@ -12,13 +12,14 @@ import "@mantine/spotlight/styles.css";
 import "@mantine/tiptap/styles.css";
 import type { Metadata, Viewport } from "next";
 
+import { Message, i18n, openGraphLocale, t } from "@repo/i18n";
+
 import "./globals.css";
 import { Providers } from "./providers";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-const title = "Кабинет предпринимателя";
-const description =
-  "Проверка компании по ИНН: выписка ЕГРЮЛ, данные БКИ и ФНС, оценка скоринга.";
+const title = t(i18n.defaultLocale, Message.CabinetTitle);
+const description = t(i18n.defaultLocale, Message.CabinetDescription);
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    locale: "ru_RU",
+    locale: openGraphLocale[i18n.defaultLocale],
     url: "/",
     siteName: title,
     title,
@@ -61,7 +62,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" {...mantineHtmlProps}>
+    <html lang={i18n.defaultLocale} {...mantineHtmlProps}>
       <head>
         <ColorSchemeScript defaultColorScheme="light" />
       </head>

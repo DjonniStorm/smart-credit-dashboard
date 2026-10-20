@@ -12,12 +12,13 @@ import "@mantine/spotlight/styles.css";
 import "@mantine/tiptap/styles.css";
 import type { Metadata, Viewport } from "next";
 
+import { Message, i18n, t } from "@repo/i18n";
+
 import "./globals.css";
 import { Providers } from "./providers";
 
-const title = "АРМ сотрудника банка";
-const description =
-  "Внутренний кабинет сотрудника: очередь заявок и кредитное решение. Страницы не для поисковой выдачи.";
+const title = t(i18n.defaultLocale, Message.ArmTitle);
+const description = t(i18n.defaultLocale, Message.ArmDescription);
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -52,7 +53,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" {...mantineHtmlProps}>
+    <html lang={i18n.defaultLocale} {...mantineHtmlProps}>
       <head>
         <ColorSchemeScript defaultColorScheme="light" />
       </head>
