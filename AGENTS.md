@@ -17,6 +17,8 @@ This block is written and re-added by `turbo` before repository-scoped commands 
   условием, написано в самом файле.
 - `docs/QA_SESSION_QUESTIONS.md`: ответы организаторов с вебинара. Вместе с `TRACK.md` это основной
   источник требований; при расхождении с чужими планами правы они.
+- `docs/smart-credit-dashboard-plan.pdf`: итоговый план продукта, принятый командой. `docs/TECH_ADDENDUM.md`:
+  техническое дополнение к нему (статусы, API, таблицы, формулы). При расхождении с кодом правим оба.
 - `docs/REQUIREMENTS.md` пишет человек, агенты его не правят.
 
 ## Перед началом работы
