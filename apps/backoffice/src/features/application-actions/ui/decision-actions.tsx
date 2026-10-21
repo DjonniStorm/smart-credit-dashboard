@@ -15,7 +15,11 @@ import {
   Textarea,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconAlertCircle, IconChevronDown } from "@tabler/icons-react";
+import {
+  IconAlertCircle,
+  IconChevronDown,
+  IconCircleX,
+} from "@tabler/icons-react";
 import { useState } from "react";
 
 import type {
@@ -151,7 +155,11 @@ export function DecisionActions({
             {order.map((key) => (
               <Button
                 key={key}
-                variant={key === recommended ? "filled" : "default"}
+                // Красная заливка только у рекомендованного действия, и никогда у отказа.
+                variant={
+                  key === recommended && key !== "reject" ? "filled" : "default"
+                }
+                leftSection={key === "reject" ? <RejectIcon /> : undefined}
                 disabled={key === "approve" && overLimit}
                 onClick={() => open(key)}
               >
@@ -252,6 +260,10 @@ export function DecisionActions({
       )}
     </Stack>
   );
+}
+
+function RejectIcon() {
+  return <IconCircleX size={16} color="var(--kk-danger)" aria-hidden />;
 }
 
 interface DialogProps {
@@ -600,7 +612,12 @@ function RejectDialog({
             <Button variant="default" onClick={onClose}>
               Отмена
             </Button>
-            <Button type="submit" color="danger" loading={pending}>
+            <Button
+              type="submit"
+              variant="default"
+              leftSection={<RejectIcon />}
+              loading={pending}
+            >
               Отказать
             </Button>
           </Group>

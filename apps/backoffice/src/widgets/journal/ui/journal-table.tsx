@@ -123,6 +123,8 @@ export function JournalTable() {
                       component={Link}
                       href={`/applications/${e.app.id}`}
                       size="sm"
+                      c="var(--mantine-color-text)"
+                      underline="always"
                     >
                       № {e.app.number}
                     </Anchor>

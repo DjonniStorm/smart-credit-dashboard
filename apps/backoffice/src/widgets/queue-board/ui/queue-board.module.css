@@ -24,12 +24,17 @@
   background: var(--kk-surface-sunken);
 }
 
+/* Выбор строки: фирменная метка, как в QueueTable. Янтарь занят под «ход за вами». */
 .row[aria-selected="true"] {
-  background: var(--kk-amber-soft);
+  background: var(--kk-surface-sunken);
+}
+
+.row[aria-selected="true"] td:first-child {
+  box-shadow: inset 2px 0 0 var(--kk-brand-graphic);
 }
 
 .row:focus-visible {
-  outline: 2px solid var(--mantine-color-text);
+  outline: 2px solid var(--mantine-primary-color-filled);
   outline-offset: -2px;
 }
 
@@ -50,7 +55,7 @@
 }
 
 .sortButton:focus-visible {
-  outline: 2px solid var(--mantine-color-text);
+  outline: 2px solid var(--mantine-primary-color-filled);
   outline-offset: 2px;
 }
 

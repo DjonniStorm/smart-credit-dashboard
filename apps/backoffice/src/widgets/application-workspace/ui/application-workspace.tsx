@@ -84,7 +84,13 @@ export function ApplicationWorkspace({ id }: { id: string }) {
 
 function BackLink() {
   return (
-    <Anchor component={Link} href="/" size="sm">
+    <Anchor
+      component={Link}
+      href="/"
+      size="sm"
+      c="var(--mantine-color-text)"
+      underline="always"
+    >
       <Group gap={4} component="span">
         <IconArrowLeft size={16} aria-hidden />
         Очередь заявок

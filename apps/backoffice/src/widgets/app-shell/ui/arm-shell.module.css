@@ -42,14 +42,15 @@
   background: var(--kk-surface-sunken);
 }
 
+/* Активный раздел как NavLink темы: красный текст на brand-soft. */
 .link[aria-current="page"] {
-  background: var(--kk-surface-sunken);
+  background: var(--kk-brand-soft);
+  color: var(--kk-brand-text);
   font-weight: 600;
-  box-shadow: inset 0 -2px 0 var(--mantine-color-text);
 }
 
 .link:focus-visible {
-  outline: 2px solid var(--mantine-color-text);
+  outline: 2px solid var(--mantine-primary-color-filled);
   outline-offset: 2px;
 }
 
