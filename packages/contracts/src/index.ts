@@ -1,7 +1,6 @@
 // Контракты: Zod-схемы. Типы через z.infer / enum.
 // На клиенте: schemaResolver(schema, { sync: true }) из @mantine/form (Mantine 9, Zod 4).
 // На api: createZodDto(schema) из nestjs-zod.
-
 import { z } from "zod";
 
 export enum ServiceName {
@@ -91,3 +90,15 @@ export const companyCheckResponseSchema = z.object({
   scoring: scoreResponseSchema,
 });
 export type CompanyCheckResponse = z.infer<typeof companyCheckResponseSchema>;
+
+/** Статус заявки: один словарь для кабинета клиента, АРМ и api. */
+export const applicationStatusSchema = z.enum([
+  "draft",
+  "in_review",
+  "needs_client",
+  "counter_offer",
+  "approved",
+  "disbursed",
+  "rejected",
+]);
+export type ApplicationStatus = z.infer<typeof applicationStatusSchema>;

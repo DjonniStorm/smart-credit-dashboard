@@ -1,3 +1,4 @@
+import { Card as MantineCard, Stack, Title } from "@mantine/core";
 import { type JSX, type ReactNode } from "react";
 
 export function Card({
@@ -10,9 +11,11 @@ export function Card({
   children: ReactNode;
 }): JSX.Element {
   return (
-    <section className={className}>
-      <h2>{title}</h2>
-      <div>{children}</div>
-    </section>
+    <MantineCard component="section" className={className}>
+      <Stack gap="sm">
+        <Title order={3}>{title}</Title>
+        <div>{children}</div>
+      </Stack>
+    </MantineCard>
   );
 }

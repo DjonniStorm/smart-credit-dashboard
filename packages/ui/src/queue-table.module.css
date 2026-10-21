@@ -1,0 +1,42 @@
+.wrap {
+  overflow-x: auto;
+  border: 1px solid var(--kk-line);
+  border-radius: var(--mantine-radius-lg);
+  background: var(--kk-surface);
+}
+
+.table {
+  min-width: 680px;
+}
+
+.row {
+  cursor: pointer;
+}
+
+.row:hover td {
+  background: var(--mantine-color-body);
+}
+
+/* Выбранная строка: настоящее состояние выбора, поэтому полоса слева допустима. */
+.row[aria-selected="true"] td {
+  background: var(--kk-surface-sunken);
+}
+
+.row[aria-selected="true"] td:first-child {
+  box-shadow: inset 2px 0 0 var(--mantine-color-text);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: -2px;
+}
+
+.num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
