@@ -6,6 +6,7 @@
     "./theme": "./src/theme.ts",
     "./motion": "./src/motion.ts",
     "./document": "./src/document.ts",
+    "./money": "./src/money.ts",
     "./*": "./src/*.tsx"
   },
   "scripts": {

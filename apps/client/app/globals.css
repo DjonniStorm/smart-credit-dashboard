@@ -1,13 +1,5 @@
 /* Цвета, шрифт и тёмную тему задаёт тема Mantine из @repo/ui. */
 
 body {
-  padding: 32px;
-}
-
-section {
-  margin-block: 24px;
-}
-
-pre {
-  overflow-x: auto;
+  margin: 0;
 }

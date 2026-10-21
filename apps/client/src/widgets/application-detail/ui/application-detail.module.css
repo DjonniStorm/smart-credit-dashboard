@@ -1,0 +1,32 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: calc(var(--mantine-spacing-xl) * 1.5);
+  align-items: start;
+}
+
+.checks {
+  list-style: none;
+}
+
+.sunken {
+  background: var(--kk-surface-sunken);
+}
+
+.success {
+  border-color: var(--kk-success);
+}
+
+.amount {
+  font-size: 40px;
+  line-height: 44px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+@media (max-width: 62em) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

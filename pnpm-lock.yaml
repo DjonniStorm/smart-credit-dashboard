@@ -286,6 +286,9 @@ importers:
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@tabler/icons-react':
+        specifier: 3.49.0
+        version: 3.49.0(react@19.2.8)
       '@tanstack/react-query':
         specifier: 5.104.5
         version: 5.104.5(@types/react@19.2.18)(react@19.2.8)
@@ -328,6 +331,9 @@ importers:
       server-only:
         specifier: 0.0.1
         version: 0.0.1
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*

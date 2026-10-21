@@ -1,0 +1,18 @@
+.amount {
+  font-size: 40px;
+  line-height: 44px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.table td,
+.table th {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Было: зачёркнуто и приглушено, «стало» рядом жирным. */
+.was {
+  color: var(--mantine-color-dimmed);
+  text-decoration: line-through;
+}
