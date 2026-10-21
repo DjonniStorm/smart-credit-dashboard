@@ -15,7 +15,14 @@ This block is written and re-added by `turbo` before repository-scoped commands 
   (фраза про новостную ленту). Свой текст туда не дописывать.
 - `docs/CLARIFICATIONS.md`: разъяснения организаторов, читать вместе с `TRACK.md`. Как они соотносятся с
   условием, написано в самом файле.
+- `docs/QA_SESSION_QUESTIONS.md`: ответы организаторов с вебинара. Вместе с `TRACK.md` это основной
+  источник требований; при расхождении с чужими планами правы они.
 - `docs/REQUIREMENTS.md` пишет человек, агенты его не правят.
+
+## Перед началом работы
+
+`git fetch origin` и `git log --oneline HEAD..origin/dev`: если вывод не пустой, сначала
+`git rebase origin/dev`. Хук SessionStart (`scripts/check-branch-fresh.mjs`) сообщает об этом сам.
 
 ## Правила зависимостей в монорепо
 
