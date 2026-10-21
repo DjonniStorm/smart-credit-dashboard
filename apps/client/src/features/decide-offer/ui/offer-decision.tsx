@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Alert,
-  Button,
-  Group,
-  Paper,
-  Stack,
-  Table,
-  Text,
-  Title,
-} from "@mantine/core";
+import { Button, Group, Paper, Stack, Table, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 
 import type { Application, OfferTerms } from "@repo/contracts/cabinet";
@@ -18,6 +9,7 @@ import { formatRub } from "@repo/ui/money";
 
 import { useAcceptOffer, useDeclineOffer } from "@/entities/application";
 import { tx } from "@/shared/i18n";
+import { InlineError } from "@/shared/ui/query-state";
 
 import classes from "./offer-decision.module.css";
 
@@ -57,7 +49,8 @@ export function OfferDecision({
       title: t.declineConfirmTitle,
       children: <Text size="sm">{t.declineConfirmText}</Text>,
       labels: { confirm: t.declineConfirm, cancel: t.declineCancel },
-      confirmProps: { color: "red" },
+      confirmProps: { variant: "default" },
+      cancelProps: { variant: "subtle" },
       onConfirm: () => decline.mutate(),
     });
   }
@@ -107,9 +100,9 @@ export function OfferDecision({
         </Table.ScrollContainer>
 
         {error && (
-          <Alert color="red" role="alert" title={t.acceptError}>
-            {error.message}
-          </Alert>
+          <InlineError>
+            {t.acceptError}: {error.message}
+          </InlineError>
         )}
 
         <Text size="sm" c="dimmed">

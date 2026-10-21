@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Alert,
   Button,
   Checkbox,
   Group,
@@ -47,7 +46,7 @@ import {
 } from "@/entities/product";
 import { cabinetApi } from "@/shared/api/cabinet";
 import { formatDate, tx } from "@/shared/i18n";
-import { QueryError } from "@/shared/ui/query-state";
+import { InlineError, QueryError } from "@/shared/ui/query-state";
 
 import classes from "./application-wizard.module.css";
 
@@ -490,6 +489,7 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
       />
       <Stack gap="sm">
         <Checkbox
+          color="primary"
           label={t.consentBki}
           checked={consents.bki}
           onChange={(e) => {
@@ -499,6 +499,7 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
           error={errors.bki}
         />
         <Checkbox
+          color="primary"
           label={t.consentPd}
           checked={consents.pd}
           onChange={(e) => {
@@ -509,9 +510,9 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
         />
       </Stack>
       {create.isError && (
-        <Alert color="red" title={t.submitError} role="alert">
-          {create.error.message}
-        </Alert>
+        <InlineError>
+          {t.submitError}: {create.error.message}
+        </InlineError>
       )}
     </Stack>,
   ];

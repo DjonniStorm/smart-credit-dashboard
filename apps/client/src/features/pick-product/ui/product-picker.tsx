@@ -71,7 +71,7 @@ export function ProductPicker() {
             <Title order={2} size="h3">
               {t.resultsTitle(list.length)}
             </Title>
-            {list.map((p) => {
+            {list.map((p, index) => {
               const e = estimate(
                 p,
                 keyRate,
@@ -134,6 +134,7 @@ export function ProductPicker() {
                       <Button
                         component={Link}
                         href={`/applications/new?${query.toString()}`}
+                        variant={index === 0 ? "filled" : "default"}
                       >
                         {t.apply}
                       </Button>
@@ -165,7 +166,7 @@ export function ProductPicker() {
                 className={classes.purpose}
               >
                 <Group wrap="nowrap" align="flex-start" gap="sm">
-                  <Radio.Indicator mt={2} />
+                  <Radio.Indicator mt={2} color="primary" />
                   <div>
                     <Text fw={500}>{tx.purposes[p].label}</Text>
                     <Text size="sm" c="dimmed">

@@ -44,6 +44,7 @@ export function DemoSignIn() {
               </Text>
             </Stack>
             <Button
+              variant="default"
               loading={signIn.isPending && signIn.variables === a.id}
               disabled={signIn.isPending && signIn.variables !== a.id}
               onClick={() =>

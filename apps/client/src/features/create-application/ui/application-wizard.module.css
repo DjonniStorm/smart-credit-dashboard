@@ -70,14 +70,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Номер шага чернилами: красный на экране мастера один, у кнопки «Дальше». */
 .stepButton[data-state="current"] .stepIndex {
-  background: var(--mantine-primary-color-filled);
-  border-color: var(--mantine-primary-color-filled);
-  color: var(--mantine-primary-color-contrast);
+  background: var(--mantine-color-text);
+  border-color: var(--mantine-color-text);
+  color: var(--mantine-color-body);
 }
 
 .stepButton[data-state="done"] .stepIndex {
-  border-color: var(--mantine-primary-color-filled);
+  border-color: var(--mantine-color-text);
 }
 
 .panel {

@@ -11,7 +11,7 @@
 }
 
 .purpose[data-checked] {
-  border-color: var(--mantine-primary-color-filled);
+  border-color: var(--mantine-color-text);
 }
 
 @media (max-width: 62em) {

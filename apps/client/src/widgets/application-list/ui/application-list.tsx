@@ -64,6 +64,9 @@ export function ApplicationList() {
       </StateBlock>
     );
   } else {
+    // Красная кнопка одна: у заявки, где ход за клиентом, иначе у черновика.
+    const primaryId =
+      apps.data.find(needsClient)?.id ?? (draft ? "draft" : null);
     const sorted = [...apps.data].sort(
       (a, b) => Number(needsClient(b)) - Number(needsClient(a)),
     );
@@ -94,7 +97,11 @@ export function ApplicationList() {
                 >
                   {t.draftDiscard}
                 </Button>
-                <Button component={Link} href="/applications/new?draft=1">
+                <Button
+                  component={Link}
+                  href="/applications/new?draft=1"
+                  variant={primaryId === "draft" ? "filled" : "default"}
+                >
                   {t.draftContinue}
                 </Button>
               </Group>
@@ -103,7 +110,6 @@ export function ApplicationList() {
         )}
         {sorted.map((app) => {
           const stage = stageOf(app);
-          const mine = stage.waitingForClient;
           return (
             <ApplicationCard
               key={app.id}
@@ -121,7 +127,7 @@ export function ApplicationList() {
                 <Button
                   component={Link}
                   href={`/applications/${app.id}`}
-                  variant={mine ? "filled" : "default"}
+                  variant={app.id === primaryId ? "filled" : "default"}
                 >
                   {tx.common.open}
                 </Button>

@@ -22,6 +22,7 @@ import { StateBlock } from "@repo/ui/state-block";
 
 import { useRequestSignCode, useSign } from "@/entities/application";
 import { tx } from "@/shared/i18n";
+import { InlineError } from "@/shared/ui/query-state";
 
 const t = tx.sign;
 
@@ -108,7 +109,7 @@ export function SignContract({ app }: { app: Application }) {
             </Button>
           ) : (
             <>
-              <Alert title={t.codeSent} w="100%">
+              <Alert title={t.codeSent} w="100%" color="gray">
                 {t.demoCode(requestCode.data.demoCode)}
               </Alert>
               <Stack gap={6}>
@@ -127,11 +128,7 @@ export function SignContract({ app }: { app: Application }) {
                   aria-label={t.codeLabel}
                 />
               </Stack>
-              {sign.isError && (
-                <Text c="var(--kk-danger)" size="sm" role="alert">
-                  {sign.error.message}
-                </Text>
-              )}
+              {sign.isError && <InlineError>{sign.error.message}</InlineError>}
               <Group gap="sm">
                 <Button
                   onClick={submit}
@@ -155,9 +152,7 @@ export function SignContract({ app }: { app: Application }) {
             </>
           )}
           {requestCode.isError && (
-            <Text c="var(--kk-danger)" size="sm" role="alert">
-              {requestCode.error.message}
-            </Text>
+            <InlineError>{requestCode.error.message}</InlineError>
           )}
         </Stack>
       </Paper>

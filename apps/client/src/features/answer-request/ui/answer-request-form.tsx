@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Alert,
   Button,
   FileInput,
   Paper,
@@ -16,6 +15,7 @@ import type { ClientRequest } from "@repo/contracts/cabinet";
 
 import { useAnswerRequest } from "@/entities/application";
 import { tx } from "@/shared/i18n";
+import { InlineError } from "@/shared/ui/query-state";
 
 const t = tx.application.request;
 
@@ -85,11 +85,7 @@ export function AnswerRequestForm({
           clearable
           accept="application/pdf,image/png,image/jpeg"
         />
-        {answer.isError && (
-          <Alert color="red" role="alert">
-            {answer.error.message}
-          </Alert>
-        )}
+        {answer.isError && <InlineError>{answer.error.message}</InlineError>}
         <div>
           <Button onClick={send} loading={answer.isPending}>
             {t.send}
