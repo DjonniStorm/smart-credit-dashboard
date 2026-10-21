@@ -6,6 +6,7 @@ import {
   Input,
   type MantineColorsTuple,
   Modal,
+  NavLink,
   NumberInput,
   Table,
   TextInput,
@@ -72,6 +73,22 @@ const amber: MantineColorsTuple = [
   "#8a6206",
   "#6b4a00",
 ];
+// Фирменный красный. Оттенок 7 = brand: кнопки и всё, на чём белый текст
+// (белый на нём 4.97:1). Оттенок 6 = brand-bright #EF3124 из гайда банка:
+// с белым только 4.09:1, поэтому он для графиков и крупных элементов без текста.
+// Оттенок 8 = brand-hover.
+const red: MantineColorsTuple = [
+  "#fff3f2",
+  "#ffe1de",
+  "#ffc4be",
+  "#ff9e94",
+  "#ff7366",
+  "#f5493d",
+  "#ef3124",
+  "#d62b1f",
+  "#bd2418",
+  "#9a1d13",
+];
 // Оттенок 7 = success.
 const success: MantineColorsTuple = [
   "#eef8f6",
@@ -99,12 +116,15 @@ const danger: MantineColorsTuple = [
   "#6a140d",
 ];
 
-// subtle и light у primary Mantine считает от шкалы primary, а в тёмной теме она
-// инвертирована: текст выходил тёмным на тёмном. Привязываем к токенам текста и surface-sunken.
+// primary (чернила) Mantine в тёмной теме считает от инвертированной шкалы:
+// subtle и light выходили тёмным на тёмном. Привязываем к токенам текста и surface-sunken.
+// Цвет по умолчанию теперь red, а subtle и light без цвета остаются нейтральными:
+// иначе красными стали бы все бейджи и тихие кнопки вроде «Отмены».
 const variantColorResolver: VariantColorsResolver = (input) => {
   const colors = defaultVariantColorsResolver(input);
-  const isPrimary = !input.color || input.color === "primary";
-  if (isPrimary && (input.variant === "subtle" || input.variant === "light")) {
+  const isQuiet =
+    !input.color || input.color === "primary" || input.color === "red";
+  if (isQuiet && (input.variant === "subtle" || input.variant === "light")) {
     return {
       ...colors,
       background:
@@ -146,13 +166,16 @@ export const theme = createTheme({
     amber,
     success,
     danger,
+    red,
     primary: virtualColor({
       name: "primary",
       light: "ink",
       dark: "inkInverse",
     }),
   },
-  primaryColor: "primary",
+  // Действие красное: основная кнопка, активная навигация, фокус.
+  // color="primary" по-прежнему чернила: второстепенное, текст, скоринг.
+  primaryColor: "red",
   primaryShade: { light: 7, dark: 7 },
   variantColorResolver,
   autoContrast: true,
@@ -211,6 +234,16 @@ export const theme = createTheme({
         },
       },
     }),
+    // Активный пункт меню: красный текст на бледно-красном, как текущее место в кабинете.
+    NavLink: NavLink.extend({
+      vars: () => ({
+        root: {
+          "--nl-bg": "var(--kk-brand-soft)",
+          "--nl-color": "var(--kk-brand-text)",
+        },
+        children: {},
+      }),
+    }),
     Modal: Modal.extend({
       defaultProps: {
         radius: "lg",
@@ -246,6 +279,13 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     "--mantine-color-dimmed": "#5c5a52",
     "--mantine-color-default-border": "#86827a",
     "--mantine-color-error": "#b42318",
+    "--kk-brand": "#d62b1f",
+    "--kk-brand-hover": "#bd2418",
+    "--kk-brand-bright": "#ef3124",
+    "--kk-on-brand": "#ffffff",
+    "--kk-brand-text": "#d62b1f",
+    "--kk-brand-soft": "#fff3f2",
+    "--kk-brand-graphic": "#d62b1f",
     "--kk-surface": "#ffffff",
     "--kk-surface-sunken": "#eceae3",
     "--kk-line": "#d6d3ca",
@@ -262,6 +302,13 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     "--mantine-color-dimmed": "#a7a49c",
     "--mantine-color-default-border": "#74767c",
     "--mantine-color-error": "#ff8b7d",
+    "--kk-brand": "#d62b1f",
+    "--kk-brand-hover": "#bd2418",
+    "--kk-brand-bright": "#ef3124",
+    "--kk-on-brand": "#ffffff",
+    "--kk-brand-text": "#ff6b5e",
+    "--kk-brand-soft": "#341a17",
+    "--kk-brand-graphic": "#ef3124",
     "--kk-surface": "#1c1d20",
     "--kk-surface-sunken": "#27292d",
     "--kk-line": "#34373b",

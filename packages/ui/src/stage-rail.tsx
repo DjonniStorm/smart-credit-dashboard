@@ -10,6 +10,7 @@ type StageState = "done" | "current" | "action" | "next";
 
 /**
  * Путь заявки: по сегменту на этап. Фирменный мотив системы.
+ * Пройденные этапы чернильные, текущий красный.
  * waitingForClient красит текущий этап янтарным: ход за клиентом.
  */
 export function StageRail({

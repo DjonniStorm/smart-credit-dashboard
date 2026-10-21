@@ -5,6 +5,8 @@ import { type JSX, type ReactNode } from "react";
 export type Tone = "neutral" | "action" | "success" | "danger";
 
 // Цвета из токенов: action = «ход за тем, кто смотрит на экран».
+// Фирменного красного тут нет: красный значит «нажми», а не статус.
+// danger отличается от бренда светлотой (6.6:1 против 5.0:1 на белом), иконкой и подписью.
 const toneVars: Record<Tone, { bg: string; color: string }> = {
   neutral: {
     bg: "var(--kk-surface-sunken)",

@@ -23,7 +23,7 @@
 }
 
 .row[aria-selected="true"] td:first-child {
-  box-shadow: inset 2px 0 0 var(--mantine-color-text);
+  box-shadow: inset 2px 0 0 var(--kk-brand-graphic);
 }
 
 .row:focus-visible {

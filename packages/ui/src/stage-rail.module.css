@@ -42,6 +42,11 @@
   background: var(--mantine-color-text);
 }
 
+/* Текущий этап: фирменный красный. brand-graphic держит 3:1 к дорожке в обеих темах. */
+.item[data-state="current"] .fill {
+  background: var(--kk-brand-graphic);
+}
+
 /* Банк ждёт клиента. amber на фоне даёт 1.7:1, поэтому тёмная обводка в обеих темах. */
 .item[data-state="action"] .segment {
   background: var(--mantine-color-amber-5);
