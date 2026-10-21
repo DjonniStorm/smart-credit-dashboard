@@ -1,0 +1,130 @@
+.layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: var(--mantine-spacing-xl);
+  align-items: start;
+}
+
+.steps {
+  position: sticky;
+  top: var(--mantine-spacing-lg);
+}
+
+.stepCount {
+  display: none;
+}
+
+.stepList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stepButton {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
+  width: 100%;
+  min-height: 44px;
+  padding: 6px var(--mantine-spacing-sm);
+  border: 0;
+  border-radius: var(--mantine-radius-sm);
+  background: transparent;
+  color: var(--mantine-color-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.stepButton:hover:not(:disabled) {
+  background: var(--kk-surface-sunken);
+}
+
+.stepButton:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 2px;
+}
+
+.stepButton:disabled {
+  color: var(--mantine-color-dimmed);
+  cursor: default;
+}
+
+.stepButton[data-state="current"] {
+  background: var(--kk-surface-sunken);
+  font-weight: 600;
+}
+
+.stepIndex {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--kk-line);
+  font-size: var(--mantine-font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Номер шага чернилами: красный на экране мастера один, у кнопки «Дальше». */
+.stepButton[data-state="current"] .stepIndex {
+  background: var(--mantine-color-text);
+  border-color: var(--mantine-color-text);
+  color: var(--mantine-color-body);
+}
+
+.stepButton[data-state="done"] .stepIndex {
+  border-color: var(--mantine-color-text);
+}
+
+.panel {
+  overflow: hidden;
+}
+
+.stepTitle:focus {
+  outline: none;
+}
+
+.stepTitle:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 4px;
+}
+
+.sunken {
+  background: var(--kk-surface-sunken);
+  border-radius: var(--mantine-radius-lg);
+  padding: var(--mantine-spacing-lg);
+}
+
+/* На узком экране шаги превращаются в строку «Шаг N из 5». */
+@media (max-width: 62em) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--mantine-spacing-md);
+  }
+
+  .steps {
+    position: static;
+  }
+
+  .stepCount {
+    display: block;
+  }
+
+  .stepList {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .stepButton {
+    width: auto;
+  }
+
+  .stepButton:not([data-state="current"]) .stepLabel {
+    display: none;
+  }
+}

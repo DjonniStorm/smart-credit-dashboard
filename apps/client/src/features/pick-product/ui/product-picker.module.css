@@ -1,0 +1,25 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  gap: calc(var(--mantine-spacing-xl) * 1.5);
+  align-items: start;
+}
+
+.form {
+  position: sticky;
+  top: var(--mantine-spacing-lg);
+}
+
+.purpose[data-checked] {
+  border-color: var(--mantine-color-text);
+}
+
+@media (max-width: 62em) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .form {
+    position: static;
+  }
+}
