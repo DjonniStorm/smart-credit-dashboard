@@ -1,0 +1,60 @@
+.wrap {
+  overflow-x: auto;
+  border: 1px solid var(--kk-line);
+  border-radius: var(--mantine-radius-lg);
+  background: var(--kk-surface);
+}
+
+.table {
+  min-width: 760px;
+}
+
+.table thead th {
+  background: var(--kk-surface-sunken);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.row {
+  cursor: pointer;
+  outline: none;
+}
+
+.row:hover {
+  background: var(--kk-surface-sunken);
+}
+
+.row[aria-selected="true"] {
+  background: var(--kk-amber-soft);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--mantine-color-text);
+  outline-offset: -2px;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  border-radius: var(--mantine-radius-xs);
+}
+
+.sortButton:focus-visible {
+  outline: 2px solid var(--mantine-color-text);
+  outline-offset: 2px;
+}
+
+.preview {
+  position: sticky;
+  top: 72px;
+}

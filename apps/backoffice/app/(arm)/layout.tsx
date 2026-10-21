@@ -1,13 +1,7 @@
 import { type PropsWithChildren } from "react";
 
-import { Message, i18n, t } from "@repo/i18n";
+import { ArmShell } from "@/widgets/app-shell";
 
 export default function ArmLayout({ children }: PropsWithChildren) {
-  return (
-    <main>
-      <h1>{t(i18n.defaultLocale, Message.ArmTitle)}</h1>
-      <p>{t(i18n.defaultLocale, Message.ArmLead)}</p>
-      {children}
-    </main>
-  );
+  return <ArmShell>{children}</ArmShell>;
 }

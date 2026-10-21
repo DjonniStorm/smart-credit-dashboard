@@ -156,6 +156,9 @@ importers:
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@tabler/icons-react':
+        specifier: 3.49.0
+        version: 3.49.0(react@19.2.8)
       '@tanstack/react-query':
         specifier: 5.104.5
         version: 5.104.5(@types/react@19.2.18)(react@19.2.8)

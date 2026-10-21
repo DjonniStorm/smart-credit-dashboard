@@ -1,14 +1,15 @@
-import { Suspense } from "react";
+import { Stack, Title } from "@mantine/core";
+import type { Metadata } from "next";
 
-import { HealthStatusPending } from "@/entities/health";
-import { HealthPanel } from "@/widgets/health-panel";
+import { QueueBoard } from "@/widgets/queue-board";
 
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Очередь заявок" };
 
-export default function Home() {
+export default function QueuePage() {
   return (
-    <Suspense fallback={<HealthStatusPending />}>
-      <HealthPanel />
-    </Suspense>
+    <Stack gap="md">
+      <Title order={1}>Очередь заявок</Title>
+      <QueueBoard />
+    </Stack>
   );
 }
