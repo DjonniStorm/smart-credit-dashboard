@@ -1,0 +1,19 @@
+# Пути высокого риска из REVIEW.md: нужно одобрение Ильи.
+# Работает, только если в защите ветки включено «Require review from Code Owners».
+# Авторизация, state machine заявки и логика кредитного решения добавятся сюда, когда появятся их папки.
+
+/REVIEW.md                    @DjonniStorm
+/.github/                     @DjonniStorm
+/infra/                       @DjonniStorm
+/scripts/                     @DjonniStorm
+/packages/contracts/          @DjonniStorm
+/packages/sdk/                @DjonniStorm
+/packages/eslint-config/      @DjonniStorm
+/packages/typescript-config/  @DjonniStorm
+/package.json                 @DjonniStorm
+/pnpm-workspace.yaml          @DjonniStorm
+/pnpm-lock.yaml               @DjonniStorm
+/apps/scoring/uv.lock         @DjonniStorm
+/lefthook.yml                 @DjonniStorm
+turbo.json                    @DjonniStorm
+Dockerfile                    @DjonniStorm
