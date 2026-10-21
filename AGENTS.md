@@ -22,7 +22,7 @@ This block is written and re-added by `turbo` before repository-scoped commands 
 ## Перед началом работы
 
 `git fetch origin` и `git log --oneline HEAD..origin/dev`: если вывод не пустой, сначала
-`git rebase origin/dev`. Хук SessionStart (`scripts/check-branch-fresh.mjs`) сообщает об этом сам.
+`git rebase origin/dev`.
 
 ## Правила зависимостей в монорепо
 
