@@ -33,12 +33,13 @@ import { formatRub } from "@/shared/lib/money";
 import {
   ApproveDialog,
   CounterDialog,
+  HoldDialog,
   RejectDialog,
   RejectIcon,
   RequestDialog,
 } from "./dialogs";
 
-type Dialog = "approve" | "counter" | "request" | "reject";
+type Dialog = "approve" | "counter" | "request" | "reject" | "pause" | "block";
 
 const recommendedDialog = {
   approve: "approve",
@@ -52,6 +53,8 @@ const dialogLabel: Record<Dialog, string> = {
   counter: "Другие условия",
   request: "Запросить документы",
   reject: "Отказать",
+  pause: "Поставить на паузу",
+  block: "Заблокировать",
 };
 
 /** Ответ клиента, которого ждёт заявка. В демо его делает сотрудник. */
@@ -102,15 +105,19 @@ export function ActionBar({
     setDialog(next);
   }
 
-  const canDecide = app.stage === "decision" && app.waitingOn === "employee";
+  const canDecide =
+    !app.hold && app.stage === "decision" && app.waitingOn === "employee";
   const overLimit = app.request.amount > employee.approvalLimit;
   const lead = employees.data?.find(
     (e) => e.role === "lead" && e.id !== employee.id,
   );
   const assigning = mutation.isPending && mutation.variables?.type === "assign";
+  const holding =
+    mutation.isPending &&
+    ["pause", "block", "resume"].includes(mutation.variables?.type ?? "");
 
   const take: Item | null =
-    app.assigneeId !== employee.id && app.waitingOn !== "nobody"
+    !app.hold && app.assigneeId !== employee.id && app.waitingOn !== "nobody"
       ? {
           key: "take",
           label: "Взять в работу",
@@ -165,7 +172,7 @@ export function ActionBar({
       : null;
 
   const transfers: Item[] =
-    app.waitingOn === "nobody"
+    app.hold || app.waitingOn === "nobody"
       ? []
       : (employees.data ?? [])
           .filter((e) => e.id !== app.assigneeId && e.id !== lead?.id)
@@ -175,6 +182,24 @@ export function ActionBar({
             run: () =>
               run({ type: "assign", assigneeId: e.id }, `Передано: ${e.name}`),
           }));
+
+  const holdActions: Item[] = app.hold
+    ? [
+        {
+          key: "resume",
+          label: "Вернуть в работу",
+          loading: holding,
+          run: () =>
+            run(
+              { type: "resume", comment: "" },
+              "Заявка возвращена в работу",
+            ),
+        },
+      ]
+    : [
+        { key: "pause", label: dialogLabel.pause, run: () => open("pause") },
+        { key: "block", label: dialogLabel.block, run: () => open("block") },
+      ];
 
   // Красная только у рекомендованного решения, и никогда у отказа.
   // Если одобрить нельзя по лимиту, следующий шаг: передать руководителю.
@@ -193,7 +218,7 @@ export function ActionBar({
   }
 
   // Пока ход за клиентом, процесс двигает только его ответ: он идёт вторым.
-  const rest = [demo, take, toLead, ...decisions, ...transfers].filter(
+  const rest = [demo, take, toLead, ...decisions, ...transfers, ...holdActions].filter(
     (i): i is Item => i !== null && i.key !== primary?.key,
   );
   const secondary = rest.find((i) => !i.disabled) ?? null;
@@ -201,6 +226,8 @@ export function ActionBar({
 
   const hint = canDecide
     ? null
+    : app.hold
+      ? "Заявка приостановлена. Верните её в работу, чтобы продолжить обработку."
     : app.waitingOn === "system"
       ? "Проверки идут автоматически. Решение станет доступно после рекомендации."
       : app.waitingOn === "client"
@@ -230,6 +257,20 @@ export function ActionBar({
         <Text size="xs" c="dimmed">
           {hint}
         </Text>
+      )}
+      {app.hold && (
+        <Alert
+          color={app.hold.state === "blocked" ? "red" : "yellow"}
+          variant="light"
+          p="xs"
+        >
+          <Text size="xs" fw={600}>
+            {app.hold.state === "blocked"
+              ? "Заявка заблокирована"
+              : "Заявка на паузе"}
+          </Text>
+          <Text size="xs">{app.hold.reason}</Text>
+        </Alert>
       )}
       {error && !dialog && (
         <Text size="xs" c="var(--kk-danger)" role="alert">
@@ -338,6 +379,23 @@ export function ActionBar({
           onSubmit={(action) => run(action, "Отказ зафиксирован")}
         />
       )}
+      {(dialog === "pause" || dialog === "block") && (
+        <HoldDialog
+          opened
+          kind={dialog}
+          pending={mutation.isPending}
+          error={mutation.error}
+          onClose={() => setDialog(null)}
+          onSubmit={(reason) =>
+            run(
+              { type: dialog, reason },
+              dialog === "pause"
+                ? "Заявка поставлена на паузу"
+                : "Заявка заблокирована",
+            )
+          }
+        />
+      )}
     </Stack>
   );
 }
@@ -361,6 +419,12 @@ function showAlfiActionFeedback(action: EmployeeAction, message: string): void {
     }
     case "assign":
     case "rerun_check": {
+      alfi.showSuccess(message, options);
+      break;
+    }
+    case "pause":
+    case "block":
+    case "resume": {
       alfi.showSuccess(message, options);
       break;
     }

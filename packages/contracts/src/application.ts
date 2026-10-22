@@ -56,6 +56,10 @@ export const waitingOnSchema = z.enum([
 ]);
 export type WaitingOn = z.infer<typeof waitingOnSchema>;
 
+/** Операционное состояние заявки, не меняющее бизнес-статус. */
+export const workflowStateSchema = z.enum(["active", "paused", "blocked"]);
+export type WorkflowState = z.infer<typeof workflowStateSchema>;
+
 export const employeeRoleSchema = z.enum(["analyst", "lead"]);
 export type EmployeeRole = z.infer<typeof employeeRoleSchema>;
 
@@ -206,6 +210,18 @@ export const employeeActionSchema = z.discriminatedUnion("type", [
   }),
   z.object({ type: z.literal("assign"), assigneeId: z.string() }),
   z.object({ type: z.literal("rerun_check"), source: checkSourceSchema }),
+  z.object({
+    type: z.literal("pause"),
+    reason: z.string().min(1).max(500),
+  }),
+  z.object({
+    type: z.literal("block"),
+    reason: z.string().min(1).max(500),
+  }),
+  z.object({
+    type: z.literal("resume"),
+    comment: z.string().max(500).default(""),
+  }),
 ]);
 export type EmployeeAction = z.infer<typeof employeeActionSchema>;
 
@@ -222,6 +238,16 @@ export const actorSchema = z.object({
   name: z.string(),
 });
 export type Actor = z.infer<typeof actorSchema>;
+
+export const applicationHoldSchema = z.object({
+  state: z.enum(["paused", "blocked"]),
+  reason: z.string().min(1).max(500),
+  at: z.string(),
+  by: actorSchema,
+  previousWaitingOn: waitingOnSchema,
+  previousBlocker: z.string(),
+});
+export type ApplicationHold = z.infer<typeof applicationHoldSchema>;
 
 export const applicationEventSchema = z.object({
   id: z.string(),
@@ -243,6 +269,8 @@ export const applicationSchema = z.object({
   status: applicationStatusSchema,
   stage: applicationStageSchema,
   waitingOn: waitingOnSchema,
+  workflowState: workflowStateSchema.default("active"),
+  hold: applicationHoldSchema.nullable().default(null),
   /** Что мешает решению, одной фразой. */
   blocker: z.string(),
   assigneeId: z.string().nullable(),

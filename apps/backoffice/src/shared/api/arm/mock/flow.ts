@@ -260,6 +260,39 @@ export function applyAction(
   const actor = employeeActor(employee);
   const comment = "comment" in action && action.comment ? action.comment : null;
 
+  if (action.type === "pause" || action.type === "block") {
+    if (app.hold) throw new ArmActionError("Заявка уже приостановлена.");
+    app.hold = {
+      state: action.type === "pause" ? "paused" : "blocked",
+      reason: action.reason,
+      at: new Date(now).toISOString(),
+      by: actor,
+      previousWaitingOn: app.waitingOn,
+      previousBlocker: app.blocker,
+    };
+    app.workflowState = app.hold.state;
+    app.blocker = `${action.type === "pause" ? "Пауза" : "Блокировка"}: ${action.reason}`;
+    log(
+      rec,
+      now,
+      actor,
+      action.type === "pause" ? "Заявка поставлена на паузу" : "Заявка заблокирована",
+      action.reason,
+    );
+    return;
+  }
+
+  if (action.type === "resume") {
+    if (!app.hold) throw new ArmActionError("Заявка не находится на паузе или блокировке.");
+    const hold = app.hold;
+    app.waitingOn = hold.previousWaitingOn;
+    app.blocker = hold.previousBlocker;
+    app.hold = null;
+    app.workflowState = "active";
+    log(rec, now, actor, "Заявка возвращена в работу", action.comment || null);
+    return;
+  }
+
   switch (action.type) {
     case "approve": {
       assertDecisionStage(app);

@@ -1,0 +1,17 @@
+.result {
+  padding: var(--mantine-spacing-md);
+  border: 1px solid var(--kk-line);
+  border-radius: var(--mantine-radius-md);
+  background: var(--kk-surface-sunken);
+}
+
+.payment {
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.ready {
+  text-align: right;
+}
