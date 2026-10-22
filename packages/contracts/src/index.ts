@@ -72,10 +72,20 @@ export const scoreRequestSchema = z.object({
 });
 export type ScoreRequest = z.infer<typeof scoreRequestSchema>;
 
+export const scoreFactorResponseSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  value: z.string(),
+  impact: z.number(),
+});
+export type ScoreFactorResponse = z.infer<typeof scoreFactorResponseSchema>;
+
 export const scoreResponseSchema = z.object({
   inn: innSchema,
-  score: z.number(),
+  score: z.number().min(0).max(100),
   model: z.string(),
+  /** Объяснение baseline/ML-модели; optional для обратной совместимости. */
+  factors: z.array(scoreFactorResponseSchema).optional(),
 });
 export type ScoreResponse = z.infer<typeof scoreResponseSchema>;
 

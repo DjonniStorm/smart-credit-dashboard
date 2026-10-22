@@ -11,7 +11,7 @@ import {
 
 import type { Application } from "@repo/contracts/cabinet";
 
-import { stageOf } from "../model/stage";
+import { stageOf, stages } from "../model/stage";
 
 type IndexTone = "success" | "action" | "warning" | "danger";
 
@@ -36,17 +36,14 @@ function financialHealth(app: Application) {
   return clamp(100 - debtLoad * 100 - Math.abs(1 - turnoverConsistency) * 35);
 }
 
+function isTerminal(app: Application) {
+  return app.status === "rejected" || app.status === "disbursed";
+}
+
 function readiness(app: Application) {
-  if (app.status === "disbursed" || app.status === "rejected") return 100;
-  const progress = [
-    "draft",
-    "in_review",
-    "needs_client",
-    "counter_offer",
-    "approved",
-  ];
-  if (app.status === "approved" && app.deal?.stage === "signing") return 88;
-  return clamp(((progress.indexOf(app.status) + 1) / progress.length) * 100);
+  if (isTerminal(app)) return null;
+  const { current } = stageOf(app);
+  return clamp(((current + 1) / stages.length) * 100);
 }
 
 function confidence(app: Application) {
@@ -73,24 +70,30 @@ function Index({
   hint,
 }: {
   label: string;
-  value: number;
+  value: number | null;
   hint: string;
 }) {
-  const currentTone = tone(value);
+  const currentTone = value === null ? null : tone(value);
   return (
     <Stack gap={6}>
       <Group justify="space-between" gap="xs">
         <Text fw={600}>{label}</Text>
         <Text fw={700} style={{ fontVariantNumeric: "tabular-nums" }}>
-          {value}
+          {value === null ? "—" : value}
         </Text>
       </Group>
-      <Progress
-        value={value}
-        color={toneColor[currentTone]}
-        size="md"
-        radius="xl"
-      />
+      {value === null ? (
+        <Text size="sm" c="dimmed">
+          Завершено
+        </Text>
+      ) : (
+        <Progress
+          value={value}
+          color={toneColor[currentTone!]}
+          size="md"
+          radius="xl"
+        />
+      )}
       <Text size="xs" c="dimmed">
         {hint}
       </Text>
@@ -103,7 +106,13 @@ export function HealthIndices({ app }: { app: Application }) {
   const health = financialHealth(app);
   const ready = readiness(app);
   const trust = confidence(app);
-  const currentStage = stageOf(app).current + 1;
+  const stage = stageOf(app);
+  const currentStage = Math.min(stage.current + 1, stages.length);
+  const terminal = isTerminal(app);
+  const terminalHint =
+    app.status === "rejected"
+      ? "Заявка завершена: банк отказал"
+      : "Выдача завершена: деньги зачислены";
 
   return (
     <Card component="section" aria-labelledby="health-indices-title">
@@ -130,7 +139,11 @@ export function HealthIndices({ app }: { app: Application }) {
           <Index
             label="Готовность заявки"
             value={ready}
-            hint={`Пройден этап ${currentStage} из 7`}
+            hint={
+              terminal
+                ? terminalHint
+                : `Текущий этап ${currentStage} из ${stages.length}`
+            }
           />
           <Index
             label="Уверенность"
@@ -139,13 +152,15 @@ export function HealthIndices({ app }: { app: Application }) {
           />
         </SimpleGrid>
         <Text size="sm" c="dimmed">
-          Компас уверенности:{" "}
-          {trust >= 75
-            ? "можно переходить к условиям"
-            : trust >= 55
-              ? "сверьте факторы и документы"
-              : "сначала закройте замечания"}
-          .
+          {terminal
+            ? `Итог заявки: ${terminalHint.toLowerCase()}.`
+            : `Компас уверенности: ${
+                trust >= 75
+                  ? "можно переходить к условиям"
+                  : trust >= 55
+                    ? "сверьте факторы и документы"
+                    : "сначала закройте замечания"
+              }.`}
         </Text>
       </Stack>
     </Card>

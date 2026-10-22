@@ -56,10 +56,6 @@ export const waitingOnSchema = z.enum([
 ]);
 export type WaitingOn = z.infer<typeof waitingOnSchema>;
 
-/** Операционное состояние заявки, не меняющее бизнес-статус. */
-export const workflowStateSchema = z.enum(["active", "paused", "blocked"]);
-export type WorkflowState = z.infer<typeof workflowStateSchema>;
-
 export const employeeRoleSchema = z.enum(["analyst", "lead"]);
 export type EmployeeRole = z.infer<typeof employeeRoleSchema>;
 
@@ -269,7 +265,6 @@ export const applicationSchema = z.object({
   status: applicationStatusSchema,
   stage: applicationStageSchema,
   waitingOn: waitingOnSchema,
-  workflowState: workflowStateSchema.default("active"),
   hold: applicationHoldSchema.nullable().default(null),
   /** Что мешает решению, одной фразой. */
   blocker: z.string(),

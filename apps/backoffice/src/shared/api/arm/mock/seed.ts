@@ -507,7 +507,6 @@ export function createSeed(now: number): MockRecord[] {
         status: "draft",
         stage: "intake",
         waitingOn: "system",
-        workflowState: "active",
         hold: null,
         blocker: "",
         assigneeId: s.assigneeId,

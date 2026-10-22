@@ -162,7 +162,7 @@ export function ActionBar({
 
   const response = expectedResponse[app.status];
   const demo: Item | null =
-    armApiMode === "mock" && response && app.waitingOn === "client"
+    armApiMode === "mock" && !app.hold && response && app.waitingOn === "client"
       ? {
           key: "demo",
           label: `Демо: ${clientResponseLabel[response].toLowerCase()}`,
@@ -183,6 +183,11 @@ export function ActionBar({
               run({ type: "assign", assigneeId: e.id }, `Передано: ${e.name}`),
           }));
 
+  const canHold =
+    !app.hold &&
+    app.status !== "rejected" &&
+    app.status !== "disbursed" &&
+    app.waitingOn !== "nobody";
   const holdActions: Item[] = app.hold
     ? [
         {
@@ -196,10 +201,12 @@ export function ActionBar({
             ),
         },
       ]
-    : [
-        { key: "pause", label: dialogLabel.pause, run: () => open("pause") },
-        { key: "block", label: dialogLabel.block, run: () => open("block") },
-      ];
+    : canHold
+      ? [
+          { key: "pause", label: dialogLabel.pause, run: () => open("pause") },
+          { key: "block", label: dialogLabel.block, run: () => open("block") },
+        ]
+      : [];
 
   // Красная только у рекомендованного решения, и никогда у отказа.
   // Если одобрить нельзя по лимиту, следующий шаг: передать руководителю.
