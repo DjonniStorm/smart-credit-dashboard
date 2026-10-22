@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Альфи Pixel Scout</title>
+  <style>
+    :root { font: 16px/1.4 Arial, sans-serif; color: #171717; background: #f4f4f2; }
+    * { box-sizing: border-box; }
+    body { max-width: 1440px; margin: auto; padding: 32px 24px 56px; }
+    h1 { margin: 0 0 8px; font-size: 40px; }
+    p { margin: 0 0 28px; color: #505759; }
+    main { display: grid; grid-template-columns: repeat(auto-fit, minmax(232px, 1fr)); gap: 14px; }
+    article { background: #fff; border: 1px solid #d9d9d6; }
+    .hero { display: grid; place-items: center; min-height: 224px; }
+    .hero img { width: 192px; height: 192px; image-rendering: pixelated; }
+    .sizes { height: 88px; display: flex; align-items: center; justify-content: center; gap: 24px; background: #27292d; }
+    .sizes img { image-rendering: pixelated; }
+    .sizes img:first-child { width: 64px; height: 64px; }
+    .sizes img:last-child { width: 32px; height: 32px; }
+    footer { padding: 13px 15px 16px; }
+    small { color: #ef3124; font-weight: 700; }
+    h2 { margin: 3px 0 0; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>Альфи: Pixel Scout</h1>
+  <p>Один персонаж, десять направлений экипировки. Нижняя полоса проверяет силуэт на тёмном фоне и в малом размере.</p>
+  <main id="grid"></main>
+  <script>
+    const scouts = [
+      ['01-classic.svg', 'Классический'], ['02-hooded.svg', 'Капюшон'],
+      ['03-analyst.svg', 'Аналитик'], ['04-courier.svg', 'Курьер'],
+      ['05-visor.svg', 'Визор'], ['06-ranger.svg', 'Рейнджер'],
+      ['07-formal.svg', 'Деловой'], ['08-technician.svg', 'Техник'],
+      ['09-night.svg', 'Ночной'], ['10-flagbearer.svg', 'Знаменосец'],
+    ];
+    document.querySelector('#grid').innerHTML = scouts.map(([file, name], i) => `<article>
+      <div class="hero"><img src="${file}" alt="Альфи Pixel Scout: ${name}"></div>
+      <div class="sizes"><img src="${file}" alt=""><img src="${file}" alt=""></div>
+      <footer><small>${String(i + 1).padStart(2, '0')}</small><h2>${name}</h2></footer>
+    </article>`).join('');
+  </script>
+</body>
+</html>

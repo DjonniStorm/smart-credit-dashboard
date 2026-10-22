@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Альфи — мультяшный компас</title><desc id="desc">Персонаж-компас в стиле старой анимации, с длинными руками и перчатками.</desc>
+  <g fill="none" stroke="#171717" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M64 140Q25 127 24 77M192 140q39-13 40-63" stroke-width="11"/>
+    <path d="M95 198q-24 32-30 43m96-43q24 32 30 43" stroke-width="12"/>
+  </g>
+  <path d="M17 57q-10-2-10 10v22q3 12 18 12 15-2 18-17l-8-24q-5-11-12-5l2 13Z" fill="#FFFFFF" stroke="#171717" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M239 57q10-2 10 10v22q-3 12-18 12-15-2-18-17l8-24q5-11 12-5l-2 13Z" fill="#FFFFFF" stroke="#171717" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="128" cy="132" r="91" fill="#EF3124" stroke="#171717" stroke-width="8"/>
+  <circle cx="128" cy="132" r="70" fill="#FFFFFF" stroke="#171717" stroke-width="5"/>
+  <path d="M86 117q-10-18-17-3m101 3q10-18 17-3" fill="none" stroke="#171717" stroke-width="6" stroke-linecap="round"/>
+  <ellipse cx="100" cy="124" rx="7" ry="12" fill="#171717"/><ellipse cx="156" cy="124" rx="7" ry="12" fill="#171717"/>
+  <path d="M105 158q23 22 46 0" fill="none" stroke="#171717" stroke-width="6" stroke-linecap="round"/>
+  <path d="m128 71 14 64-14 23-14-23Z" fill="#EF3124" stroke="#171717" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M50 132h12m132 0h12M128 54v12" stroke="#171717" stroke-width="5" stroke-linecap="round"/>
+</svg>

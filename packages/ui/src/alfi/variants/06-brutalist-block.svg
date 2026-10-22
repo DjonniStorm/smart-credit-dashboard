@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Альфи — бруталист</title><desc id="desc">Угловатый красно-чёрный персонаж из крупных блоков держит карточку решения.</desc>
+  <path d="M24 28h208v200H24Z" fill="#FFFFFF"/>
+  <path d="M49 49h158v145H49Z" fill="#171717"/>
+  <path d="M49 49h124v31H49ZM49 80h31v114H49Z" fill="#EF3124"/>
+  <path d="M80 80h127v114H80Z" fill="#D9D9D6"/>
+  <path d="M94 105h37v26H94Zm62 0h37v26h-37Z" fill="#171717"/>
+  <path d="M111 151h65v14h-65Z" fill="#EF3124"/>
+  <path d="M30 179h30v43H30Zm166 0h30v43h-30Z" fill="#171717"/>
+  <path d="M82 194h36v34H82Zm56 0h36v34h-36Z" fill="#EF3124"/>
+  <path d="M121 26h14v23h-14Z" fill="#EF3124"/>
+  <path d="M138 145v26h-19v-26Z" fill="#FFFFFF"/>
+  <path d="m128 149 5 9-5 9-5-9Z" fill="#EF3124"/>
+</svg>

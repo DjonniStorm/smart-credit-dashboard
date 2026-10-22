@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Альфи — десять направлений</title>
+  <style>
+    :root { font: 16px/1.4 Arial, sans-serif; color: #171717; background: #f5f5f3; }
+    * { box-sizing: border-box; }
+    body { max-width: 1440px; margin: 0 auto; padding: 36px 24px 60px; }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 42px); }
+    p { margin: 0 0 30px; color: #505759; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    article { background: white; border: 1px solid #d9d9d6; }
+    .main { min-height: 230px; display: grid; place-items: center; padding: 18px; }
+    .main img { width: 176px; height: 176px; }
+    .small { min-height: 90px; display: flex; align-items: center; justify-content: center; gap: 20px; background: #27292d; }
+    .small img:first-child { width: 64px; height: 64px; }
+    .small img:last-child { width: 32px; height: 32px; }
+    .label { padding: 14px 16px 18px; }
+    .number { display: block; color: #ef3124; font-size: 12px; font-weight: 700; letter-spacing: .1em; }
+    h2 { margin: 4px 0 0; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>Альфи: десять направлений</h1>
+  <p>Один брендовый диапазон, десять разных характеров. Крупно — светлый фон; ниже — тёмный и размеры 64/32 px.</p>
+  <main class="grid" id="concepts"></main>
+  <script>
+    const concepts = [
+      ['01-anime-courier.svg', 'ANIME', 'Проводник'],
+      ['02-pixel-scout.svg', 'PIXEL', 'Разведчик'],
+      ['03-rubber-hose-compass.svg', 'RUBBER HOSE', 'Компас'],
+      ['04-cut-paper-guide.svg', 'COLLAGE', 'Коллаж'],
+      ['05-soft-clay.svg', 'SOFT CLAY', 'Фигурка'],
+      ['06-brutalist-block.svg', 'BRUTALIST', 'Блок'],
+      ['07-line-art-host.svg', 'LINE ART', 'Ведущий'],
+      ['08-retro-terminal.svg', 'RETRO', 'Терминал'],
+      ['09-kawaii-wayfinder.svg', 'KAWAII', 'Указатель'],
+      ['10-manga-navigator.svg', 'MANGA', 'Навигатор'],
+    ];
+    document.querySelector('#concepts').innerHTML = concepts.map(([file, style, name], index) => `
+      <article>
+        <div class="main"><img src="${file}" alt="Альфи, вариант ${index + 1}: ${name}"></div>
+        <div class="small"><img src="${file}" alt=""><img src="${file}" alt=""></div>
+        <div class="label"><span class="number">${String(index + 1).padStart(2, '0')} / ${style}</span><h2>${name}</h2></div>
+      </article>`).join('');
+  </script>
+</body>
+</html>
