@@ -1,0 +1,35 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--mantine-radius-sm);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.badge[data-tone="neutral"] {
+  background: var(--kk-neutral-soft);
+  color: var(--kk-neutral-ink);
+}
+
+.badge[data-tone="info"] {
+  background: var(--kk-info-soft);
+  color: var(--kk-info-ink);
+}
+
+.badge[data-tone="review"] {
+  background: var(--kk-amber-soft);
+  color: var(--kk-amber-ink);
+}
+
+.badge[data-tone="done"] {
+  background: var(--kk-success-soft);
+  color: var(--kk-success-ink);
+}
+
+.badge[data-tone="danger"] {
+  background: var(--kk-danger-soft);
+  color: var(--kk-danger);
+}

@@ -73,3 +73,20 @@ export function useResetDemo() {
     onSuccess: () => qc.invalidateQueries({ queryKey: armKeys.all }),
   });
 }
+
+/** Назначить ответственного сразу на несколько заявок из очереди. */
+export function useAssignMany(employeeId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ids, assigneeId }: { ids: string[]; assigneeId: string }) =>
+      Promise.all(
+        ids.map((id) =>
+          armApi.act(id, { type: "assign", assigneeId }, employeeId),
+        ),
+      ),
+    onSuccess: (apps) => {
+      for (const app of apps) qc.setQueryData(armKeys.application(app.id), app);
+      void qc.invalidateQueries({ queryKey: armKeys.applications() });
+    },
+  });
+}
