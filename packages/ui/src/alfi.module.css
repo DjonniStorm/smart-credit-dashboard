@@ -90,6 +90,34 @@
   border: 0;
 }
 
+.notification {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 220px;
+}
+
+.notificationCopy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding-top: 3px;
+}
+
+.notificationState {
+  color: #505759;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.notificationMessage {
+  color: #171717;
+  line-height: 1.35;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .image { transition: none; }
   .root[data-state="greeting"] .image,

@@ -72,19 +72,47 @@ WCAG 2.x. Текст: не ниже 4.5:1. Полосы и границы эле
 ## Альфи
 
 `Alfi` — общий компонент помощника для кабинета клиента и банковского АРМ.
-Пиксельные варианты находятся в `src/alfi/pixel-scout/`; приложение передаёт
-путь к опубликованному SVG через `src`:
+Пиксельные варианты находятся в `src/alfi/pixel-scout/`. Семь рабочих состояний
+имеют отдельные SVG в `src/alfi/pixel-scout/states/` и выбираются автоматически:
 
 ```tsx
-import { Alfi } from "@repo/ui/alfi";
+import { Alfi, AlfiState } from "@repo/ui/alfi";
 
 <Alfi
-  state="checking"
-  src="/alfi/pixel-scout/03-analyst.svg"
+  state={AlfiState.Checking}
+  assetBasePath="/alfi/pixel-scout/states"
   size={96}
 />
 ```
 
-Компонент знает семь состояний Альфи, добавляет доступное описание и показывает
-геометричный fallback, если SVG недоступен. Обновление состояния не требует
-отдельного персонажа для клиента и менеджера.
+Приложение может передать `src`, если ему нужен специальный SVG. Компонент
+добавляет доступное описание, поддерживает `prefers-reduced-motion` и показывает
+геометричный fallback, если ассет недоступен.
+
+### Уведомления Альфи
+
+`alfi` использует уже подключённый в приложении Mantine `<Notifications />`, но
+добавляет персонажа и состояние к каждому уведомлению:
+
+```tsx
+import { alfi, AlfiOperation } from "@repo/ui/alfi";
+
+const id = alfi.show({
+  operation: AlfiOperation.NeedsInfo,
+  message: "Проверьте банковскую выписку",
+  raw: "исходная строка для будущей обработки",
+  autoClose: 5000,
+  withBorder: true,
+});
+
+alfi.update({
+  id,
+  operation: AlfiOperation.ActionCompleted,
+  message: "Ответ сохранён",
+});
+```
+
+`operation` обязателен и выбирает состояние по умолчанию. Параметр `state`
+переопределяет его для специальных случаев. `message` — готовый текст для
+пользователя, а `raw?: string` хранится отдельно и никогда не выводится.
+Доступны `show`, `hide`, `update` и `clean`.
