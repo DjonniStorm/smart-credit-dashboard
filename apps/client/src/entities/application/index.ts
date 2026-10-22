@@ -17,6 +17,7 @@ export {
   stages,
 } from "./model/stage";
 export { DecisionFactors } from "./ui/decision-factors";
+export { HealthIndices } from "./ui/health-indices";
 export { ApplicationHistory } from "./ui/application-history";
 export { ApplicationFacts } from "./ui/application-facts";
 export {

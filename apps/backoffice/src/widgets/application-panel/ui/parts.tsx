@@ -377,14 +377,20 @@ export function RiskBlock({ app }: { app: Application }) {
 }
 
 function managerAlfiState(app: Application): AlfiState {
+  if (app.status === "rejected") {
+    return AlfiState.Attention;
+  }
+  if (app.status === "disbursed") {
+    return AlfiState.Success;
+  }
   if (app.waitingOn === "system") {
     return AlfiState.Checking;
   }
   if (app.waitingOn === "client") {
     return AlfiState.NeedsAnswer;
   }
-  if (app.status === "rejected") {
-    return AlfiState.Attention;
+  if (app.status === "approved") {
+    return AlfiState.Success;
   }
   if (app.waitingOn === "nobody") {
     return AlfiState.Success;
@@ -399,14 +405,31 @@ function managerAlfiMessage(app: Application): string {
   if (app.waitingOn === "system") {
     return "Источники ещё проверяются. Решение появится после ответа системы.";
   }
-  if (app.waitingOn === "client") {
-    return "Клиент должен ответить на запрос. После этого заявка вернётся в очередь.";
-  }
   if (app.status === "rejected") {
-    return "Решение отклонено. Проверьте причину и историю факторов.";
+    return app.rejectReason
+      ? `Отказ зафиксирован: ${rejectReasonLabel[app.rejectReason].toLowerCase()}. Причина и факторы доступны в истории.`
+      : "Решение отклонено. Проверьте причину и историю факторов.";
+  }
+  if (app.status === "disbursed") {
+    return "Выдача завершена: деньги перечислены клиенту. Проверьте историю операции.";
+  }
+  if (app.status === "needs_client") {
+    const items = app.requestedInfo.slice(0, 2).join(", ").toLowerCase();
+    return items
+      ? `Ждём от клиента: ${items}. После ответа проверки запустятся повторно.`
+      : "Клиент должен ответить на запрос. После этого заявка вернётся в очередь.";
+  }
+  if (app.status === "counter_offer") {
+    if (app.offer) {
+      return `Клиенту предложены другие условия: ${formatRub(app.offer.amount)} на ${formatMonths(app.offer.termMonths)} под ${app.offer.ratePct} %.`;
+    }
+    return "Клиенту отправлено встречное предложение. Дождитесь его ответа.";
+  }
+  if (app.status === "approved") {
+    return "Заявка одобрена. Клиенту осталось подписать договор, после чего банк выполнит выдачу.";
   }
   if (app.decision) {
-    return "Рекомендация готова. Сверьте факторы и подтвердите или измените её.";
+    return `Рекомендация «${recommendationLabel[app.decision.recommendation].toLowerCase()}». Сверьте факторы и подтвердите или измените решение.`;
   }
   return app.blocker;
 }

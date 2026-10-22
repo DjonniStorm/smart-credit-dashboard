@@ -142,6 +142,7 @@ export function tick(
   products: CreditProduct[],
 ): boolean {
   const { app } = rec;
+  if (app.hold) return false;
   let changed = false;
   for (const source of SOURCES) {
     const due = rec.due[source];
@@ -260,6 +261,48 @@ export function applyAction(
   const actor = employeeActor(employee);
   const comment = "comment" in action && action.comment ? action.comment : null;
 
+  if (action.type === "pause" || action.type === "block") {
+    if (app.hold) throw new ArmActionError("Заявка уже приостановлена.");
+    if (
+      app.status === "rejected" ||
+      app.status === "disbursed" ||
+      app.waitingOn === "nobody"
+    ) {
+      throw new ArmActionError("Закрытую заявку нельзя поставить на паузу или заблокировать.");
+    }
+    app.hold = {
+      state: action.type === "pause" ? "paused" : "blocked",
+      reason: action.reason,
+      at: new Date(now).toISOString(),
+      by: actor,
+      previousWaitingOn: app.waitingOn,
+      previousBlocker: app.blocker,
+    };
+    app.blocker = `${action.type === "pause" ? "Пауза" : "Блокировка"}: ${action.reason}`;
+    log(
+      rec,
+      now,
+      actor,
+      action.type === "pause" ? "Заявка поставлена на паузу" : "Заявка заблокирована",
+      action.reason,
+    );
+    return;
+  }
+
+  if (action.type === "resume") {
+    if (!app.hold) throw new ArmActionError("Заявка не находится на паузе или блокировке.");
+    const hold = app.hold;
+    app.waitingOn = hold.previousWaitingOn;
+    app.blocker = hold.previousBlocker;
+    app.hold = null;
+    log(rec, now, actor, "Заявка возвращена в работу", action.comment || null);
+    return;
+  }
+
+  if (app.hold) {
+    throw new ArmActionError("Заявка приостановлена. Сначала верните её в работу.");
+  }
+
   switch (action.type) {
     case "approve": {
       assertDecisionStage(app);
@@ -365,6 +408,9 @@ export function applyClientResponse(
   now: number,
 ) {
   const { app } = rec;
+  if (app.hold) {
+    throw new ArmActionError("Заявка приостановлена. Ответ клиента пока не обрабатывается.");
+  }
   const client: Actor = { kind: "client", name: app.applicant.name };
   if (response === "documents_sent" && app.status === "needs_client") {
     const docs = app.requestedInfo.join(", ");

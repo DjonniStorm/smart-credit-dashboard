@@ -23,8 +23,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import type { Application, Decision } from "@repo/contracts/cabinet";
-import { ApplicationStatusBadge } from "@repo/ui/application-status";
 import { Alfi, AlfiState } from "@repo/ui/alfi";
+import { ApplicationStatusBadge } from "@repo/ui/application-status";
 import { Marker } from "@repo/ui/marker";
 import { formatRub } from "@repo/ui/money";
 import { StageRail } from "@repo/ui/stage-rail";
@@ -35,6 +35,7 @@ import {
   ApplicationFacts,
   ApplicationHistory,
   DecisionFactors,
+  HealthIndices,
   isDeclinedByClient,
   nextStepOf,
   stageOf,
@@ -50,6 +51,7 @@ import { formatDate, formatDateTime, lx, tx } from "@/shared/i18n";
 import { QueryError } from "@/shared/ui/query-state";
 
 import classes from "./application-detail.module.css";
+import { TermsSandbox } from "./terms-sandbox";
 
 const t = tx.application;
 
@@ -140,6 +142,10 @@ function Detail({ app }: { app: Application }) {
       <Header app={app} />
 
       <AlfiContext app={app} />
+
+      <HealthIndices app={app} />
+
+      {catalog.data && <TermsSandbox app={app} catalog={catalog.data} />}
 
       <div className={classes.layout}>
         <Stack gap="lg" className={classes.main}>
