@@ -7,6 +7,10 @@ import type {
 } from "@repo/contracts/cabinet";
 
 import { decide } from "./decide";
+import {
+  getMockCompanyProfile,
+  grantMockBkiConsent,
+} from "./company-profile-mock";
 import { accounts, catalog } from "./fixtures";
 import { ApiError, type CabinetApi } from "./types";
 
@@ -215,6 +219,16 @@ export const mockApi: CabinetApi = {
   async getCatalog() {
     await delay();
     return structuredClone(catalog);
+  },
+
+  async getCompanyProfile(inn) {
+    await delay();
+    return getMockCompanyProfile(inn);
+  },
+
+  async grantBkiConsent(inn) {
+    await delay();
+    return grantMockBkiConsent(inn);
   },
 
   async lookupCompany(inn) {

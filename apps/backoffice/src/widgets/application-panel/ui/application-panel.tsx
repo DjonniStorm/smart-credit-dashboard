@@ -19,6 +19,7 @@ import {
   EventTimeline,
   StatusTag,
   formatDateTimeFull,
+  useCompanyProfile,
   useApplication,
   useProducts,
 } from "@/entities/application";
@@ -26,6 +27,7 @@ import { useEmployees, useSignedInEmployee } from "@/entities/employee";
 import { ActionBar } from "@/features/application-actions";
 
 import classes from "./application-panel.module.css";
+import { CompanyProfileContext } from "./company-profile-context";
 import { CheckResults, DataList, RiskBlock, Summary } from "./parts";
 
 type Tab = "data" | "checks" | "history";
@@ -47,6 +49,7 @@ export function ApplicationPanel({
   const [tab, setTab] = useState<Tab>("checks");
 
   const app = query.data;
+  const companyProfile = useCompanyProfile(app?.applicant.inn);
   const assignee = app?.assigneeId
     ? app.assigneeId === employee.id
       ? "Вы"
@@ -109,6 +112,9 @@ export function ApplicationPanel({
         ) : (
           <>
             <Summary app={query.data} />
+            {companyProfile.data && (
+              <CompanyProfileContext profile={companyProfile.data} />
+            )}
             <Tabs
               value={tab}
               onChange={(v) => v && setTab(v as Tab)}

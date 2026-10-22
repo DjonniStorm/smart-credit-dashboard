@@ -6,6 +6,7 @@ import type {
   DemoAccount,
   ProductCatalog,
 } from "@repo/contracts/cabinet";
+import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
 
 /**
  * Всё, что кабинет клиента берёт у бэкенда. Реализации: mock.ts (браузер,
@@ -19,6 +20,8 @@ export interface CabinetApi {
   signOut(): Promise<void>;
 
   getCatalog(): Promise<ProductCatalog>;
+  getCompanyProfile(inn: string): Promise<CompanyProfileResponse>;
+  grantBkiConsent(inn: string): Promise<CompanyProfileResponse>;
   /** Выписка ЕГРЮЛ/ЕГРИП по ИНН. */
   lookupCompany(inn: string): Promise<CompanyProfile>;
 

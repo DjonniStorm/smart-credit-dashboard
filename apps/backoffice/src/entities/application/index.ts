@@ -8,6 +8,10 @@ export {
   useResetDemo,
 } from "./api/queries";
 export {
+  companyProfileKeys,
+  useCompanyProfile,
+} from "./api/company-profile";
+export {
   formatAge,
   formatDate,
   formatDateTime,

@@ -6,12 +6,12 @@ import {
   demoAccountSchema,
   productCatalogSchema,
 } from "@repo/contracts/cabinet";
+import { companyProfileResponseSchema } from "@repo/contracts/company-profile";
 
 import { ApiError, type CabinetApi } from "./types";
 
-// HTTP-адаптер под будущие ручки api. Пути предложены кабинетом и должны
-// совпасть с контроллерами Nest; ответы проверяются схемами из contracts.
-// Пока api этих ручек не отдаёт, в index.ts включён мок.
+// HTTP-адаптер к ручкам API; ответы проверяются схемами из contracts.
+// В index.ts можно переключить его на mock-адаптер для локального сценария.
 
 async function call<T>(
   schema: z.ZodType<T>,
@@ -52,6 +52,13 @@ export const httpApi: CabinetApi = {
     call(z.unknown(), "/auth/sign-out", post).then(() => undefined),
 
   getCatalog: () => call(productCatalogSchema, "/products"),
+  getCompanyProfile: (inn) =>
+    call(companyProfileResponseSchema, `/v1/companies/${inn}/profile`),
+  grantBkiConsent: (inn) =>
+    call(companyProfileResponseSchema, `/v1/companies/${inn}/consents/bki`, {
+      ...post,
+      json: { granted: true },
+    }),
   lookupCompany: (inn) => call(companyProfileSchema, `/companies/${inn}/egrul`),
 
   listApplications: () => call(z.array(applicationSchema), "/applications"),

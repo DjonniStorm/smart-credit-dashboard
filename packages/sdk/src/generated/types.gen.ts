@@ -12,43 +12,71 @@ export type HealthDto = {
     };
 };
 
-export type EgrulRecordDto = {
-    inn: string;
-    ogrn: string;
-    name: string;
-    status: string;
-    registeredAt: string;
-    okved: string;
-};
-
-export type BkiReportDto = {
-    inn: string;
-    activeLoans: number;
-    totalDebtRub: number;
-    overdueDays: number;
-};
-
-export type FnsProfileDto = {
-    inn: string;
-    taxDebtRub: number;
-    employees: number;
-    massRegistrationAddress: boolean;
-};
-
-export type ScoreResponseDto = {
-    inn: string;
-    score: number;
-    model: string;
-};
-
 export type CompanyCheckDto = {
     inn: string;
     sources: {
-        egrul: EgrulRecordDto;
-        bki: BkiReportDto;
-        fns: FnsProfileDto;
+        egrul: {
+            inn: string;
+            ogrn: string;
+            name: string;
+            status: string;
+            registeredAt: string;
+            okved: string;
+        };
+        bki: {
+            inn: string;
+            activeLoans: number;
+            totalDebtRub: number;
+            overdueDays: number;
+        };
+        fns: {
+            inn: string;
+            taxDebtRub: number;
+            employees: number;
+            massRegistrationAddress: boolean;
+        };
     };
-    scoring: ScoreResponseDto;
+    scoring: {
+        inn: string;
+        score: number;
+        model: string;
+    };
+};
+
+export type CompanyProfileDto = {
+    profile: {
+        inn: string;
+        ogrn: string;
+        name: string;
+        legalForm: 'ip' | 'ooo';
+        registeredAt: string;
+        okved: string;
+        region: string;
+        address: string;
+        director: string;
+    };
+    sources: Array<{
+        source: 'egrul' | 'fns' | 'bki' | 'bank_turnover';
+        state: 'pending' | 'confirmed' | 'discrepancy' | 'unavailable' | 'manual_check';
+        summary: string;
+        facts: Array<{
+            key: string;
+            label: string;
+            value: string;
+            source: 'egrul' | 'fns' | 'bki' | 'bank_turnover';
+            state: 'pending' | 'confirmed' | 'discrepancy' | 'unavailable' | 'manual_check';
+            checkedAt: unknown;
+        }>;
+        checkedAt: unknown;
+    }>;
+    bkiConsent: {
+        status: 'required' | 'granted';
+        grantedAt: unknown;
+    };
+};
+
+export type BkiConsentDto = {
+    granted: true;
 };
 
 export type HealthControllerCheckData = {
@@ -67,17 +95,44 @@ export type HealthControllerCheckResponse = HealthControllerCheckResponses[keyof
 export type CompaniesControllerCheckData = {
     body?: never;
     path: {
-        inn: string;
+        inn: unknown;
     };
     query?: never;
     url: '/v1/companies/{inn}/check';
 };
 
 export type CompaniesControllerCheckResponses = {
-    /**
-     * Сквозная проверка: данные из mocks (ЕГРЮЛ, БКИ, ФНС) и оценка scoring.
-     */
     200: CompanyCheckDto;
 };
 
 export type CompaniesControllerCheckResponse = CompaniesControllerCheckResponses[keyof CompaniesControllerCheckResponses];
+
+export type CompaniesControllerProfileData = {
+    body?: never;
+    path: {
+        inn: unknown;
+    };
+    query?: never;
+    url: '/v1/companies/{inn}/profile';
+};
+
+export type CompaniesControllerProfileResponses = {
+    200: CompanyProfileDto;
+};
+
+export type CompaniesControllerProfileResponse = CompaniesControllerProfileResponses[keyof CompaniesControllerProfileResponses];
+
+export type CompaniesControllerGrantBkiConsentData = {
+    body: BkiConsentDto;
+    path: {
+        inn: unknown;
+    };
+    query?: never;
+    url: '/v1/companies/{inn}/consents/bki';
+};
+
+export type CompaniesControllerGrantBkiConsentResponses = {
+    200: CompanyProfileDto;
+};
+
+export type CompaniesControllerGrantBkiConsentResponse = CompaniesControllerGrantBkiConsentResponses[keyof CompaniesControllerGrantBkiConsentResponses];

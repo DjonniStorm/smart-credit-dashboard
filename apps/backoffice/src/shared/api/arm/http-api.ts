@@ -8,6 +8,10 @@ import {
   creditProductSchema,
   employeeSchema,
 } from "@repo/contracts/application";
+import {
+  companyProfileResponseSchema,
+  type CompanyProfileResponse,
+} from "@repo/contracts/company-profile";
 
 import type { ArmApi } from "./types";
 
@@ -18,8 +22,9 @@ async function request<T>(
   path: string,
   schema: { parse(value: unknown): T },
   init?: RequestInit,
+  base = BASE,
 ): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
+  const res = await fetch(`${base}${path}`, {
     credentials: "include",
     headers: { "content-type": "application/json" },
     ...init,
@@ -43,6 +48,13 @@ export const httpArmApi: ArmApi = {
     request<Application[]>("/applications", applicationSchema.array()),
   getApplication: (id) =>
     request<Application>(`/applications/${id}`, applicationSchema),
+  getCompanyProfile: (inn) =>
+    request<CompanyProfileResponse>(
+      `/v1/companies/${inn}/profile`,
+      companyProfileResponseSchema,
+      undefined,
+      "/api",
+    ),
   act: (id, action, employeeId) =>
     request<Application>(
       `/applications/${id}/actions`,
