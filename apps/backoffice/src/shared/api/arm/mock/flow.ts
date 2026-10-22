@@ -371,8 +371,23 @@ export function applyAction(
       log(rec, now, actor, "Заявка отменена", action.reason, "rejected");
       return;
     }
-    case "set_urgent":
-      throw new ArmActionError("Срочный режим пока не подключён к модели заявки.");
+    case "set_urgent": {
+      if (app.status === "rejected" || app.status === "disbursed" || app.waitingOn === "nobody") {
+        throw new ArmActionError("Для закрытой заявки нельзя менять приоритет.");
+      }
+      app.urgent = action.enabled;
+      app.urgentReason = action.enabled ? action.reason || "Приоритетная обработка" : null;
+      log(
+        rec,
+        now,
+        actor,
+        action.enabled ? "Включён срочный режим" : "Срочный режим снят",
+        app.urgentReason,
+        null,
+        "action",
+      );
+      return;
+    }
     case "approve": {
       assertDecisionStage(app);
       // Одобрение всегда на условиях заявки. Другие условия: встречное предложение.

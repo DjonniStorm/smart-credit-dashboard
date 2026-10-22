@@ -72,6 +72,7 @@ export function DocumentList() {
                     </Table.Td>
                     <Table.Td>
                       <Anchor
+                        data-testid="document-application-link"
                         component={Link}
                         href={`/applications/${d.appId}`}
                         size="sm"

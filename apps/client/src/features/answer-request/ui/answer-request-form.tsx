@@ -56,7 +56,7 @@ export function AnswerRequestForm({
   }
 
   return (
-    <Card>
+    <Card data-testid="answer-request">
       <Stack gap="md">
         <Title order={2} size="h3">
           {t.title}
@@ -87,7 +87,11 @@ export function AnswerRequestForm({
         />
         {answer.isError && <InlineError>{answer.error.message}</InlineError>}
         <div>
-          <Button onClick={send} loading={answer.isPending}>
+          <Button
+            data-testid="answer-request-submit"
+            onClick={send}
+            loading={answer.isPending}
+          >
             {t.send}
           </Button>
         </div>

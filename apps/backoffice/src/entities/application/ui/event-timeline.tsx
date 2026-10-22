@@ -1,7 +1,7 @@
-import { Group, Stack, Text, Timeline } from "@mantine/core";
+import { Badge, Card, Group, List, Stack, Text, Timeline } from "@mantine/core";
 import { IconRoute, IconUser, IconUserCheck } from "@tabler/icons-react";
 
-import type { ApplicationEvent } from "@repo/contracts/application";
+import type { ApplicationComment, ApplicationEvent, ApplicationHandoff } from "@repo/contracts/application";
 import { StateBlock } from "@repo/ui/state-block";
 
 import { formatDateTime } from "../model/format";
@@ -20,8 +20,16 @@ const actorKind = {
 };
 
 /** История заявки: кто, когда и что сделал. Новые сверху. */
-export function EventTimeline({ events }: { events: ApplicationEvent[] }) {
-  if (events.length === 0) {
+export function EventTimeline({
+  events,
+  comments = [],
+  handoff = null,
+}: {
+  events: ApplicationEvent[];
+  comments?: ApplicationComment[];
+  handoff?: ApplicationHandoff | null;
+}) {
+  if (events.length === 0 && comments.length === 0 && !handoff) {
     return (
       <StateBlock kind="empty" title="Событий пока нет">
         Здесь появятся действия конвейера, сотрудников и клиента.
@@ -30,7 +38,38 @@ export function EventTimeline({ events }: { events: ApplicationEvent[] }) {
   }
   const list = [...events].reverse();
   return (
-    <Timeline bulletSize={26} lineWidth={2} color="primary">
+    <Stack gap="md">
+      {handoff && (
+        <Card withBorder padding="sm" radius="md" bg="var(--kk-surface-sunken)">
+          <Group justify="space-between" align="flex-start" mb={4}>
+            <Text size="sm" fw={700}>Последняя передача</Text>
+            <Badge variant="light" color="blue">Передача</Badge>
+          </Group>
+          <Text size="sm">{handoff.summary}</Text>
+          <Text size="xs" c="dimmed" mt={4}>Следующий шаг: {handoff.nextStep}</Text>
+          {handoff.verifiedFacts.length > 0 && <List size="xs" mt="xs" withPadding><List.Item>Проверено: {handoff.verifiedFacts.join(" · ")}</List.Item></List>}
+          {handoff.openQuestions.length > 0 && <List size="xs" mt="xs" withPadding><List.Item>Открытые вопросы: {handoff.openQuestions.join(" · ")}</List.Item></List>}
+          <Text size="xs" c="dimmed" mt="xs">Получатель: {handoff.toEmployeeId}</Text>
+        </Card>
+      )}
+      {comments.length > 0 && (
+        <Stack gap="xs">
+          <Text size="sm" fw={700}>Комментарии</Text>
+          {[...comments].reverse().map((comment) => (
+            <Card key={comment.id} withBorder padding="sm" radius="md">
+              <Group justify="space-between" align="flex-start" gap="xs">
+                <Text size="sm">{comment.body}</Text>
+                <Badge size="xs" variant="light" color={comment.visibility === "client" ? "green" : comment.visibility === "handoff" ? "blue" : "gray"}>
+                  {comment.visibility === "client" ? "Клиенту" : comment.visibility === "handoff" ? "Передача" : "Внутренний"}
+                </Badge>
+              </Group>
+              <Text size="xs" c="dimmed" mt={4}>{formatDateTime(comment.at)} · {comment.author.name}</Text>
+            </Card>
+          ))}
+        </Stack>
+      )}
+      <Text size="sm" fw={700}>События</Text>
+      <Timeline bulletSize={26} lineWidth={2} color="primary">
       {list.map((e) => {
         const Icon = actorIcon[e.actor.kind];
         return (
@@ -60,6 +99,7 @@ export function EventTimeline({ events }: { events: ApplicationEvent[] }) {
           </Timeline.Item>
         );
       })}
-    </Timeline>
+      </Timeline>
+    </Stack>
   );
 }

@@ -109,7 +109,12 @@ export function SignContract({ app }: { app: Application }) {
             </Button>
           ) : (
             <>
-              <Alert title={t.codeSent} w="100%" color="gray">
+              <Alert
+                data-testid="sign-demo-code"
+                title={t.codeSent}
+                w="100%"
+                color="gray"
+              >
                 {t.demoCode(requestCode.data.demoCode)}
               </Alert>
               <Stack gap={6}>
@@ -117,6 +122,7 @@ export function SignContract({ app }: { app: Application }) {
                   {t.codeLabel}
                 </Text>
                 <PinInput
+                  data-testid="sign-code"
                   id="sign-code"
                   length={6}
                   type="number"
@@ -131,6 +137,7 @@ export function SignContract({ app }: { app: Application }) {
               {sign.isError && <InlineError>{sign.error.message}</InlineError>}
               <Group gap="sm">
                 <Button
+                  data-testid="sign-submit"
                   onClick={submit}
                   loading={sign.isPending}
                   disabled={code.length !== 6}
