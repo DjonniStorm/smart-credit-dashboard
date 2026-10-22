@@ -72,6 +72,9 @@ export const productLabel: Record<CreditProductId, string> = {
   working_capital: "Оборотный кредит",
   credit_line: "Кредитная линия",
   investment: "Инвестиционный кредит",
+  cash_gap: "Кассовый разрыв",
+  equipment: "Оборудование",
+  development: "Развитие",
 };
 
 export const sourceLabel: Record<CheckSource, string> = {

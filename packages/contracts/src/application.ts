@@ -12,6 +12,9 @@ export const creditProductIdSchema = z.enum([
   "working_capital",
   "credit_line",
   "investment",
+  "cash_gap",
+  "equipment",
+  "development",
 ]);
 export type CreditProductId = z.infer<typeof creditProductIdSchema>;
 
@@ -32,6 +35,8 @@ export const creditProductSchema = z.object({
   maxDebtLoad: z.number(),
   /** Минимальный срок жизни бизнеса, месяцев. */
   minBusinessAgeMonths: z.number().int(),
+  /** Обеспечение по продукту; null — не требуется. */
+  collateral: z.string().nullable().optional(),
 });
 export type CreditProduct = z.infer<typeof creditProductSchema>;
 

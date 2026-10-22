@@ -36,6 +36,7 @@ import {
   ApplicationHistory,
   DecisionFactors,
   HealthIndices,
+  UrgencyIndicator,
   isDeclinedByClient,
   nextStepOf,
   stageOf,
@@ -144,6 +145,8 @@ function Detail({ app }: { app: Application }) {
       <AlfiContext app={app} />
 
       <HealthIndices app={app} />
+
+      <UrgencyIndicator app={app} />
 
       {catalog.data && <TermsSandbox app={app} catalog={catalog.data} />}
 

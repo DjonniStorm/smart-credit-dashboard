@@ -12,6 +12,7 @@ import { StateBlock } from "@repo/ui/state-block";
 
 import {
   type ApplicationDraft,
+  UrgencyIndicator,
   clearDraft,
   loadDraft,
   needsClient,
@@ -122,7 +123,12 @@ export function ApplicationList() {
               status={app.status}
               stages={stages}
               current={stage.current}
-              nextStep={nextStepOf(app)}
+              nextStep={
+                <Group gap="sm" wrap="wrap">
+                  <UrgencyIndicator app={app} compact />
+                  <Text>{nextStepOf(app)}</Text>
+                </Group>
+              }
               action={
                 <Button
                   component={Link}
