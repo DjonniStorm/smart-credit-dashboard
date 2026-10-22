@@ -1,75 +1,151 @@
-.page {
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-}
-
 .header {
+  background: var(--kk-surface);
   border-bottom: 1px solid var(--kk-line);
-  background: var(--mantine-color-body);
 }
 
-.headerInner {
-  display: flex;
-  align-items: center;
-  gap: var(--mantine-spacing-lg);
-  min-height: 64px;
-  flex-wrap: wrap;
-  padding-block: var(--mantine-spacing-xs);
-}
-
-.brand {
-  font-weight: 600;
-  color: var(--mantine-color-text);
-  white-space: nowrap;
-}
-
-.nav {
-  display: flex;
-  gap: var(--mantine-spacing-xs);
-  flex: 1;
-}
-
-.navLink {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding-inline: var(--mantine-spacing-sm);
-  border-radius: var(--mantine-radius-sm);
-  color: var(--mantine-color-dimmed);
-  font-weight: 500;
-  box-shadow: inset 0 -2px 0 transparent;
-}
-
-.navLink:hover {
-  color: var(--mantine-color-text);
-}
-
-/* Текущий раздел: подчёркивание акцентом, как сегмент пути заявки. */
-.navLink[data-active] {
-  color: var(--mantine-color-text);
-  box-shadow: inset 0 -2px 0 var(--mantine-primary-color-filled);
-  border-radius: 0;
-}
-
-.account {
-  margin-inline-start: auto;
+.navbar {
+  background: var(--kk-bg-rail);
+  border-right: 1px solid var(--kk-line);
 }
 
 .main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/* Рабочая область: поля 24px, на телефоне 16px. */
+.content {
   flex: 1;
   width: 100%;
-  padding-block: var(--mantine-spacing-xl) calc(var(--mantine-spacing-xl) * 2);
+  max-width: 1320px;
+  padding: var(--mantine-spacing-lg) 24px var(--mantine-spacing-xl);
 }
 
-.footer {
-  border-top: 1px solid var(--kk-line);
-  padding-block: var(--mantine-spacing-md);
+.note {
+  padding: 0 24px var(--mantine-spacing-lg);
+  max-width: 720px;
 }
 
-@media (max-width: 36em) {
-  .nav {
-    order: 3;
-    flex-basis: 100%;
+.logo {
+  display: inline-flex;
+  gap: 8px;
+  flex: none;
+  min-height: 44px;
+  align-items: center;
+  color: var(--mantine-color-text);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: var(--mantine-font-size-lg);
+}
+
+.logoMark {
+  display: inline-block;
+  color: var(--kk-brand-bright);
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 700;
+  /* Черта под буквой, как в знаке банка. */
+  box-shadow: 0 3px 0 var(--kk-brand-bright);
+  padding-bottom: 1px;
+}
+
+.logoBank {
+  color: var(--kk-brand-text);
+}
+
+.logoCabinet {
+  padding-left: 8px;
+  border-left: 1px solid var(--kk-line);
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.searchSlot {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 400px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: var(--mantine-radius-md);
+  background: var(--kk-surface-sunken);
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-sm);
+}
+
+.search:hover {
+  color: var(--mantine-color-text);
+}
+
+.searchText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: start;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 4px 0 8px;
+  border-radius: var(--mantine-radius-md);
+  color: var(--mantine-color-text);
+}
+
+.account:hover {
+  background: var(--kk-surface-sunken);
+}
+
+.accountText {
+  max-width: 200px;
+  text-align: end;
+}
+
+.navLink {
+  border-radius: var(--mantine-radius-md);
+  min-height: 40px;
+  margin-bottom: 2px;
+}
+
+/* «Нет в демо» читается подписью, а не бледным пунктом. */
+.navLink[data-disabled] {
+  opacity: 1;
+  color: var(--mantine-color-dimmed);
+}
+
+@media (max-width: 48em) {
+  .content {
+    padding: var(--mantine-spacing-md) 16px var(--mantine-spacing-xl);
+  }
+
+  .note {
+    padding: 0 16px var(--mantine-spacing-lg);
+  }
+
+  .logoCabinet {
+    display: none;
+  }
+
+  .searchSlot {
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 22em) {
+  .logoBank {
+    display: none;
   }
 }

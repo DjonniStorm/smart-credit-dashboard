@@ -23,3 +23,5 @@ const time = new Intl.DateTimeFormat("ru-RU", {
 export const formatDate = (iso: string) => date.format(new Date(iso));
 export const formatDateTime = (iso: string) => dateTime.format(new Date(iso));
 export const formatTime = (iso: string) => time.format(new Date(iso));
+
+export { lx } from "./layout-text";
