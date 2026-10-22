@@ -10,6 +10,10 @@
   top: calc(52px + var(--mantine-spacing-lg));
 }
 
+.purpose {
+  padding: var(--mantine-spacing-sm);
+}
+
 .purpose[data-checked] {
   border-color: var(--mantine-color-text);
 }
