@@ -69,6 +69,14 @@ export const scoreRequestSchema = z.object({
   egrul: egrulRecordSchema,
   bki: bkiReportSchema,
   fns: fnsProfileSchema,
+  requestedAmount: z.number().nonnegative().optional(),
+  termMonths: z.number().int().nonnegative().optional(),
+  annualRevenue: z.number().nonnegative().optional(),
+  monthlyExpenses: z.number().nonnegative().optional(),
+  currentPayments: z.number().nonnegative().optional(),
+  documentsComplete: z.boolean().optional(),
+  consentBki: z.boolean().optional(),
+  collateralConfirmed: z.boolean().optional(),
 });
 export type ScoreRequest = z.infer<typeof scoreRequestSchema>;
 
@@ -86,6 +94,18 @@ export const scoreResponseSchema = z.object({
   model: z.string(),
   /** Объяснение baseline/ML-модели; optional для обратной совместимости. */
   factors: z.array(scoreFactorResponseSchema).optional(),
+  model_version: z.string().optional(),
+  grade: z.enum(["A", "B", "C", "D"]).optional(),
+  pd: z.number().min(0).max(1).optional(),
+  risk_band: z.enum(["low", "moderate", "high"]).optional(),
+  health_index: z.number().min(0).max(100).optional(),
+  readiness_index: z.number().min(0).max(100).optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  recommendation: z
+    .enum(["approve", "counter_offer", "request_info", "manual_review", "reject"])
+    .optional(),
+  reasons: z.array(z.string()).optional(),
+  next_actions: z.array(z.string()).optional(),
 });
 export type ScoreResponse = z.infer<typeof scoreResponseSchema>;
 

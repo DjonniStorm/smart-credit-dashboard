@@ -223,8 +223,34 @@ export const employeeActionSchema = z.discriminatedUnion("type", [
     type: z.literal("resume"),
     comment: z.string().max(500).default(""),
   }),
+  z.object({
+    type: z.literal("comment"),
+    visibility: z.enum(["client", "internal", "handoff"]),
+    body: z.string().min(1).max(2_000),
+  }),
+  z.object({
+    type: z.literal("handoff"),
+    assigneeId: z.string(),
+    summary: z.string().min(1).max(1_000),
+    verifiedFacts: z.array(z.string()).max(20),
+    openQuestions: z.array(z.string()).max(20),
+    requestedItems: z.array(z.string()).max(20),
+    nextStep: z.string().min(1).max(500),
+  }),
+  z.object({
+    type: z.literal("cancel"),
+    reason: z.string().min(1).max(500),
+  }),
+  z.object({
+    type: z.literal("set_urgent"),
+    enabled: z.boolean(),
+    reason: z.string().max(500).default(""),
+  }),
 ]);
 export type EmployeeAction = z.infer<typeof employeeActionSchema>;
+/** Команда АРМ: employeeActionSchema является версируемым command-контрактом. */
+export const applicationCommandSchema = employeeActionSchema;
+export type ApplicationCommand = EmployeeAction;
 
 /** Ответ клиента. В прототипе АРМ его моделирует сотрудник вместо кабинета клиента. */
 export const clientResponseSchema = z.enum([
@@ -239,6 +265,33 @@ export const actorSchema = z.object({
   name: z.string(),
 });
 export type Actor = z.infer<typeof actorSchema>;
+
+export const commentVisibilitySchema = z.enum(["client", "internal", "handoff"]);
+export type CommentVisibility = z.infer<typeof commentVisibilitySchema>;
+
+export const applicationCommentSchema = z.object({
+  id: z.string(),
+  applicationId: z.string(),
+  at: z.string(),
+  author: actorSchema,
+  visibility: commentVisibilitySchema,
+  body: z.string().min(1).max(2_000),
+});
+export type ApplicationComment = z.infer<typeof applicationCommentSchema>;
+
+export const applicationHandoffSchema = z.object({
+  id: z.string(),
+  applicationId: z.string(),
+  at: z.string(),
+  from: actorSchema,
+  toEmployeeId: z.string(),
+  summary: z.string().min(1).max(1_000),
+  verifiedFacts: z.array(z.string()).max(20),
+  openQuestions: z.array(z.string()).max(20),
+  requestedItems: z.array(z.string()).max(20),
+  nextStep: z.string().min(1).max(500),
+});
+export type ApplicationHandoff = z.infer<typeof applicationHandoffSchema>;
 
 export const applicationHoldSchema = z.object({
   state: z.enum(["paused", "blocked"]),
@@ -259,6 +312,12 @@ export const applicationEventSchema = z.object({
   comment: z.string().nullable(),
   fromStatus: applicationStatusSchema.nullable(),
   toStatus: applicationStatusSchema.nullable(),
+  /** Тип аудита; optional для чтения старых событий. */
+  kind: z
+    .enum(["status_changed", "action", "comment_added", "handoff", "hold"])
+    .optional(),
+  /** Небольшой набор структурированных параметров без сырых payload. */
+  metadata: z.record(z.string(), z.string()).optional(),
 });
 export type ApplicationEvent = z.infer<typeof applicationEventSchema>;
 
@@ -271,6 +330,8 @@ export const applicationSchema = z.object({
   stage: applicationStageSchema,
   waitingOn: waitingOnSchema,
   hold: applicationHoldSchema.nullable().default(null),
+  comments: z.array(applicationCommentSchema).default([]),
+  handoff: applicationHandoffSchema.nullable().default(null),
   /** Что мешает решению, одной фразой. */
   blocker: z.string(),
   assigneeId: z.string().nullable(),
