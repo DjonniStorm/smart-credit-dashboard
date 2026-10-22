@@ -1,15 +1,14 @@
-import { Stack, Title } from "@mantine/core";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
-import { QueueBoard } from "@/widgets/queue-board";
+import { QueueScreen } from "./queue-screen";
 
 export const metadata: Metadata = { title: "Очередь заявок" };
 
 export default function QueuePage() {
   return (
-    <Stack gap="md">
-      <Title order={1}>Очередь заявок</Title>
-      <QueueBoard />
-    </Stack>
+    <Suspense>
+      <QueueScreen />
+    </Suspense>
   );
 }
