@@ -10,9 +10,8 @@ import { companyProfileResponseSchema } from "@repo/contracts/company-profile";
 
 import { ApiError, type CabinetApi } from "./types";
 
-// HTTP-адаптер под будущие ручки api. Пути предложены кабинетом и должны
-// совпасть с контроллерами Nest; ответы проверяются схемами из contracts.
-// Пока api этих ручек не отдаёт, в index.ts включён мок.
+// HTTP-адаптер к ручкам API; ответы проверяются схемами из contracts.
+// В index.ts можно переключить его на mock-адаптер для локального сценария.
 
 async function call<T>(
   schema: z.ZodType<T>,
