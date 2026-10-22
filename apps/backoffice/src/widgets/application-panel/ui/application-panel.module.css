@@ -83,6 +83,152 @@
   color: var(--mantine-color-dimmed);
 }
 
+.workflow {
+  padding-top: 2px;
+}
+
+.workflowGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.workflowCard {
+  position: relative;
+  min-height: 68px;
+  height: auto;
+  padding: 12px 13px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0;
+  border: 2px solid var(--kk-line);
+  border-radius: var(--mantine-radius-sm);
+  background: var(--kk-surface-sunken);
+  text-align: left;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    transform 150ms ease;
+}
+
+.workflowCard:hover {
+  border-color: var(--kk-brand);
+  background: var(--kk-surface);
+  transform: translateY(-1px);
+}
+
+.workflowCard[data-selected="true"] {
+  border-color: var(--kk-brand);
+}
+
+.workflowCard[data-state="done"] .workflowIndex {
+  display: none;
+}
+
+.workflowCard[data-state="done"] {
+  border-color: var(--kk-brand);
+  background: var(--kk-brand-soft);
+}
+
+.workflowCard[data-state="current"] {
+  /* Fallback для браузеров без mask-composite: пунктир всё равно виден. */
+  border: 2px dashed var(--kk-brand);
+  background: var(--kk-surface);
+  isolation: isolate;
+}
+
+.workflowCard[data-state="current"]::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: -3px;
+  padding: 2px;
+  border-radius: calc(var(--mantine-radius-sm) + 2px);
+  background: repeating-conic-gradient(
+    from var(--workflow-angle),
+    var(--kk-brand) 0deg 18deg,
+    transparent 18deg 34deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: workflow-border-spin 1.5s linear infinite;
+}
+
+.workflowIndex {
+  display: none;
+}
+
+.workflowText {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  display: block;
+  width: 100%;
+}
+
+.workflowText strong,
+.workflowText small {
+  display: block;
+  overflow: visible;
+  white-space: normal;
+}
+
+.workflowText strong {
+  color: var(--mantine-color-text);
+  font-size: 13px;
+  line-height: 17px;
+}
+
+.workflowText small {
+  color: var(--mantine-color-dimmed);
+  font-size: 11px;
+  line-height: 15px;
+}
+
+@property --workflow-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes workflow-border-spin {
+  to {
+    --workflow-angle: 360deg;
+  }
+}
+
+.workflowDetail {
+  margin-top: 6px;
+  padding: 9px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-left: 3px solid var(--kk-brand);
+  background: var(--kk-surface-sunken);
+  border-radius: 0 var(--mantine-radius-sm) var(--mantine-radius-sm) 0;
+}
+
+.workflowOwner {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--mantine-color-dimmed);
+  font-size: 10px;
+}
+
+@media (max-width: 42em) {
+  .workflowGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .tabsList {
   gap: 4px;
 }
