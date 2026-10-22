@@ -116,3 +116,7 @@ alfi.update({
 переопределяет его для специальных случаев. `message` — готовый текст для
 пользователя, а `raw?: string` хранится отдельно и никогда не выводится.
 Доступны `show`, `hide`, `update` и `clean`.
+
+Для Next-приложений стандартные SVG должны быть опубликованы в
+`public/alfi/pixel-scout/states/`. В этом репозитории одинаковые наборы лежат в
+`apps/client/public` и `apps/backoffice/public`.

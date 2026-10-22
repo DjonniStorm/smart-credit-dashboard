@@ -17,6 +17,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import type { Application, Employee } from "@repo/contracts/application";
+import { Alfi, AlfiState } from "@repo/ui/alfi";
 import { StageRail } from "@repo/ui/stage-rail";
 import { StateBlock } from "@repo/ui/state-block";
 
@@ -288,6 +289,13 @@ function Workspace({
         <Grid.Col span={{ base: 12, lg: 4 }}>
           <Card style={{ position: "sticky", top: 72 }}>
             <Stack gap="md">
+              <Group gap="sm" wrap="nowrap" align="flex-start">
+                <Alfi state={managerAlfiState(app)} size={48} />
+                <Stack gap={2}>
+                  <Text fw={600}>Альфи</Text>
+                  <Text size="sm">{managerAlfiMessage(app)}</Text>
+                </Stack>
+              </Group>
               <Stack gap={4}>
                 <Text size="sm" c="dimmed">
                   Что мешает решению
@@ -307,6 +315,31 @@ function Workspace({
       </Grid>
     </Stack>
   );
+}
+
+function managerAlfiState(app: Application): AlfiState {
+  if (app.waitingOn === "system") return AlfiState.Checking;
+  if (app.waitingOn === "client") return AlfiState.NeedsAnswer;
+  if (app.status === "rejected") return AlfiState.Attention;
+  if (app.waitingOn === "nobody") return AlfiState.Success;
+  if (app.decision) return AlfiState.Explain;
+  return AlfiState.Idle;
+}
+
+function managerAlfiMessage(app: Application): string {
+  if (app.waitingOn === "system") {
+    return "Источники ещё проверяются. Решение появится после ответа системы.";
+  }
+  if (app.waitingOn === "client") {
+    return "Клиент должен ответить на запрос. После этого заявка вернётся в очередь.";
+  }
+  if (app.status === "rejected") {
+    return "Решение отклонено. Проверьте причину и историю факторов.";
+  }
+  if (app.decision) {
+    return "Рекомендация готова. Сверьте факторы и подтвердите или измените её.";
+  }
+  return app.blocker;
 }
 
 /** Что уже решено по заявке: условия, запрос или причина отказа. */

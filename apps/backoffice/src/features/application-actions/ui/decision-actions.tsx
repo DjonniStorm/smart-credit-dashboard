@@ -14,7 +14,6 @@ import {
   TextInput,
   Textarea,
 } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
 import {
   IconAlertCircle,
   IconChevronDown,
@@ -31,6 +30,7 @@ import type {
   RejectReason,
 } from "@repo/contracts/application";
 import { AmountInput } from "@repo/ui/amount-input";
+import { alfi, AlfiOperation } from "@repo/ui/alfi";
 
 import { productLabel, useApplicationAction } from "@/entities/application";
 import { useEmployees } from "@/entities/employee";
@@ -98,7 +98,12 @@ export function DecisionActions({
     mutation.mutate(action, {
       onSuccess: () => {
         setDialog(null);
-        notifications.show({ message: done, withBorder: true });
+        alfi.show({
+          operation: operationForAction(action),
+          message: done,
+          raw: action.type,
+          withBorder: true,
+        });
       },
     });
   }
@@ -260,6 +265,21 @@ export function DecisionActions({
       )}
     </Stack>
   );
+}
+
+function operationForAction(action: EmployeeAction): AlfiOperation {
+  switch (action.type) {
+    case "request_info":
+      return AlfiOperation.NeedsInfo;
+    case "approve":
+    case "counter_offer":
+      return AlfiOperation.OfferReady;
+    case "reject":
+      return AlfiOperation.DocumentRejected;
+    case "assign":
+    case "rerun_check":
+      return AlfiOperation.ActionCompleted;
+  }
 }
 
 function RejectIcon() {
