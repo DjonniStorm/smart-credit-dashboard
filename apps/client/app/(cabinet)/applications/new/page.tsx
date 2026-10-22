@@ -1,4 +1,3 @@
-import { Stack, Title } from "@mantine/core";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
@@ -9,11 +8,8 @@ export const metadata: Metadata = { title: tx.wizard.title };
 
 export default function NewApplicationPage() {
   return (
-    <Stack gap="xl">
-      <Title order={1}>{tx.wizard.title}</Title>
-      <Suspense>
-        <NewApplication />
-      </Suspense>
-    </Stack>
+    <Suspense>
+      <NewApplication />
+    </Suspense>
   );
 }

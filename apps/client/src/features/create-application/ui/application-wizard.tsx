@@ -1,11 +1,14 @@
 "use client";
 
 import {
+  ActionIcon,
+  Anchor,
+  Breadcrumbs,
   Button,
+  Card,
   Checkbox,
   Group,
   NumberInput,
-  Paper,
   Select,
   SimpleGrid,
   Stack,
@@ -13,9 +16,11 @@ import {
   Textarea,
   Title,
 } from "@mantine/core";
-import { Dropzone } from "@mantine/dropzone";
+import { notifications } from "@mantine/notifications";
+import { IconArrowRight, IconFileText } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
@@ -45,13 +50,18 @@ import {
   useCatalog,
 } from "@/entities/product";
 import { cabinetApi } from "@/shared/api/cabinet";
-import { formatDate, tx } from "@/shared/i18n";
+import { formatDate, lx, tx } from "@/shared/i18n";
 import { InlineError, QueryError } from "@/shared/ui/query-state";
 
 import classes from "./application-wizard.module.css";
+import { CreditSummary } from "./credit-summary";
+import { DocumentsStep } from "./documents-step";
+import { FinanceStep, type FinancialsForm } from "./finance-step";
+import { WizardStepper } from "./wizard-stepper";
 
 const t = tx.wizard;
-const STEPS = t.steps;
+const w = lx.wizard;
+const STEPS = lx.steps;
 const LAST = STEPS.length - 1;
 const financialKeys: (keyof Financials)[] = [
   "revenueLastYear",
@@ -59,15 +69,15 @@ const financialKeys: (keyof Financials)[] = [
   "monthlyDebtPayments",
   "employees",
 ];
-const financialLabels: Record<keyof Financials, string> = {
-  revenueLastYear: t.revenue,
-  avgMonthlyTurnover: t.turnover,
-  monthlyDebtPayments: t.debtPayments,
-  employees: t.employees,
-};
+const stepHeads: { title: string; lead?: string }[] = [
+  { title: w.purposeTitle, lead: w.purposeLead },
+  { title: w.companyTitle, lead: t.companyLead },
+  { title: w.financeTitle, lead: w.financeLead },
+  { title: w.documentsTitle, lead: w.documentsLead },
+  { title: w.reviewTitle, lead: t.reviewLead },
+];
 
 type Errors = Partial<Record<string, string>>;
-type FinancialsForm = Record<keyof Financials, number | string>;
 
 function initialDraft(
   params: URLSearchParams,
@@ -93,7 +103,7 @@ function initialDraft(
   };
 }
 
-/** Мастер заявки: пять шагов, черновик сохраняется при переходе между шагами. */
+/** Мастер заявки по business.jpg: степпер, карточка шага, сводка справа, подвал. */
 export function ApplicationWizard({ account }: { account: DemoAccount }) {
   const params = useSearchParams();
   const router = useRouter();
@@ -186,6 +196,11 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
     saveDraft(next);
   }
 
+  function saveNow() {
+    saveDraft({ ...draft, savedAt: new Date().toISOString() });
+    notifications.show({ message: w.draftSaved });
+  }
+
   function submit() {
     const e = validate(LAST);
     setErrors(e);
@@ -222,8 +237,10 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
     );
   }
 
+  const amountOk =
+    product && !amountError(draft.amount, product.minAmount, product.maxAmount);
   const preview =
-    product && !amountError(draft.amount, product.minAmount, product.maxAmount)
+    product && amountOk
       ? estimate(
           product,
           catalog.data.keyRate,
@@ -233,30 +250,35 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
       : null;
 
   const steps: ReactNode[] = [
-    <Stack gap="md" key="product">
-      <Select
-        label={tx.products.purposeLabel}
-        data={purposes.map((p) => ({ value: p, label: tx.purposes[p].label }))}
-        value={draft.purpose}
-        allowDeselect={false}
-        onChange={(v) => {
-          const purpose = v as CreditPurpose;
-          const keep = products.find(
-            (p) => p.id === draft.productId && fitsPurpose(p, purpose),
-          );
-          patch({ purpose, productId: keep ? keep.id : "" });
-        }}
-      />
-      <Select
-        label={t.product}
-        placeholder={t.productPlaceholder}
-        data={available.map((p) => ({ value: p.id, label: p.name }))}
-        value={draft.productId || null}
-        onChange={(v) => patch({ productId: v ?? "" })}
-        error={errors.product}
-      />
+    <Stack gap="lg" key="purpose">
+      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
+        <Select
+          label={tx.products.purposeLabel}
+          data={purposes.map((p) => ({
+            value: p,
+            label: tx.purposes[p].label,
+          }))}
+          value={draft.purpose}
+          allowDeselect={false}
+          onChange={(v) => {
+            const purpose = v as CreditPurpose;
+            const keep = products.find(
+              (p) => p.id === draft.productId && fitsPurpose(p, purpose),
+            );
+            patch({ purpose, productId: keep ? keep.id : "" });
+          }}
+        />
+        <Select
+          label={t.product}
+          placeholder={t.productPlaceholder}
+          data={available.map((p) => ({ value: p.id, label: p.name }))}
+          value={draft.productId || null}
+          onChange={(v) => patch({ productId: v ?? "" })}
+          error={errors.product}
+        />
+      </SimpleGrid>
       {product && (
-        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
           <AmountInput
             min={product.minAmount}
             max={product.maxAmount}
@@ -279,14 +301,6 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
           />
         </SimpleGrid>
       )}
-      {preview && (
-        <Text size="sm" aria-live="polite">
-          {t.paymentPreview(
-            formatRub(preview.payment),
-            tx.common.percent(preview.rate),
-          )}
-        </Text>
-      )}
       <Textarea
         label={t.comment}
         description={t.commentDescription}
@@ -300,7 +314,6 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
     </Stack>,
 
     <Stack gap="md" key="company">
-      <Text>{t.companyLead}</Text>
       {company.isPending ? (
         <StateBlock kind="loading" title={t.companyLoading} />
       ) : company.isError ? (
@@ -308,8 +321,8 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
       ) : (
         <div className={classes.sunken}>
           <SimpleGrid
-            cols={{ base: 1, sm: 2 }}
-            spacing="md"
+            cols={{ base: 1, sm: 2, lg: 3 }}
+            spacing="lg"
             component="dl"
             m={0}
           >
@@ -319,8 +332,8 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
                 ["inn", company.data.inn],
                 ["ogrn", company.data.ogrn],
                 ["registeredAt", formatDate(company.data.registeredAt)],
-                ["okved", `${company.data.okved} ${company.data.okvedName}`],
                 ["head", company.data.head],
+                ["okved", `${company.data.okved} ${company.data.okvedName}`],
                 ["address", company.data.address],
               ] as const
             ).map(([k, v]) => (
@@ -328,123 +341,36 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
                 <Text component="dt" size="sm" c="dimmed">
                   {t.companyFields[k]}
                 </Text>
-                <Text component="dd" m={0}>
+                <Text component="dd" m={0} className={classes.num}>
                   {v}
                 </Text>
               </div>
             ))}
           </SimpleGrid>
-          <Text size="sm" c="dimmed" mt="md">
-            {t.companySource}
-          </Text>
         </div>
       )}
       <Text size="sm" c="dimmed">
-        {t.companyOutdated}
+        {t.companySource}. {t.companyOutdated}
       </Text>
     </Stack>,
 
-    <Stack gap="md" key="finance">
-      <Text>{t.financeLead}</Text>
-      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-        {financialKeys.map((k) => (
-          <NumberInput
-            key={k}
-            label={financialLabels[k]}
-            description={
-              k === "monthlyDebtPayments" ? t.debtDescription : undefined
-            }
-            suffix={k === "employees" ? undefined : " ₽"}
-            thousandSeparator=" "
-            min={0}
-            value={financials[k]}
-            onChange={(v) => patch({ financials: { ...financials, [k]: v } })}
-            error={errors[k]}
-            hideControls
-            inputMode="numeric"
-          />
-        ))}
-      </SimpleGrid>
-    </Stack>,
+    <FinanceStep
+      key="finance"
+      financials={financials}
+      registeredAt={account.company.registeredAt}
+      payment={preview?.payment ?? null}
+      errors={errors}
+      onChange={(next) => patch({ financials: next })}
+    />,
 
-    <Stack gap="md" key="documents">
-      <Text>{t.documentsLead}</Text>
-      <Dropzone
-        onDrop={(files) =>
-          patch({
-            documents: [
-              ...draft.documents,
-              ...files.map((f) => ({
-                id: `${f.name}-${f.size}-${f.lastModified}`,
-                name: f.name,
-                kind: "other" as const,
-                sizeBytes: f.size,
-                addedAt: new Date().toISOString(),
-              })),
-            ],
-          })
-        }
-        maxSize={10 * 1024 ** 2}
-        accept={[
-          "application/pdf",
-          "image/png",
-          "image/jpeg",
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        ]}
-        radius="lg"
-      >
-        <Stack gap={4} align="center" py="lg">
-          <Text fw={500} ta="center">
-            {t.documentsDrop}
-          </Text>
-          <Text size="sm" c="dimmed">
-            {t.documentsAccept}
-          </Text>
-        </Stack>
-      </Dropzone>
-      {draft.documents.length === 0 ? (
-        <Text size="sm" c="dimmed">
-          {t.documentsEmpty}
-        </Text>
-      ) : (
-        <Stack
-          gap="xs"
-          component="ul"
-          p={0}
-          m={0}
-          style={{ listStyle: "none" }}
-        >
-          {draft.documents.map((d) => (
-            <Group component="li" key={d.id} justify="space-between" gap="sm">
-              <Text size="sm">
-                {d.name}{" "}
-                <Text span c="dimmed" size="sm">
-                  {Math.max(1, Math.round(d.sizeBytes / 1024))} КБ
-                </Text>
-              </Text>
-              <Button
-                variant="subtle"
-                size="xs"
-                onClick={() =>
-                  patch({
-                    documents: draft.documents.filter((x) => x.id !== d.id),
-                  })
-                }
-              >
-                {t.remove}
-              </Button>
-            </Group>
-          ))}
-        </Stack>
-      )}
-      <Text size="sm" c="dimmed">
-        {t.documentsNote}
-      </Text>
-    </Stack>,
+    <DocumentsStep
+      key="documents"
+      documents={draft.documents}
+      onChange={(documents) => patch({ documents })}
+    />,
 
     <Stack gap="lg" key="review">
-      <Text>{t.reviewLead}</Text>
-      <Summary
+      <Review
         title={STEPS[0]!}
         onEdit={() => go(0)}
         rows={[
@@ -457,12 +383,12 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
             : []),
         ]}
       />
-      <Summary
+      <Review
         title={STEPS[1]!}
         onEdit={() => go(1)}
         rows={[[t.summary.company, account.company.name]]}
       />
-      <Summary
+      <Review
         title={STEPS[2]!}
         onEdit={() => go(2)}
         rows={[
@@ -475,7 +401,7 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
           [t.summary.employees, String(financials.employees)],
         ]}
       />
-      <Summary
+      <Review
         title={STEPS[3]!}
         onEdit={() => go(3)}
         rows={[
@@ -517,44 +443,35 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
     </Stack>,
   ];
 
-  return (
-    <div className={classes.layout}>
-      <nav aria-label={t.stepsLabel} className={classes.steps}>
-        <Text size="sm" c="dimmed" className={classes.stepCount}>
-          {t.stepOf(draft.step + 1, STEPS.length)}
-        </Text>
-        <ol className={classes.stepList}>
-          {STEPS.map((s, i) => (
-            <li key={s}>
-              <button
-                type="button"
-                className={classes.stepButton}
-                data-state={
-                  i === draft.step ? "current" : i <= maxStep ? "done" : "next"
-                }
-                aria-current={i === draft.step ? "step" : undefined}
-                disabled={i > maxStep}
-                onClick={() => go(i)}
-              >
-                <span className={classes.stepIndex} aria-hidden>
-                  {i + 1}
-                </span>
-                <span className={classes.stepLabel}>{s}</span>
-              </button>
-            </li>
-          ))}
-        </ol>
-        <Text size="xs" c="dimmed" mt="md" visibleFrom="md">
-          {t.savedDraft}
-        </Text>
-      </nav>
+  const head = stepHeads[draft.step]!;
 
-      <Paper
-        withBorder
-        radius="lg"
-        p={{ base: "md", sm: "xl" }}
-        className={classes.panel}
-      >
+  return (
+    <div className={classes.page}>
+      <div className={classes.top}>
+        <Breadcrumbs separator="/" className={classes.crumbs}>
+          <Anchor component={Link} href="/products" size="sm" c="dimmed">
+            {w.crumbs}
+          </Anchor>
+          <Text size="sm" c="dimmed" aria-current="page">
+            {t.title}
+          </Text>
+        </Breadcrumbs>
+        <Title order={1}>{product ? w.titleFor(product.name) : t.title}</Title>
+        <WizardStepper step={draft.step} maxStep={maxStep} onGo={go} />
+      </div>
+
+      <div className={classes.side}>
+        <CreditSummary
+          purpose={draft.purpose}
+          product={product}
+          amount={amountOk ? Number(draft.amount) : null}
+          termMonths={Number(draft.termMonths) || null}
+          preview={preview}
+          onEdit={() => go(0)}
+        />
+      </div>
+
+      <Card className={classes.panel} padding={0}>
         <AnimatePresence mode="wait" custom={dir} initial={false}>
           <motion.div
             key={draft.step}
@@ -563,42 +480,79 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
             initial="enter"
             animate="center"
             exit="exit"
+            className={classes.panelBody}
           >
-            <Stack gap="lg">
+            <Stack gap={4} mb="lg">
               <Title
                 order={2}
                 ref={headingRef}
                 tabIndex={-1}
                 className={classes.stepTitle}
               >
-                {STEPS[draft.step]}
+                {head.title}
               </Title>
-              {steps[draft.step]}
+              {head.lead && (
+                <Text size="sm" c="dimmed" maw={720}>
+                  {head.lead}
+                </Text>
+              )}
             </Stack>
+            {steps[draft.step]}
           </motion.div>
         </AnimatePresence>
-        <Group justify="space-between" mt="xl">
-          {draft.step > 0 ? (
-            <Button variant="default" onClick={() => go(draft.step - 1)}>
-              {tx.common.back}
-            </Button>
-          ) : (
-            <span />
-          )}
+      </Card>
+
+      <div className={classes.footer}>
+        {draft.step > 0 ? (
+          <Button variant="default" onClick={() => go(draft.step - 1)}>
+            {tx.common.back}
+          </Button>
+        ) : (
+          <Button variant="default" component={Link} href="/products">
+            {tx.common.back}
+          </Button>
+        )}
+        <Group gap="sm" wrap="nowrap" className={classes.footerEnd}>
+          <Button
+            variant="subtle"
+            leftSection={<IconFileText size={16} stroke={1.5} aria-hidden />}
+            onClick={saveNow}
+            className={classes.saveDraft}
+            visibleFrom="sm"
+          >
+            {w.saveDraft}
+          </Button>
+          <ActionIcon
+            variant="subtle"
+            size={44}
+            onClick={saveNow}
+            className={classes.saveDraft}
+            aria-label={w.saveDraft}
+            hiddenFrom="sm"
+          >
+            <IconFileText size={20} stroke={1.5} aria-hidden />
+          </ActionIcon>
           {draft.step === LAST ? (
             <Button onClick={submit} loading={create.isPending}>
               {t.submit}
             </Button>
           ) : (
-            <Button onClick={() => go(draft.step + 1)}>{tx.common.next}</Button>
+            <Button
+              onClick={() => go(draft.step + 1)}
+              rightSection={
+                <IconArrowRight size={18} stroke={1.75} aria-hidden />
+              }
+            >
+              {w.continue}
+            </Button>
           )}
         </Group>
-      </Paper>
+      </div>
     </div>
   );
 }
 
-function Summary({
+function Review({
   title,
   rows,
   onEdit,
@@ -608,12 +562,18 @@ function Summary({
   onEdit: () => void;
 }) {
   return (
-    <section>
+    <section className={classes.review}>
       <Group justify="space-between" mb={6}>
         <Text fw={600}>{title}</Text>
-        <Button variant="subtle" size="xs" onClick={onEdit}>
+        <Anchor
+          component="button"
+          type="button"
+          size="sm"
+          onClick={onEdit}
+          className={classes.editLink}
+        >
           {t.edit}
-        </Button>
+        </Anchor>
       </Group>
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={6} component="dl" m={0}>
         {rows.map(([label, value]) => (
@@ -621,11 +581,7 @@ function Summary({
             <Text component="dt" size="sm" c="dimmed">
               {label}
             </Text>
-            <Text
-              component="dd"
-              m={0}
-              style={{ fontVariantNumeric: "tabular-nums" }}
-            >
+            <Text component="dd" m={0} className={classes.num}>
               {value}
             </Text>
           </div>
