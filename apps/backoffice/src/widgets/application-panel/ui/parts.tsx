@@ -1,8 +1,9 @@
 "use client";
 
-import { Anchor, Group, List, Stack, Text } from "@mantine/core";
+import { Anchor, Button, Group, List, Stack, Text } from "@mantine/core";
 import {
   IconAlertCircle,
+  IconArrowRight,
   IconBuildingBank,
   IconCircleCheck,
   IconCircleX,
@@ -12,16 +13,17 @@ import {
   IconUserSearch,
 } from "@tabler/icons-react";
 import Link from "next/link";
+import { useState } from "react";
 
 import type {
   Application,
+  ApplicationStage,
   CheckSource,
   CheckState,
   Employee,
   RiskBand,
 } from "@repo/contracts/application";
 import { Alfi, AlfiState } from "@repo/ui/alfi";
-import { StageRail } from "@repo/ui/stage-rail";
 import { StateBlock } from "@repo/ui/state-block";
 
 import {
@@ -33,6 +35,7 @@ import {
   riskLabel,
   stageLabel,
   stageOrder,
+  waitingLabel,
 } from "@/entities/application";
 import { RerunCheckButton } from "@/features/application-actions";
 import { rejectReasonLabel } from "@/shared/api/arm";
@@ -87,13 +90,142 @@ export function Summary({ app }: { app: Application }) {
         </div>
       </div>
 
-      <StageRail
-        stages={stageOrder.map((s) => stageLabel[s])}
-        current={stageOrder.indexOf(app.stage)}
-        waitingForClient={app.waitingOn === "client"}
-        label="Этап заявки"
-      />
+      <WorkflowStateCards app={app} />
     </Stack>
+  );
+}
+
+const workflowDescription: Record<
+  Application["stage"],
+  { short: string; detail: string; owner: string }
+> = {
+  intake: {
+    short: "Анкета и цель",
+    detail: "Фиксируем продукт, сумму, срок и сведения о компании.",
+    owner: "Клиент",
+  },
+  completeness: {
+    short: "Документы",
+    detail: "Проверяем комплектность и качество загруженных документов.",
+    owner: "Банк",
+  },
+  enrichment: {
+    short: "ФНС · ЕГРЮЛ · БКИ",
+    detail: "Получаем подтверждения из внешних и внутренних источников.",
+    owner: "Система",
+  },
+  scoring: {
+    short: "Риск-профиль",
+    detail: "Рассчитываем score и объясняем вклад факторов в риск.",
+    owner: "Модель",
+  },
+  decision: {
+    short: "Условия кредита",
+    detail: "Правила продукта превращают скоринг в рекомендацию по заявке.",
+    owner: "Сотрудник банка",
+  },
+  signing: {
+    short: "Договор",
+    detail: "Клиент принимает предложение и подписывает договор.",
+    owner: "Клиент",
+  },
+  disbursement: {
+    short: "Зачисление",
+    detail: "Проверяем финальные условия и отправляем деньги клиенту.",
+    owner: "Банк",
+  },
+};
+
+/** Интерактивный путь заявки: состояние берётся из доменного Application. */
+export function WorkflowStateCards({ app }: { app: Application }) {
+  const selectionKey = `${app.id}:${app.stage}:${app.status}`;
+  const [selection, setSelection] = useState<{
+    key: string;
+    stage: ApplicationStage;
+  } | null>(null);
+
+  const selectedStage =
+    selection?.key === selectionKey ? selection.stage : app.stage;
+  const current = stageOrder.indexOf(app.stage);
+  const selectedMeta = workflowDescription[selectedStage];
+  const isTerminal =
+    app.status === "rejected" ||
+    app.status === "disbursed" ||
+    app.waitingOn === "nobody";
+
+  return (
+    <section
+      className={classes.workflow}
+      aria-labelledby={`workflow-${app.id}`}
+    >
+      <Group justify="space-between" align="center" mb={8}>
+        <Text
+          id={`workflow-${app.id}`}
+          size="xs"
+          fw={700}
+          tt="uppercase"
+          c="dimmed"
+        >
+          Путь заявки
+        </Text>
+        <Text size="xs" c="dimmed">
+          {current + 1} из {stageOrder.length} · {waitingLabel[app.waitingOn]}
+        </Text>
+      </Group>
+      <ol
+        className={classes.workflowGrid}
+        aria-label="Этапы заявки"
+      >
+        {stageOrder.map((stage, index) => {
+          const isDone = index < current || (isTerminal && index === current);
+          const isCurrent = index === current;
+          const isSelected = stage === selectedStage;
+          return (
+            <li key={stage} className={classes.workflowItem}>
+              <Button
+                variant="subtle"
+                color="dark"
+                className={classes.workflowCard}
+                data-state={
+                  isDone
+                    ? "done"
+                    : isCurrent
+                      ? isTerminal ||
+                        app.waitingOn === "client" ||
+                        app.waitingOn === "system"
+                        ? "waiting"
+                        : "current"
+                      : "next"
+                }
+                data-selected={isSelected}
+                onClick={() => setSelection({ key: selectionKey, stage })}
+                aria-pressed={isSelected}
+                aria-current={isCurrent ? "step" : undefined}
+              >
+                <span className={classes.workflowText}>
+                  <strong>{stageLabel[stage]}</strong>
+                  <small>{workflowDescription[stage].short}</small>
+                </span>
+              </Button>
+            </li>
+          );
+        })}
+      </ol>
+      <div className={classes.workflowDetail} aria-live="polite">
+        <div>
+          <Text size="xs" fw={700}>
+            {stageLabel[selectedStage]}
+          </Text>
+          <Text size="xs" c="dimmed">
+            {selectedMeta.detail}
+          </Text>
+        </div>
+        <span className={classes.workflowOwner}>
+          {selectedMeta.owner}
+          <IconArrowRight size={13} />
+        </span>
+      </div>
+    </section>
   );
 }
 

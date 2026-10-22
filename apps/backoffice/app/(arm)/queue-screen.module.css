@@ -14,21 +14,22 @@
   right: 0;
   bottom: 0;
   z-index: 150;
-  width: 320px;
+  /* Панель читаемая, но не забирает у очереди половину экрана. */
+  width: 360px;
   border-left: 1px solid var(--kk-line);
   animation: slide-in 200ms ease-out;
 }
 
 @media (min-width: 75em) {
   .screen[data-panel] .main {
-    margin-right: 320px;
+    margin-right: 360px;
   }
 }
 
 /* Уже 1200px: панель выезжает поверх таблицы. */
 @media (max-width: 74.99em) {
   .aside {
-    width: 360px;
+    width: 380px;
     max-width: 100%;
     box-shadow: -12px 0 32px rgb(16 24 40 / 0.14);
   }
