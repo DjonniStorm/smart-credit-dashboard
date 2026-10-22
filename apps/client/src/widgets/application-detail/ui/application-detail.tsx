@@ -23,8 +23,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import type { Application, Decision } from "@repo/contracts/cabinet";
-import { ApplicationStatusBadge } from "@repo/ui/application-status";
 import { Alfi, AlfiState } from "@repo/ui/alfi";
+import { ApplicationStatusBadge } from "@repo/ui/application-status";
 import { Marker } from "@repo/ui/marker";
 import { formatRub } from "@repo/ui/money";
 import { StageRail } from "@repo/ui/stage-rail";
@@ -35,6 +35,7 @@ import {
   ApplicationFacts,
   ApplicationHistory,
   DecisionFactors,
+  HealthIndices,
   isDeclinedByClient,
   nextStepOf,
   stageOf,
@@ -140,6 +141,8 @@ function Detail({ app }: { app: Application }) {
       <Header app={app} />
 
       <AlfiContext app={app} />
+
+      <HealthIndices app={app} />
 
       <div className={classes.layout}>
         <Stack gap="lg" className={classes.main}>
