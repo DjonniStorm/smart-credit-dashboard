@@ -53,7 +53,7 @@ export class WorkflowStore implements OnModuleInit {
     return rows[0] ? this.application(rows[0]) : null;
   }
 
-  async saveJob(job: ScoringJob, attempts = 0): Promise<void> {
+  async saveJob(job: ScoringJob, attempts = job.attempts): Promise<void> {
     await this.db.query(
       `insert into scoring_jobs(id,application_id,status,idempotency_key,created_at,started_at,finished_at,error,result,attempts,next_attempt_at)
        values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
@@ -65,6 +65,20 @@ export class WorkflowStore implements OnModuleInit {
   async getJob(id: string): Promise<ScoringJob | null> {
     const rows = await this.db.query("select * from scoring_jobs where id=$1", [id]);
     return rows[0] ? this.job(rows[0]) : null;
+  }
+
+  /** Atomically claims one queued job so multiple API replicas cannot process it twice. */
+  async claimNextQueuedJob(): Promise<ScoringJob | null> {
+    const rows = await this.db.query(
+      `update scoring_jobs set status='running', started_at=now(), attempts=attempts+1
+       where id = (select id from scoring_jobs where status='queued' and (next_attempt_at is null or next_attempt_at <= now()) order by created_at for update skip locked limit 1)
+       returning *`,
+    );
+    return rows[0] ? this.job(rows[0]) : null;
+  }
+
+  async setJobRetry(id: string, error: string, nextAttemptAt: Date): Promise<void> {
+    await this.db.query(`update scoring_jobs set status='queued', error=$2, next_attempt_at=$3, finished_at=null where id=$1`, [id, error, nextAttemptAt]);
   }
 
   async findIdempotent(scope: string, key: string): Promise<string | null> {
@@ -85,6 +99,6 @@ export class WorkflowStore implements OnModuleInit {
   }
 
   private job(row: Record<string, unknown>): ScoringJob {
-    return { id: String(row.id), applicationId: String(row.application_id), status: row.status as ScoringJob["status"], idempotencyKey: String(row.idempotency_key), createdAt: new Date(String(row.created_at)).toISOString(), startedAt: row.started_at ? new Date(String(row.started_at)).toISOString() : null, finishedAt: row.finished_at ? new Date(String(row.finished_at)).toISOString() : null, error: (row.error as string | null) ?? null, result: (row.result as ScoringJob["result"]) ?? null };
+    return { id: String(row.id), applicationId: String(row.application_id), status: row.status as ScoringJob["status"], idempotencyKey: String(row.idempotency_key), createdAt: new Date(String(row.created_at)).toISOString(), startedAt: row.started_at ? new Date(String(row.started_at)).toISOString() : null, finishedAt: row.finished_at ? new Date(String(row.finished_at)).toISOString() : null, error: (row.error as string | null) ?? null, attempts: Number(row.attempts ?? 0), result: (row.result as ScoringJob["result"]) ?? null };
   }
 }

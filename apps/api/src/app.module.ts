@@ -9,12 +9,14 @@ import { CompaniesModule } from "./modules/companies/companies.module.ts";
 import { ApplicationsModule } from "./modules/applications/applications.module.ts";
 import { ExampleModule } from "./modules/example/example.module.ts";
 import { HealthModule } from "./modules/health/health.module.ts";
+import { StorageModule } from "./common/storage/storage.module.ts";
 
 @Module({
   imports: [
     ConfigModule,
     CqrsModule.forRoot(),
     DatabaseModule,
+    StorageModule,
     HealthModule,
     CompaniesModule,
     ApplicationsModule,

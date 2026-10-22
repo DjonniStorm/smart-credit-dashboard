@@ -24,6 +24,27 @@ class FeatureSnapshot:
     provenance: Mapping[str, str]
 
 
+@dataclass(frozen=True)
+class ModelEvaluation:
+    """Сравнение champion/challenger на одном отложенном наборе."""
+
+    model: str
+    brier: float
+    logloss: float
+    ece: float
+    auc: float
+
+
+@dataclass(frozen=True)
+class DriftReport:
+    """Мониторинг сдвига score distribution без внешних ML-зависимостей."""
+
+    psi: float
+    population_shifted: bool
+    baseline_count: int
+    current_count: int
+
+
 def build_feature_snapshot(
     values: Mapping[str, float | str | bool | None],
     provenance: Mapping[str, str] | None = None,
@@ -115,6 +136,52 @@ def rank_auc(labels: Sequence[int], scores: Sequence[float]) -> float:
         raise ValueError("AUC требует оба класса")
     wins = sum(1.0 if positive[0] > negative[0] else 0.5 if positive[0] == negative[0] else 0.0 for positive in positives for negative in negatives)
     return wins / (len(positives) * len(negatives))
+
+
+def evaluate_model(
+    model: str,
+    labels: Sequence[int],
+    probabilities: Sequence[float],
+    scores: Sequence[float] | None = None,
+) -> ModelEvaluation:
+    """Единый evaluation contract для baseline и challenger моделей."""
+    ranking = scores if scores is not None else probabilities
+    return ModelEvaluation(
+        model=model,
+        brier=round(brier_score(labels, probabilities), 6),
+        logloss=round(log_loss(labels, probabilities), 6),
+        ece=round(expected_calibration_error(labels, probabilities), 6),
+        auc=round(rank_auc(labels, ranking), 6),
+    )
+
+
+def population_stability_index(
+    baseline: Sequence[float], current: Sequence[float], bins: int = 10
+) -> float:
+    """PSI для score/risk distribution; значения >= .2 считаются сдвигом."""
+    if not baseline or not current or bins < 2:
+        raise ValueError("baseline/current должны быть непустыми, bins >= 2")
+    def histogram(values: Sequence[float]) -> list[float]:
+        clipped = [max(0.0, min(1.0, value)) for value in values]
+        counts = [0] * bins
+        for value in clipped:
+            index = min(bins - 1, int(value * bins))
+            counts[index] += 1
+        total = len(clipped)
+        return [max(1e-6, count / total) for count in counts]
+
+    expected, actual = histogram(baseline), histogram(current)
+    return sum((a - e) * math.log(a / e) for e, a in zip(expected, actual))
+
+
+def drift_report(baseline: Sequence[float], current: Sequence[float], threshold: float = 0.2) -> DriftReport:
+    psi = population_stability_index(baseline, current)
+    return DriftReport(
+        psi=round(psi, 6),
+        population_shifted=psi >= threshold,
+        baseline_count=len(baseline),
+        current_count=len(current),
+    )
 
 
 def synthetic_pd_dataset(size: int = 200, seed: int = 7) -> tuple[list[float], list[int]]:

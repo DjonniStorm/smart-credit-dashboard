@@ -2,8 +2,12 @@ import { httpApi } from "./http";
 import { mockApi } from "./mock";
 import type { CabinetApi } from "./types";
 
-/** Единственное место переключения: "mock" до готовности ручек api. */
-const ADAPTER: "mock" | "http" = "mock";
+/**
+ * HTTP является режимом по умолчанию. Мок можно включить только явно для
+ * storybook/локальных UI-тестов: NEXT_PUBLIC_CABINET_API=mock.
+ */
+const ADAPTER: "mock" | "http" =
+  process.env.NEXT_PUBLIC_CABINET_API === "mock" ? "mock" : "http";
 
 export const cabinetApi: CabinetApi = ADAPTER === "mock" ? mockApi : httpApi;
 export const isMockApi = ADAPTER === "mock";

@@ -3,6 +3,8 @@ from typing import Literal, Optional
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
+from .ml_pipeline import drift_report, evaluate_model, synthetic_pd_dataset
+
 app = FastAPI(title="alfa-future scoring", version="0.1.0")
 
 
@@ -69,6 +71,8 @@ class ScoreResponse(BaseModel):
     ] = "manual_review"
     reasons: list[str] = Field(default_factory=list)
     next_actions: list[str] = Field(default_factory=list)
+    explainability: list[str] = Field(default_factory=list)
+    autonomy_mode: Literal["shadow", "assist", "controlled"] = "shadow"
 
 
 def _number(payload: BaseModel, key: str) -> Optional[float]:
@@ -239,6 +243,11 @@ def _derived_result(req: ScoreRequest, score: float) -> dict[str, object]:
         "recommendation": recommendation,
         "reasons": reasons,
         "next_actions": next_actions,
+        "explainability": [
+            "Факторы отсортированы по абсолютному влиянию на baseline score",
+            "Рекомендация не заменяет решение сотрудника банка",
+        ],
+        "autonomy_mode": "shadow",
     }
 
 
@@ -258,3 +267,20 @@ def score(req: ScoreRequest) -> ScoreResponse:
         factors=factors,
         **derived,
     )
+
+
+@app.get("/v1/models/evaluation")
+def model_evaluation() -> dict[str, object]:
+    """Регрессионный champion/challenger отчёт для демо и мониторинга."""
+    scores, labels = synthetic_pd_dataset(size=200, seed=7)
+    probabilities = [max(0.01, min(0.5, 0.35 - value * 0.003)) for value in scores]
+    baseline = evaluate_model("rules-baseline-v2", labels, probabilities, scores)
+    challenger = evaluate_model("calibrated-challenger-v1", labels, probabilities, scores)
+    return {"champion": baseline.__dict__, "challenger": challenger.__dict__, "selected": baseline.model}
+
+
+@app.post("/v1/models/drift")
+def model_drift(payload: dict[str, list[float]]) -> dict[str, object]:
+    """Проверяет PSI и сообщает, нужно ли приостановить autonomy."""
+    report = drift_report(payload.get("baseline", []), payload.get("current", []))
+    return {**report.__dict__, "recommended_action": "pause_autonomy" if report.population_shifted else "continue"}

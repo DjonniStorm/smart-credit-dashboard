@@ -64,8 +64,9 @@ export const scoringJobSchema = z.object({
   startedAt: z.string().nullable(),
   finishedAt: z.string().nullable(),
   error: z.string().nullable(),
+  attempts: z.number().int().nonnegative().default(0),
   result: z
-    .object({ score: z.number().min(0).max(100), model: z.string() })
+    .object({ score: z.number().min(0).max(100), model: z.string(), recommendation: z.string().optional() })
     .nullable(),
 });
 export type ScoringJob = z.infer<typeof scoringJobSchema>;
