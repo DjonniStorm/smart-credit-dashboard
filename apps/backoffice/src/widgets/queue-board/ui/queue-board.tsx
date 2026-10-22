@@ -277,7 +277,7 @@ export function QueueBoard({
                   Номер
                 </SortHeader>
                 <Table.Th>Компания / ИНН</Table.Th>
-                <Table.Th>Продукт</Table.Th>
+                <Table.Th className={classes.product}>Продукт</Table.Th>
                 <SortHeader k="amount" filters={filters} onSort={sortBy}>
                   Сумма
                 </SortHeader>
@@ -285,7 +285,9 @@ export function QueueBoard({
                   Дата подачи
                 </SortHeader>
                 <Table.Th>Этап</Table.Th>
-                <Table.Th>Ответственный</Table.Th>
+                <Table.Th className={classes.assigneeCol}>
+                  Ответственный
+                </Table.Th>
                 <Table.Th className={classes.menuCell}>
                   <VisuallyHidden>Действия</VisuallyHidden>
                 </Table.Th>
@@ -351,7 +353,7 @@ export function QueueBoard({
                     <Table.Td>
                       <StageBadge app={app} />
                     </Table.Td>
-                    <Table.Td>
+                    <Table.Td className={classes.assigneeCol}>
                       <Text
                         size="sm"
                         c={app.assigneeId ? undefined : "dimmed"}

@@ -72,6 +72,7 @@
 }
 
 .tableBox {
+  container-type: inline-size;
   border: 1px solid var(--kk-line);
   border-radius: var(--mantine-radius-lg);
   background: var(--kk-surface);
@@ -208,5 +209,18 @@
     grid-column: 1 / -1;
     grid-row: 2;
     justify-self: center;
+  }
+}
+
+/* Открытая панель оставляет таблице около 690px на экране 1280px.
+   Продукт и ответственный есть в панели, поэтому в узкой таблице их прячем,
+   а этап и сумма остаются видны целиком. */
+@container (max-width: 819px) {
+  .table {
+    min-width: 640px;
+  }
+  .product,
+  .assigneeCol {
+    display: none;
   }
 }
