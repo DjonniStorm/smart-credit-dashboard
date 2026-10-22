@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Group, Paper, Stack, Table, Text, Title } from "@mantine/core";
+import { Button, Card, Group, Stack, Table, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 
 import type { Application, OfferTerms } from "@repo/contracts/cabinet";
@@ -58,7 +58,7 @@ export function OfferDecision({
   const error = accept.error ?? decline.error;
 
   return (
-    <Paper withBorder radius="lg" p="lg">
+    <Card>
       <Stack gap="md">
         <Group justify="space-between" align="flex-start" gap="sm">
           <Title order={2} size="h3">
@@ -69,7 +69,7 @@ export function OfferDecision({
         <Text>{summary}</Text>
         <Text className={classes.amount}>{formatRub(offer.amount)}</Text>
 
-        <Table.ScrollContainer minWidth={420}>
+        <Table.ScrollContainer minWidth={300}>
           <Table className={classes.table}>
             <Table.Thead>
               <Table.Tr>
@@ -126,6 +126,6 @@ export function OfferDecision({
           </Button>
         </Group>
       </Stack>
-    </Paper>
+    </Card>
   );
 }

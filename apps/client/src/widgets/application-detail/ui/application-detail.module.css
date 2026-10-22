@@ -1,8 +1,14 @@
+/* Как у мастера заявки: слева работа, справа колонка 320px. */
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: calc(var(--mantine-spacing-xl) * 1.5);
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
   align-items: start;
+}
+
+.main,
+.aside {
+  min-width: 0;
 }
 
 .checks {
@@ -17,6 +23,16 @@
   border-color: var(--kk-success);
 }
 
+.terms {
+  padding: var(--mantine-spacing-md);
+  border-radius: var(--mantine-radius-md);
+  background: var(--kk-surface-sunken);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
 .amount {
   font-size: 40px;
   line-height: 44px;
@@ -25,8 +41,15 @@
   letter-spacing: -0.01em;
 }
 
-@media (max-width: 62em) {
+@media (max-width: 75em) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 30em) {
+  .amount {
+    font-size: 32px;
+    line-height: 38px;
   }
 }

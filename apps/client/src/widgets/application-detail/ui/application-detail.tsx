@@ -1,27 +1,35 @@
 "use client";
 
 import {
+  Anchor,
+  Breadcrumbs,
   Button,
+  Card,
   Group,
   Loader,
-  Paper,
   SimpleGrid,
   Stack,
   Text,
   Title,
 } from "@mantine/core";
-import { IconCircleCheck, IconClock, IconLoader2 } from "@tabler/icons-react";
+import {
+  IconAlertCircle,
+  IconCircleCheck,
+  IconCircleX,
+  IconClock,
+  IconLoader2,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import type { Application } from "@repo/contracts/cabinet";
+import type { Application, Decision } from "@repo/contracts/cabinet";
 import { ApplicationStatusBadge } from "@repo/ui/application-status";
 import { Alfi, AlfiState } from "@repo/ui/alfi";
 import { Marker } from "@repo/ui/marker";
 import { formatRub } from "@repo/ui/money";
 import { StageRail } from "@repo/ui/stage-rail";
 import { StateBlock } from "@repo/ui/state-block";
-import { ToneBadge } from "@repo/ui/tone-badge";
+import { type Tone, ToneBadge } from "@repo/ui/tone-badge";
 
 import {
   ApplicationFacts,
@@ -38,7 +46,7 @@ import { AnswerRequestForm } from "@/features/answer-request";
 import { OfferDecision } from "@/features/decide-offer";
 import { SignContract } from "@/features/sign-contract";
 import { ApiError } from "@/shared/api/cabinet";
-import { formatDate, formatDateTime, tx } from "@/shared/i18n";
+import { formatDate, formatDateTime, lx, tx } from "@/shared/i18n";
 import { QueryError } from "@/shared/ui/query-state";
 
 import classes from "./application-detail.module.css";
@@ -81,21 +89,41 @@ function Header({ app, title }: { app: Application; title?: string }) {
     (p) => p.id === app.productId,
   );
   return (
-    <Group justify="space-between" align="flex-start" gap="sm">
-      <Stack gap={4}>
-        <Title order={1}>{title ?? t.title(app.number)}</Title>
-        <Text c="dimmed">
-          {product?.name}
-          {product ? ", " : ""}
-          {formatDate(app.createdAt)}
+    <Stack gap="xs">
+      <Breadcrumbs separator="/">
+        <Anchor component={Link} href="/" size="sm" c="dimmed">
+          {lx.applications.crumbs}
+        </Anchor>
+        {title && (
+          <Anchor
+            component={Link}
+            href={`/applications/${app.id}`}
+            size="sm"
+            c="dimmed"
+          >
+            {t.title(app.number)}
+          </Anchor>
+        )}
+        <Text size="sm" c="dimmed" aria-current="page">
+          {title ?? t.title(app.number)}
         </Text>
-      </Stack>
-      <ApplicationStatusBadge status={app.status} />
-    </Group>
+      </Breadcrumbs>
+      <Group justify="space-between" align="flex-start" gap="sm">
+        <Stack gap={4}>
+          <Title order={1}>{title ?? t.title(app.number)}</Title>
+          <Text c="dimmed">
+            {product?.name}
+            {product ? ", " : ""}
+            {formatDate(app.createdAt)}
+          </Text>
+        </Stack>
+        <ApplicationStatusBadge status={app.status} />
+      </Group>
+    </Stack>
   );
 }
 
-/** Страница заявки: путь, следующий шаг, панель текущего этапа, история. */
+/** Страница заявки: движение по этапам, текущее действие, решение, история. */
 export function ApplicationDetail({ id }: { id: string }) {
   return (
     <WithApplication id={id}>{(app) => <Detail app={app} />}</WithApplication>
@@ -108,35 +136,37 @@ function Detail({ app }: { app: Application }) {
   const stage = stageOf(app);
 
   return (
-    <Stack gap="xl">
+    <Stack gap="lg">
       <Header app={app} />
-
-      <Paper withBorder radius="lg" p="lg">
-        <Stack gap="md">
-          <StageRail
-            stages={stages}
-            current={stage.current}
-            waitingForClient={stage.waitingForClient}
-          />
-          <Text aria-live="polite">
-            {stage.waitingForClient ? (
-              <Marker>{nextStepOf(app)}</Marker>
-            ) : (
-              nextStepOf(app)
-            )}
-          </Text>
-        </Stack>
-      </Paper>
 
       <AlfiContext app={app} />
 
       <div className={classes.layout}>
-        <Stack gap="xl" className={classes.main}>
+        <Stack gap="lg" className={classes.main}>
+          <Card component="section" aria-labelledby="path-title">
+            <Stack gap="md">
+              <Title order={2} size="h3" id="path-title">
+                {lx.detail.path}
+              </Title>
+              <StageRail
+                stages={stages}
+                current={stage.current}
+                waitingForClient={stage.waitingForClient}
+              />
+              <Text aria-live="polite">
+                {stage.waitingForClient ? (
+                  <Marker>{nextStepOf(app)}</Marker>
+                ) : (
+                  nextStepOf(app)
+                )}
+              </Text>
+            </Stack>
+          </Card>
           <StagePanel app={app} />
           {app.requests
             .filter((r) => r.answer)
             .map((r) => (
-              <Paper key={r.id} radius="lg" p="lg" className={classes.sunken}>
+              <Card key={r.id} className={classes.sunken}>
                 <Stack gap={6}>
                   <Text fw={600}>{t.request.title}</Text>
                   <Text size="sm">{r.question}</Text>
@@ -147,13 +177,17 @@ function Detail({ app }: { app: Application }) {
                       ` (${r.answer!.documents.map((d) => d.name).join(", ")})`}
                   </Text>
                 </Stack>
-              </Paper>
+              </Card>
             ))}
-          {app.decision && <DecisionFactors factors={app.decision.factors} />}
+          <DecisionCard app={app} />
         </Stack>
-        <Stack gap="xl" className={classes.aside}>
-          <ApplicationFacts app={app} product={product} />
-          <ApplicationHistory events={app.events} />
+        <Stack gap="lg" className={classes.aside}>
+          <Card>
+            <ApplicationFacts app={app} product={product} />
+          </Card>
+          <Card>
+            <ApplicationHistory events={app.events} />
+          </Card>
         </Stack>
       </div>
     </Stack>
@@ -163,7 +197,7 @@ function Detail({ app }: { app: Application }) {
 function AlfiContext({ app }: { app: Application }) {
   const state = clientAlfiState(app);
   return (
-    <Paper withBorder radius="lg" p="md">
+    <Card padding="md">
       <Group gap="sm" wrap="nowrap" align="flex-start">
         <Alfi state={state} size={48} />
         <Stack gap={2}>
@@ -171,7 +205,7 @@ function AlfiContext({ app }: { app: Application }) {
           <Text size="sm">{clientAlfiMessage(app)}</Text>
         </Stack>
       </Group>
-    </Paper>
+    </Card>
   );
 }
 
@@ -218,12 +252,89 @@ function clientAlfiMessage(app: Application): string {
   return nextStepOf(app);
 }
 
+const outcomeTone = {
+  approved: { tone: "success", icon: IconCircleCheck },
+  counter_offer: { tone: "action", icon: IconAlertCircle },
+  rejected: { tone: "danger", icon: IconCircleX },
+} satisfies Record<Decision["outcome"], { tone: Tone; icon: typeof IconClock }>;
+
+/** Итоговое решение банка: исход, дата, объяснение и факторы. */
+function DecisionCard({ app }: { app: Application }) {
+  const d = lx.detail;
+  const decision = app.decision;
+  // До принятия условий итог и условия показывает панель этапа выше.
+  const detailed = Boolean(app.deal);
+  return (
+    <Card component="section" aria-labelledby="decision-title">
+      <Stack gap="md">
+        <Group justify="space-between" align="flex-start" gap="sm">
+          <div>
+            <Title order={2} size="h3" id="decision-title">
+              {d.decision}
+            </Title>
+            {decision && (
+              <Text size="sm" c="dimmed">
+                {d.decisionAt(formatDateTime(decision.decidedAt))}
+              </Text>
+            )}
+          </div>
+          {decision && (
+            <ToneBadge
+              tone={outcomeTone[decision.outcome].tone}
+              icon={outcomeTone[decision.outcome].icon}
+            >
+              {d.outcome[decision.outcome]}
+            </ToneBadge>
+          )}
+        </Group>
+        {decision ? (
+          <>
+            {detailed && <Text>{decision.summary}</Text>}
+            {detailed && decision.offer && (
+              <SimpleGrid
+                cols={{ base: 2, sm: 4 }}
+                component="dl"
+                m={0}
+                className={classes.terms}
+              >
+                {(
+                  [
+                    [t.offer.amount, formatRub(decision.offer.amount)],
+                    [t.offer.term, tx.common.months(decision.offer.termMonths)],
+                    [
+                      t.offer.rate,
+                      tx.common.ratePerYear(decision.offer.ratePercent),
+                    ],
+                    [t.offer.payment, formatRub(decision.offer.monthlyPayment)],
+                  ] as const
+                ).map(([label, value]) => (
+                  <div key={label}>
+                    <Text component="dt" size="sm" c="dimmed">
+                      {label}
+                    </Text>
+                    <Text component="dd" m={0} fw={600} className={classes.num}>
+                      {value}
+                    </Text>
+                  </div>
+                ))}
+              </SimpleGrid>
+            )}
+            <DecisionFactors factors={decision.factors} />
+          </>
+        ) : (
+          <Text c="dimmed">{d.noDecision}</Text>
+        )}
+      </Stack>
+    </Card>
+  );
+}
+
 function StagePanel({ app }: { app: Application }) {
   const decision = app.decision;
 
   if (app.status === "in_review") {
     return (
-      <Paper withBorder radius="lg" p="lg">
+      <Card>
         <Stack gap="md">
           <Title order={2} size="h3">
             {t.review.title}
@@ -260,7 +371,7 @@ function StagePanel({ app }: { app: Application }) {
             {t.review.text}
           </Text>
         </Stack>
-      </Paper>
+      </Card>
     );
   }
 
@@ -287,7 +398,7 @@ function StagePanel({ app }: { app: Application }) {
 
   if (app.deal?.stage === "signing") {
     return (
-      <Paper withBorder radius="lg" p="lg">
+      <Card>
         <Stack gap="sm" align="flex-start">
           <Title order={2} size="h3">
             {t.signing.title}
@@ -297,13 +408,13 @@ function StagePanel({ app }: { app: Application }) {
             {t.signing.go}
           </Button>
         </Stack>
-      </Paper>
+      </Card>
     );
   }
 
   if (app.deal?.stage === "disbursing") {
     return (
-      <Paper withBorder radius="lg" p="lg">
+      <Card>
         <Group gap="md" wrap="nowrap" align="flex-start">
           <Loader size={20} color="var(--mantine-color-text)" mt={4} />
           <Stack gap={4}>
@@ -313,7 +424,7 @@ function StagePanel({ app }: { app: Application }) {
             <Text>{t.disbursing.text}</Text>
           </Stack>
         </Group>
-      </Paper>
+      </Card>
     );
   }
 
@@ -328,7 +439,7 @@ function StagePanel({ app }: { app: Application }) {
       [t.disbursed.firstPayment, formatDate(first.toISOString())],
     ];
     return (
-      <Paper withBorder radius="lg" p="lg" className={classes.success}>
+      <Card className={classes.success}>
         <Stack gap="md">
           <Title order={2} size="h3">
             {t.disbursed.title}
@@ -345,11 +456,7 @@ function StagePanel({ app }: { app: Application }) {
                 <Text component="dt" size="sm" c="dimmed">
                   {label}
                 </Text>
-                <Text
-                  component="dd"
-                  m={0}
-                  style={{ fontVariantNumeric: "tabular-nums" }}
-                >
+                <Text component="dd" m={0} className={classes.num}>
                   {value}
                 </Text>
               </div>
@@ -359,14 +466,14 @@ function StagePanel({ app }: { app: Application }) {
             {t.disbursed.text}
           </Text>
         </Stack>
-      </Paper>
+      </Card>
     );
   }
 
   if (app.status === "rejected") {
     const declined = isDeclinedByClient(app);
     return (
-      <Paper withBorder radius="lg" p="lg">
+      <Card>
         <Stack gap="md" align="flex-start">
           <Title order={2} size="h3">
             {declined ? t.rejected.declinedTitle : t.rejected.title}
@@ -382,7 +489,7 @@ function StagePanel({ app }: { app: Application }) {
             {t.rejected.newApplication}
           </Button>
         </Stack>
-      </Paper>
+      </Card>
     );
   }
 
@@ -394,7 +501,7 @@ export function ApplicationSigning({ id }: { id: string }) {
   return (
     <WithApplication id={id}>
       {(app) => (
-        <Stack gap="xl">
+        <Stack gap="lg" maw={880}>
           <Header app={app} title={tx.sign.title} />
           <Text maw={640}>{tx.sign.lead}</Text>
           <SignContract app={app} />

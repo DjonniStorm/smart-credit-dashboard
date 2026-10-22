@@ -14,7 +14,12 @@ export function ApplicationHistory({ events }: { events: ApplicationEvent[] }) {
       <Title order={3} id="history-title" mb="sm">
         {t.history}
       </Title>
-      <Timeline bulletSize={12} lineWidth={2} active={sorted.length - 1}>
+      <Timeline
+        color="primary"
+        bulletSize={12}
+        lineWidth={2}
+        active={sorted.length - 1}
+      >
         {sorted.map((e) => (
           <Timeline.Item key={`${e.at}-${e.text}`}>
             <Text size="sm">{e.text}</Text>
