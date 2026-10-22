@@ -17,50 +17,51 @@ import {
   virtualColor,
 } from "@mantine/core";
 
-// Значения совпадают с токенами дизайн-системы «Кредитный кабинет».
-// Меняете токен там, меняйте и здесь.
+// Значения совпадают с токенами дизайн-системы «Кредитный конвейер»
+// (макеты docs/design/business.jpg и manager.jpg). Меняете токен там, меняйте и здесь.
 
-// Светлая тема: чернила. Оттенок 7 = ink.
+// Светлая тема: холодная нейтральная шкала. Оттенок 7 = ink, 5 = ink-muted,
+// 4 = control-border, 2 = line, 1 = bg-page, 0 = bg-rail.
 const ink: MantineColorsTuple = [
-  "#f6f4ef",
-  "#eceae3",
-  "#d6d3ca",
-  "#b9b5ab",
-  "#86827a",
-  "#5c5a52",
-  "#3a3b3f",
-  "#1b1c1f",
-  "#141517",
-  "#0c0d0e",
+  "#f7f8fa",
+  "#f3f4f6",
+  "#e4e7ec",
+  "#c9ccd3",
+  "#8c919c",
+  "#5b5f6a",
+  "#3a3e47",
+  "#111318",
+  "#0b0d10",
+  "#050608",
 ];
 // Тёмная тема: та же шкала наоборот. Оттенок 7 = ink тёмной темы.
 const inkInverse: MantineColorsTuple = [
-  "#121314",
-  "#1c1d20",
-  "#27292d",
-  "#3a3c40",
-  "#74767c",
-  "#a7a49c",
-  "#c9c7c0",
-  "#ecebe6",
-  "#f4f3ef",
+  "#101215",
+  "#16181d",
+  "#1d2026",
+  "#30343c",
+  "#6b7180",
+  "#a3a8b3",
+  "#c3c8d0",
+  "#eceef2",
+  "#f5f6f8",
   "#ffffff",
 ];
 // Палитра, из которой Mantine красит тёмную схему: 0 текст, 2 dimmed,
 // 4 границы полей, 5 разделители, 6 поля и карточки (surface), 7 фон (paper).
 const dark: MantineColorsTuple = [
-  "#ecebe6",
-  "#c9c7c0",
-  "#a7a49c",
-  "#86827a",
-  "#74767c",
-  "#34373b",
-  "#1c1d20",
-  "#121314",
-  "#0e0f10",
-  "#0a0a0b",
+  "#eceef2",
+  "#c3c8d0",
+  "#a3a8b3",
+  "#8c919c",
+  "#6b7180",
+  "#30343c",
+  "#1d2026",
+  "#101215",
+  "#0b0d10",
+  "#060708",
 ];
-// Оттенок 5 = amber, 1 = amber-soft, 9 = amber-ink.
+// Оттенок 5 = amber. Фон и текст бейджа «нужно действие» в --kk-amber-*.
 const amber: MantineColorsTuple = [
   "#fff8e6",
   "#fbe9b7",
@@ -73,34 +74,34 @@ const amber: MantineColorsTuple = [
   "#8a6206",
   "#6b4a00",
 ];
-// Фирменный красный. Оттенок 7 = brand: кнопки и всё, на чём белый текст
-// (белый на нём 4.97:1). Оттенок 6 = brand-bright #EF3124 из гайда банка:
-// с белым только 4.09:1, поэтому он для графиков и крупных элементов без текста.
+// Фирменный красный. Оттенок 7 = brand #e3241b: кнопки и всё, на чём белый текст
+// (белый на нём 4.63:1). Оттенок 6 = brand-bright #EF3124 из гайда банка:
+// с белым только 4.09:1, поэтому он для логотипа и графиков.
 // Оттенок 8 = brand-hover.
 const red: MantineColorsTuple = [
-  "#fff3f2",
-  "#ffe1de",
-  "#ffc4be",
-  "#ff9e94",
-  "#ff7366",
-  "#f5493d",
+  "#fdeeed",
+  "#fbd9d6",
+  "#f6b3ad",
+  "#f08a82",
+  "#ec5f55",
+  "#f04438",
   "#ef3124",
-  "#d62b1f",
-  "#bd2418",
+  "#e3241b",
+  "#c81f17",
   "#9a1d13",
 ];
 // Оттенок 7 = success.
 const success: MantineColorsTuple = [
-  "#eef8f6",
-  "#dcefec",
-  "#b4dfd9",
-  "#86ccc4",
-  "#5ccfc4",
-  "#2a9c93",
-  "#13847d",
-  "#0b6e69",
-  "#08544f",
-  "#053a37",
+  "#eefaf3",
+  "#e2f5ea",
+  "#b9e6cb",
+  "#86d4ad",
+  "#4fbf86",
+  "#22a065",
+  "#178a55",
+  "#12804a",
+  "#1f6b4a",
+  "#0d4a30",
 ];
 // Оттенок 7 = danger.
 const danger: MantineColorsTuple = [
@@ -141,22 +142,22 @@ const variantColorResolver: VariantColorsResolver = (input) => {
 const font =
   'var(--font-golos), system-ui, -apple-system, "Segoe UI", sans-serif';
 
-/** Кабинет клиента: размеры md, цели нажатия 44px. */
+/** Кабинет клиента: размеры md, поля и кнопки 40px, как в business.jpg. */
 export const theme = createTheme({
   fontFamily: font,
   headings: {
     fontFamily: font,
-    fontWeight: "600",
+    fontWeight: "700",
     sizes: {
       h1: { fontSize: "28px", lineHeight: "34px" },
-      h2: { fontSize: "22px", lineHeight: "28px" },
-      h3: { fontSize: "18px", lineHeight: "24px" },
+      h2: { fontSize: "20px", lineHeight: "26px" },
+      h3: { fontSize: "17px", lineHeight: "24px", fontWeight: "600" },
     },
   },
-  fontSizes: { xs: "12px", sm: "14px", md: "16px", lg: "18px", xl: "22px" },
-  lineHeights: { xs: "1.33", sm: "1.43", md: "1.5", lg: "1.33", xl: "1.27" },
-  spacing: { xs: "8px", sm: "12px", md: "16px", lg: "24px", xl: "40px" },
-  radius: { xs: "4px", sm: "4px", md: "8px", lg: "14px", xl: "14px" },
+  fontSizes: { xs: "12px", sm: "13px", md: "14px", lg: "16px", xl: "20px" },
+  lineHeights: { xs: "1.33", sm: "1.38", md: "1.43", lg: "1.38", xl: "1.3" },
+  spacing: { xs: "8px", sm: "12px", md: "16px", lg: "20px", xl: "32px" },
+  radius: { xs: "4px", sm: "6px", md: "8px", lg: "12px", xl: "12px" },
   defaultRadius: "md",
 
   colors: {
@@ -185,7 +186,9 @@ export const theme = createTheme({
 
   shadows: {
     // shadow-overlay: только то, что лежит поверх страницы.
-    md: "0 8px 24px rgba(27, 28, 31, 0.14), 0 1px 3px rgba(27, 28, 31, 0.08)",
+    md: "0 8px 24px rgba(17, 19, 24, 0.12), 0 1px 3px rgba(17, 19, 24, 0.06)",
+    // shadow-panel: правая панель заявки поверх таблицы.
+    lg: "-8px 0 24px rgba(17, 19, 24, 0.06)",
   },
 
   components: {
@@ -194,13 +197,13 @@ export const theme = createTheme({
       vars: (_theme, props) => ({
         root:
           props.size === "md"
-            ? { "--button-height": "44px", "--button-padding-x": "18px" }
+            ? { "--button-height": "40px", "--button-padding-x": "18px" }
             : {},
       }),
     }),
     Input: Input.extend({
       vars: (_theme, props) => ({
-        wrapper: props.size === "md" ? { "--input-height": "44px" } : {},
+        wrapper: props.size === "md" ? { "--input-height": "40px" } : {},
       }),
     }),
     TextInput: TextInput.extend({ defaultProps: { size: "md" } }),
@@ -274,48 +277,66 @@ export const compactTheme = mergeThemeOverrides(
 export const cssVariablesResolver: CSSVariablesResolver = () => ({
   variables: {},
   light: {
-    "--mantine-color-body": "#f6f4ef",
-    "--mantine-color-text": "#1b1c1f",
-    "--mantine-color-dimmed": "#5c5a52",
-    "--mantine-color-default-border": "#86827a",
+    "--mantine-color-body": "#f3f4f6",
+    "--mantine-color-text": "#111318",
+    "--mantine-color-dimmed": "#5b5f6a",
+    "--mantine-color-default-border": "#8c919c",
     "--mantine-color-error": "#b42318",
-    "--kk-brand": "#d62b1f",
-    "--kk-brand-hover": "#bd2418",
+    "--kk-bg-rail": "#f7f8fa",
+    "--kk-brand": "#e3241b",
+    "--kk-brand-hover": "#c81f17",
     "--kk-brand-bright": "#ef3124",
     "--kk-on-brand": "#ffffff",
-    "--kk-brand-text": "#d62b1f",
-    "--kk-brand-soft": "#fff3f2",
-    "--kk-brand-graphic": "#d62b1f",
+    "--kk-brand-text": "#c4271c",
+    "--kk-brand-soft": "#fdeeed",
+    "--kk-brand-graphic": "#e3241b",
     "--kk-surface": "#ffffff",
-    "--kk-surface-sunken": "#eceae3",
-    "--kk-line": "#d6d3ca",
-    "--kk-amber-soft": "#fbe9b7",
-    "--kk-amber-ink": "#6b4a00",
-    "--kk-success": "#0b6e69",
-    "--kk-success-soft": "#dcefec",
+    "--kk-surface-sunken": "#f3f4f6",
+    "--kk-line": "#e4e7ec",
+    "--kk-link": "#2f6bd1",
+    "--kk-warning": "#a8620f",
+    "--kk-chart-bar": "#d2d5db",
+    "--kk-amber-soft": "#fff0de",
+    "--kk-amber-ink": "#8a5a14",
+    "--kk-info-soft": "#e3f1fd",
+    "--kk-info-ink": "#2b5486",
+    "--kk-neutral-soft": "#eceff2",
+    "--kk-neutral-ink": "#4f5661",
+    "--kk-success": "#12804a",
+    "--kk-success-soft": "#e2f5ea",
+    "--kk-success-ink": "#1f6b4a",
     "--kk-danger": "#b42318",
     "--kk-danger-soft": "#fbe4e1",
   },
   dark: {
-    "--mantine-color-body": "#121314",
-    "--mantine-color-text": "#ecebe6",
-    "--mantine-color-dimmed": "#a7a49c",
-    "--mantine-color-default-border": "#74767c",
+    "--mantine-color-body": "#101215",
+    "--mantine-color-text": "#eceef2",
+    "--mantine-color-dimmed": "#a3a8b3",
+    "--mantine-color-default-border": "#6b7180",
     "--mantine-color-error": "#ff8b7d",
-    "--kk-brand": "#d62b1f",
-    "--kk-brand-hover": "#bd2418",
+    "--kk-bg-rail": "#16181d",
+    "--kk-brand": "#e3241b",
+    "--kk-brand-hover": "#c81f17",
     "--kk-brand-bright": "#ef3124",
     "--kk-on-brand": "#ffffff",
     "--kk-brand-text": "#ff6b5e",
-    "--kk-brand-soft": "#341a17",
+    "--kk-brand-soft": "#3b1d19",
     "--kk-brand-graphic": "#ef3124",
-    "--kk-surface": "#1c1d20",
-    "--kk-surface-sunken": "#27292d",
-    "--kk-line": "#34373b",
-    "--kk-amber-soft": "#3a2f12",
-    "--kk-amber-ink": "#f5cf6b",
-    "--kk-success": "#5ccfc4",
-    "--kk-success-soft": "#10302d",
+    "--kk-surface": "#1d2026",
+    "--kk-surface-sunken": "#2a2e35",
+    "--kk-line": "#30343c",
+    "--kk-link": "#7fb0ff",
+    "--kk-warning": "#f2c38a",
+    "--kk-chart-bar": "#3a3f48",
+    "--kk-amber-soft": "#3a2a14",
+    "--kk-amber-ink": "#f2c38a",
+    "--kk-info-soft": "#16283d",
+    "--kk-info-ink": "#9cc6f5",
+    "--kk-neutral-soft": "#2a2e35",
+    "--kk-neutral-ink": "#c3c8d0",
+    "--kk-success": "#86d4ad",
+    "--kk-success-soft": "#13301f",
+    "--kk-success-ink": "#86d4ad",
     "--kk-danger": "#ff8b7d",
     "--kk-danger-soft": "#3b1d19",
   },
