@@ -64,7 +64,7 @@ export function ProductRules() {
             применяются к заявке после скоринга.
           </Text>
           <div style={{ overflowX: "auto" }}>
-            <Table miw={860} aria-label="Продукты и правила">
+            <Table miw={980} aria-label="Продукты и правила">
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th>Продукт</Table.Th>
@@ -74,6 +74,7 @@ export function ProductRules() {
                   <Table.Th>Мин. балл</Table.Th>
                   <Table.Th>Долг к выручке</Table.Th>
                   <Table.Th>Возраст бизнеса</Table.Th>
+                  <Table.Th>Обеспечение</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody style={{ fontVariantNumeric: "tabular-nums" }}>
@@ -97,6 +98,7 @@ export function ProductRules() {
                     <Table.Td>{p.minScore}</Table.Td>
                     <Table.Td>до {Math.round(p.maxDebtLoad * 100)} %</Table.Td>
                     <Table.Td>от {p.minBusinessAgeMonths} мес.</Table.Td>
+                    <Table.Td>{p.collateral ?? "Не требуется"}</Table.Td>
                   </Table.Tr>
                 ))}
               </Table.Tbody>

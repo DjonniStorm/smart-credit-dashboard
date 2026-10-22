@@ -62,6 +62,8 @@ function log(
   title: string,
   comment: string | null = null,
   toStatus: ApplicationStatus | null = null,
+  kind: "status_changed" | "action" | "comment_added" | "handoff" | "hold" =
+    toStatus ? "status_changed" : "action",
 ) {
   const { app } = rec;
   app.events.push({
@@ -73,6 +75,7 @@ function log(
     comment,
     fromStatus: toStatus && toStatus !== app.status ? app.status : null,
     toStatus: toStatus && toStatus !== app.status ? toStatus : null,
+    kind,
   });
   if (toStatus) app.status = toStatus;
   app.updatedAt = new Date(now).toISOString();
@@ -285,6 +288,8 @@ export function applyAction(
       actor,
       action.type === "pause" ? "Заявка поставлена на паузу" : "Заявка заблокирована",
       action.reason,
+      null,
+      "hold",
     );
     return;
   }
@@ -295,7 +300,15 @@ export function applyAction(
     app.waitingOn = hold.previousWaitingOn;
     app.blocker = hold.previousBlocker;
     app.hold = null;
-    log(rec, now, actor, "Заявка возвращена в работу", action.comment || null);
+    log(
+      rec,
+      now,
+      actor,
+      "Заявка возвращена в работу",
+      action.comment || null,
+      null,
+      "hold",
+    );
     return;
   }
 
@@ -304,6 +317,62 @@ export function applyAction(
   }
 
   switch (action.type) {
+    case "comment": {
+      app.comments ??= [];
+      app.comments.push({
+        id: `${app.id}-comment-${app.comments.length + 1}`,
+        applicationId: app.id,
+        at: new Date(now).toISOString(),
+        author: actor,
+        visibility: action.visibility,
+        body: action.body,
+      });
+      log(rec, now, actor, "Добавлен комментарий", action.body, null, "comment_added");
+      return;
+    }
+    case "handoff": {
+      if (app.status === "rejected" || app.status === "disbursed" || app.waitingOn === "nobody") {
+        throw new ArmActionError("Закрытую заявку нельзя передать.");
+      }
+      const to = employees.find((e) => e.id === action.assigneeId);
+      if (!to) throw new ArmActionError("Такого сотрудника нет.");
+      app.comments ??= [];
+      app.comments.push({
+        id: `${app.id}-comment-${app.comments.length + 1}`,
+        applicationId: app.id,
+        at: new Date(now).toISOString(),
+        author: actor,
+        visibility: "handoff",
+        body: action.summary,
+      });
+      app.handoff = {
+        id: `${app.id}-handoff-${app.events.length + 1}`,
+        applicationId: app.id,
+        at: new Date(now).toISOString(),
+        from: actor,
+        toEmployeeId: to.id,
+        summary: action.summary,
+        verifiedFacts: action.verifiedFacts,
+        openQuestions: action.openQuestions,
+        requestedItems: action.requestedItems,
+        nextStep: action.nextStep,
+      };
+      app.assigneeId = to.id;
+      log(rec, now, actor, `Передано: ${to.name}`, action.summary, null, "handoff");
+      return;
+    }
+    case "cancel": {
+      if (app.status === "rejected" || app.status === "disbursed" || app.waitingOn === "nobody") {
+        throw new ArmActionError("Заявка уже закрыта.");
+      }
+      app.rejectReason = "other";
+      app.waitingOn = "nobody";
+      app.blocker = `Отменено: ${action.reason}`;
+      log(rec, now, actor, "Заявка отменена", action.reason, "rejected");
+      return;
+    }
+    case "set_urgent":
+      throw new ArmActionError("Срочный режим пока не подключён к модели заявки.");
     case "approve": {
       assertDecisionStage(app);
       // Одобрение всегда на условиях заявки. Другие условия: встречное предложение.

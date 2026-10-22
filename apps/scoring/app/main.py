@@ -31,6 +31,16 @@ class ScoreRequest(BaseModel):
     egrul: EgrulInput
     bki: BkiInput
     fns: FnsInput
+    # Данные заявки необязательны для обратной совместимости с company-check.
+    # Если их нет, сервис считает только профильный baseline и не одобряет заявку.
+    requestedAmount: Optional[float] = Field(default=None, ge=0)
+    termMonths: Optional[int] = Field(default=None, ge=0)
+    annualRevenue: Optional[float] = Field(default=None, ge=0)
+    monthlyExpenses: Optional[float] = Field(default=None, ge=0)
+    currentPayments: Optional[float] = Field(default=None, ge=0)
+    documentsComplete: bool = False
+    consentBki: bool = False
+    collateralConfirmed: bool = False
 
 
 class ScoreFactor(BaseModel):
@@ -38,6 +48,8 @@ class ScoreFactor(BaseModel):
     label: str
     value: str
     impact: float
+    source: Optional[str] = None
+    confidence: Optional[float] = Field(default=None, ge=0, le=1)
 
 
 class ScoreResponse(BaseModel):
@@ -45,6 +57,18 @@ class ScoreResponse(BaseModel):
     score: float
     model: str
     factors: list[ScoreFactor] = Field(default_factory=list)
+    model_version: str = "2026-10-23"
+    grade: Literal["A", "B", "C", "D"] = "C"
+    pd: float = Field(default=0.2, ge=0, le=1)
+    risk_band: Literal["low", "moderate", "high"] = "moderate"
+    health_index: float = Field(default=0, ge=0, le=100)
+    readiness_index: float = Field(default=0, ge=0, le=100)
+    confidence: float = Field(default=0, ge=0, le=1)
+    recommendation: Literal[
+        "approve", "counter_offer", "request_info", "manual_review", "reject"
+    ] = "manual_review"
+    reasons: list[str] = Field(default_factory=list)
+    next_actions: list[str] = Field(default_factory=list)
 
 
 def _number(payload: BaseModel, key: str) -> Optional[float]:
@@ -129,6 +153,95 @@ def calculate_score(req: ScoreRequest) -> float:
     return score
 
 
+def _derived_result(req: ScoreRequest, score: float) -> dict[str, object]:
+    """Риск/готовность для decision engine; не является гарантией одобрения."""
+    grade = "A" if score >= 70 else "B" if score >= 55 else "C" if score >= 42 else "D"
+    risk_band = "low" if grade == "A" else "moderate" if grade in {"B", "C"} else "high"
+    # Демонстрационная монотонная проекция. Калибровка PD появится только после
+    # появления размеченного временного датасета и отдельного calibration split.
+    pd = max(0.01, min(0.5, 0.35 - score * 0.003))
+
+    overdue = _number(req.bki, "overdueDays")
+    tax_debt = _number(req.fns, "taxDebtRub")
+    health = score
+    if overdue is None or tax_debt is None:
+        health -= 8
+    if overdue is not None and overdue > 30:
+        health -= 20
+    if tax_debt is not None and tax_debt > 0:
+        health -= 8
+    health_index = max(0.0, min(100.0, health))
+
+    readiness_parts = [req.consentBki, req.documentsComplete]
+    if req.requestedAmount is not None and req.termMonths is not None:
+        readiness_parts.append(True)
+    if req.annualRevenue is not None:
+        readiness_parts.append(True)
+    readiness_index = round(100 * sum(readiness_parts) / len(readiness_parts))
+    missing = []
+    if not req.consentBki:
+        missing.append("согласие на запрос БКИ")
+    if not req.documentsComplete:
+        missing.append("подтверждающие документы")
+    if req.requestedAmount is None or req.termMonths is None:
+        missing.append("сумма и срок заявки")
+    if req.annualRevenue is None:
+        missing.append("годовая выручка")
+    confidence = max(0.1, min(1.0, readiness_index / 100))
+    reasons: list[str] = []
+    next_actions: list[str] = []
+    if overdue is not None and overdue > 30:
+        recommendation = "reject"
+        reasons.append("Просрочка в БКИ больше 30 дней")
+        next_actions.append("Проверить причину просрочки и подать новую заявку после погашения")
+    elif missing:
+        recommendation = "request_info"
+        reasons.append("Недостаточно подтверждённых данных")
+        next_actions.append("Предоставить: " + ", ".join(missing))
+    elif tax_debt is not None and tax_debt > 100_000:
+        recommendation = "manual_review"
+        reasons.append("Налоговая задолженность требует ручной проверки")
+        next_actions.append("Загрузить справку об отсутствии задолженности")
+    elif score < 42:
+        recommendation = "reject"
+        reasons.append("Балл ниже минимального порога")
+        next_actions.append("Изменить сумму или срок и повторно пройти проверку")
+    elif req.annualRevenue and req.requestedAmount:
+        projected_load = (req.currentPayments or 0) + req.requestedAmount / max(
+            1, (req.termMonths or 12)
+        )
+        projected_load = projected_load * 12 / req.annualRevenue
+        if projected_load > 0.7:
+            recommendation = "counter_offer"
+            reasons.append("Запрошенная сумма создаёт высокую долговую нагрузку")
+            next_actions.append("Рассмотреть меньшую сумму или больший срок")
+        elif score >= 70:
+            recommendation = "approve"
+            reasons.append("Стоп-факторы отсутствуют, данные подтверждены")
+            next_actions.append("Передать рекомендацию менеджеру на подтверждение")
+        else:
+            recommendation = "manual_review"
+            reasons.append("Профиль находится в зоне ручной проверки")
+            next_actions.append("Проверить факторы и принять решение сотрудником")
+    else:
+        recommendation = "manual_review"
+        reasons.append("Для рекомендации нужны параметры заявки")
+        next_actions.append("Передать сумму, срок и финансовые показатели")
+
+    return {
+        "model_version": "2026-10-23",
+        "grade": grade,
+        "pd": round(pd, 4),
+        "risk_band": risk_band,
+        "health_index": round(health_index, 1),
+        "readiness_index": readiness_index,
+        "confidence": round(confidence, 3),
+        "recommendation": recommendation,
+        "reasons": reasons,
+        "next_actions": next_actions,
+    }
+
+
 @app.get("/health")
 def health() -> Health:
     return Health(status="ok", service="scoring")
@@ -137,9 +250,11 @@ def health() -> Health:
 @app.post("/v1/score")
 def score(req: ScoreRequest) -> ScoreResponse:
     score_value, factors = calculate_score_details(req)
+    derived = _derived_result(req, score_value)
     return ScoreResponse(
         inn=req.inn,
         score=score_value,
-        model="rules-baseline-v1",
+        model="rules-baseline-v2",
         factors=factors,
+        **derived,
     )

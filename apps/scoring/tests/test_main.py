@@ -1,6 +1,6 @@
 import unittest
 
-from app.main import ScoreRequest, calculate_score, calculate_score_details
+from app.main import ScoreRequest, calculate_score, calculate_score_details, score
 
 
 def request(**overrides: object) -> ScoreRequest:
@@ -34,6 +34,43 @@ class ScoreTests(unittest.TestCase):
         self.assertGreaterEqual(score, 0)
         self.assertLessEqual(score, 100)
         self.assertEqual(len(factors), 4)
+
+    def test_decision_contract_requests_missing_evidence(self) -> None:
+        result = score(request())
+        self.assertEqual(result.model, "rules-baseline-v2")
+        self.assertEqual(result.recommendation, "request_info")
+        self.assertLess(result.readiness_index, 100)
+        self.assertGreaterEqual(result.confidence, 0)
+
+    def test_complete_low_risk_profile_can_be_recommended(self) -> None:
+        result = score(
+            request(
+                requestedAmount=1_000_000,
+                termMonths=12,
+                annualRevenue=12_000_000,
+                monthlyExpenses=500_000,
+                currentPayments=100_000,
+                documentsComplete=True,
+                consentBki=True,
+            )
+        )
+        self.assertEqual(result.recommendation, "approve")
+        self.assertEqual(result.grade, "A")
+        self.assertGreater(result.readiness_index, 80)
+
+    def test_overdue_is_a_hard_stop(self) -> None:
+        result = score(
+            request(
+                bki={"overdueDays": 45, "activeLoans": 1},
+                documentsComplete=True,
+                consentBki=True,
+                requestedAmount=100_000,
+                termMonths=12,
+                annualRevenue=12_000_000,
+            )
+        )
+        self.assertEqual(result.recommendation, "reject")
+        self.assertTrue(any("Просрочка" in reason for reason in result.reasons))
 
 
 if __name__ == "__main__":
