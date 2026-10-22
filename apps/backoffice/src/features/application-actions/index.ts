@@ -1,2 +1,2 @@
-export { DecisionActions } from "./ui/decision-actions";
+export { ActionBar } from "./ui/action-bar";
 export { RerunCheckButton } from "./ui/rerun-check-button";

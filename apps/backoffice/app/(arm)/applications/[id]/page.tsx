@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { ApplicationWorkspace } from "@/widgets/application-workspace";
+import { ApplicationWorkspace } from "@/widgets/application-panel";
 
 export async function generateMetadata({
   params,

@@ -5,7 +5,6 @@ import {
   Button,
   Checkbox,
   Group,
-  Menu,
   Modal,
   NumberInput,
   Select,
@@ -14,44 +13,22 @@ import {
   TextInput,
   Textarea,
 } from "@mantine/core";
-import {
-  IconAlertCircle,
-  IconChevronDown,
-  IconCircleX,
-} from "@tabler/icons-react";
+import { IconAlertCircle, IconCircleX } from "@tabler/icons-react";
 import { useState } from "react";
 
 import type {
   Application,
   CreditProduct,
   CreditProductId,
-  Employee,
   EmployeeAction,
   RejectReason,
 } from "@repo/contracts/application";
 import { AmountInput } from "@repo/ui/amount-input";
 import { alfi } from "@repo/ui/alfi";
 
-import { productLabel, useApplicationAction } from "@/entities/application";
-import { useEmployees } from "@/entities/employee";
+import { productLabel } from "@/entities/application";
 import { rejectReasonLabel } from "@/shared/api/arm";
 import { amountError, formatRub } from "@/shared/lib/money";
-
-type Dialog = "approve" | "counter" | "request" | "reject" | null;
-
-const recommendedDialog = {
-  approve: "approve",
-  counter_offer: "counter",
-  request_info: "request",
-  reject: "reject",
-} as const;
-
-const buttonLabel = {
-  approve: "Одобрить как в заявке",
-  counter: "Предложить другие условия",
-  request: "Запросить документы",
-  reject: "Отказать",
-};
 
 const DOCUMENTS = [
   "Справка об отсутствии налоговой задолженности",
@@ -60,234 +37,7 @@ const DOCUMENTS = [
   "Договор с покупателем под цель кредита",
 ];
 
-/** Действия сотрудника на этапе решения. Каждое меняет статус и пишется в журнал. */
-export function DecisionActions({
-  app,
-  employee,
-  products,
-}: {
-  app: Application;
-  employee: Employee;
-  products: CreditProduct[];
-}) {
-  const [dialog, setDialog] = useState<Dialog>(null);
-  const mutation = useApplicationAction(app.id, employee.id);
-  const employees = useEmployees();
-
-  const canDecide = app.stage === "decision" && app.waitingOn === "employee";
-  const approveAmount = app.request.amount;
-  const overLimit = approveAmount > employee.approvalLimit;
-  const recommended =
-    recommendedDialog[app.decision?.recommendation ?? "approve"];
-  const order: Exclude<Dialog, null>[] = [
-    recommended,
-    ...(["approve", "counter", "request", "reject"] as const).filter(
-      (k) => k !== recommended,
-    ),
-  ];
-
-  function open(next: Dialog) {
-    mutation.reset();
-    setDialog(next);
-  }
-  const lead = employees.data?.find(
-    (e) => e.role === "lead" && e.id !== employee.id,
-  );
-
-  function run(action: EmployeeAction, done: string) {
-    mutation.mutate(action, {
-      onSuccess: () => {
-        setDialog(null);
-        showAlfiActionFeedback(action, done);
-      },
-    });
-  }
-
-  const others = (employees.data ?? []).filter((e) => e.id !== app.assigneeId);
-
-  return (
-    <Stack gap="sm">
-      {app.assigneeId !== employee.id && app.waitingOn !== "nobody" && (
-        <Button
-          variant="default"
-          loading={mutation.isPending && mutation.variables?.type === "assign"}
-          onClick={() =>
-            run(
-              { type: "assign", assigneeId: employee.id },
-              "Заявка у вас в работе",
-            )
-          }
-        >
-          Взять в работу
-        </Button>
-      )}
-
-      {canDecide ? (
-        <>
-          {overLimit && (
-            <Alert
-              variant="light"
-              color="amber"
-              icon={<IconAlertCircle size={18} aria-hidden />}
-              title="Выше вашего лимита"
-            >
-              Одобрить {formatRub(approveAmount)} может руководитель: ваш лимит{" "}
-              {formatRub(employee.approvalLimit)}.
-              {lead && (
-                <Button
-                  mt="xs"
-                  size="xs"
-                  variant="default"
-                  display="block"
-                  onClick={() =>
-                    run(
-                      { type: "assign", assigneeId: lead.id },
-                      `Передано: ${lead.name}`,
-                    )
-                  }
-                >
-                  Передать руководителю
-                </Button>
-              )}
-            </Alert>
-          )}
-          <Stack gap="xs">
-            {order.map((key) => (
-              <Button
-                key={key}
-                // Красная заливка только у рекомендованного действия, и никогда у отказа.
-                variant={
-                  key === recommended && key !== "reject" ? "filled" : "default"
-                }
-                leftSection={key === "reject" ? <RejectIcon /> : undefined}
-                disabled={key === "approve" && overLimit}
-                onClick={() => open(key)}
-              >
-                {buttonLabel[key]}
-              </Button>
-            ))}
-          </Stack>
-        </>
-      ) : (
-        <Text size="sm" c="dimmed">
-          {app.waitingOn === "system"
-            ? "Проверки идут автоматически. Решение станет доступно после рекомендации."
-            : app.waitingOn === "client"
-              ? "Ход за клиентом. Заявка вернётся к вам, когда он ответит."
-              : app.waitingOn === "nobody"
-                ? "Решение принято, действий не требуется."
-                : "Сначала повторите запрос в источник, который не ответил."}
-        </Text>
-      )}
-
-      {others.length > 0 && app.waitingOn !== "nobody" && (
-        <Menu position="bottom-start" withinPortal>
-          <Menu.Target>
-            <Button
-              variant="subtle"
-              size="xs"
-              rightSection={<IconChevronDown size={14} aria-hidden />}
-              style={{ alignSelf: "flex-start" }}
-            >
-              Передать другому сотруднику
-            </Button>
-          </Menu.Target>
-          <Menu.Dropdown>
-            {others.map((e) => (
-              <Menu.Item
-                key={e.id}
-                onClick={() =>
-                  run(
-                    { type: "assign", assigneeId: e.id },
-                    `Передано: ${e.name}`,
-                  )
-                }
-              >
-                {e.name}
-              </Menu.Item>
-            ))}
-          </Menu.Dropdown>
-        </Menu>
-      )}
-
-      {dialog === "approve" && (
-        <ApproveDialog
-          opened
-          app={app}
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={() => setDialog(null)}
-          onSubmit={(comment) =>
-            run(
-              { type: "approve", comment },
-              "Заявка одобрена, клиент получит договор",
-            )
-          }
-        />
-      )}
-      {dialog === "counter" && (
-        <CounterDialog
-          opened
-          app={app}
-          products={products}
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={() => setDialog(null)}
-          onSubmit={(action) =>
-            run(action, "Встречное предложение отправлено клиенту")
-          }
-        />
-      )}
-      {dialog === "request" && (
-        <RequestDialog
-          opened
-          app={app}
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={() => setDialog(null)}
-          onSubmit={(action) => run(action, "Запрос отправлен клиенту")}
-        />
-      )}
-      {dialog === "reject" && (
-        <RejectDialog
-          opened
-          app={app}
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={() => setDialog(null)}
-          onSubmit={(action) => run(action, "Отказ зафиксирован")}
-        />
-      )}
-    </Stack>
-  );
-}
-
-function showAlfiActionFeedback(action: EmployeeAction, message: string): void {
-  const options = { raw: action.type, withBorder: true };
-
-  switch (action.type) {
-    case "request_info": {
-      alfi.showNeedsInfo(message, options);
-      break;
-    }
-    case "approve":
-    case "counter_offer": {
-      alfi.showOfferReady(message, options);
-      break;
-    }
-    case "reject": {
-      alfi.showDocumentRejected(message, options);
-      break;
-    }
-    case "assign":
-    case "rerun_check": {
-      alfi.showSuccess(message, options);
-      break;
-    }
-  }
-}
-
-function RejectIcon() {
+export function RejectIcon() {
   return <IconCircleX size={16} color="var(--kk-danger)" aria-hidden />;
 }
 
@@ -313,7 +63,7 @@ function ErrorLine({ error }: { error: Error | null }) {
   );
 }
 
-function ApproveDialog({
+export function ApproveDialog({
   opened,
   app,
   pending,
@@ -369,7 +119,7 @@ function ApproveDialog({
   );
 }
 
-function CounterDialog({
+export function CounterDialog({
   opened,
   app,
   products,
@@ -500,7 +250,7 @@ function CounterDialog({
   );
 }
 
-function RequestDialog({
+export function RequestDialog({
   opened,
   app,
   pending,
@@ -581,7 +331,7 @@ function RequestDialog({
   );
 }
 
-function RejectDialog({
+export function RejectDialog({
   opened,
   app,
   pending,
