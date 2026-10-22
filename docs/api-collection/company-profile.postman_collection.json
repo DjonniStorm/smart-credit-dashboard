@@ -1,0 +1,107 @@
+{
+  "info": {
+    "name": "Smart Credit Dashboard — профиль компании",
+    "description": "Проверка профиля компании, согласия на БКИ и ручной проверки недоступного источника.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "inn",
+      "value": "7707083893"
+    },
+    {
+      "key": "unavailableInn",
+      "value": "0000000000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Получить профиль без согласия БКИ",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/companies/{{inn}}/profile",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "companies", "{{inn}}", "profile"]
+        }
+      }
+    },
+    {
+      "name": "Выдать согласие на БКИ",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"granted\": true\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/companies/{{inn}}/consents/bki",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "companies", "{{inn}}", "consents", "bki"]
+        }
+      }
+    },
+    {
+      "name": "Получить профиль после согласия БКИ",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/companies/{{inn}}/profile",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "companies", "{{inn}}", "profile"]
+        }
+      }
+    },
+    {
+      "name": "Повторить согласие на БКИ",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"granted\": true\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/companies/{{inn}}/consents/bki",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "companies", "{{inn}}", "consents", "bki"]
+        }
+      }
+    },
+    {
+      "name": "Ошибочный ИНН",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/companies/not-an-inn/profile",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "companies", "not-an-inn", "profile"]
+        }
+      }
+    },
+    {
+      "name": "Недоступный источник",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"granted\": true\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/companies/{{unavailableInn}}/consents/bki",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "companies", "{{unavailableInn}}", "consents", "bki"]
+        }
+      }
+    }
+  ]
+}

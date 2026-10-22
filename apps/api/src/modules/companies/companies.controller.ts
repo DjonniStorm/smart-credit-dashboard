@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+} from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import {
   ApiBody,
@@ -40,6 +48,7 @@ export class CompaniesController {
   }
 
   @Post(":inn/consents/bki")
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ operationId: "CompaniesController_grantBkiConsent" })
   @ApiParam({ name: "inn", required: true })
   @ApiBody({ type: BkiConsentDto })

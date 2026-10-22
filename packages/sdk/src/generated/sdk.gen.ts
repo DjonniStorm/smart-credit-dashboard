@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CompaniesControllerCheckData, CompaniesControllerCheckResponses, HealthControllerCheckData, HealthControllerCheckResponses } from './types.gen';
+import type { CompaniesControllerCheckData, CompaniesControllerCheckResponses, CompaniesControllerGrantBkiConsentData, CompaniesControllerGrantBkiConsentResponses, CompaniesControllerProfileData, CompaniesControllerProfileResponses, HealthControllerCheckData, HealthControllerCheckResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -21,3 +21,14 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 export const healthControllerCheck = <ThrowOnError extends boolean = false>(options?: Options<HealthControllerCheckData, ThrowOnError>): RequestResult<HealthControllerCheckResponses, unknown, ThrowOnError> => (options?.client ?? client).get<HealthControllerCheckResponses, unknown, ThrowOnError>({ url: '/health', ...options });
 
 export const companiesControllerCheck = <ThrowOnError extends boolean = false>(options: Options<CompaniesControllerCheckData, ThrowOnError>): RequestResult<CompaniesControllerCheckResponses, unknown, ThrowOnError> => (options.client ?? client).get<CompaniesControllerCheckResponses, unknown, ThrowOnError>({ url: '/v1/companies/{inn}/check', ...options });
+
+export const companiesControllerProfile = <ThrowOnError extends boolean = false>(options: Options<CompaniesControllerProfileData, ThrowOnError>): RequestResult<CompaniesControllerProfileResponses, unknown, ThrowOnError> => (options.client ?? client).get<CompaniesControllerProfileResponses, unknown, ThrowOnError>({ url: '/v1/companies/{inn}/profile', ...options });
+
+export const companiesControllerGrantBkiConsent = <ThrowOnError extends boolean = false>(options: Options<CompaniesControllerGrantBkiConsentData, ThrowOnError>): RequestResult<CompaniesControllerGrantBkiConsentResponses, unknown, ThrowOnError> => (options.client ?? client).post<CompaniesControllerGrantBkiConsentResponses, unknown, ThrowOnError>({
+    url: '/v1/companies/{inn}/consents/bki',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});

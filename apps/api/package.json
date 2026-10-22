@@ -9,6 +9,7 @@
     "start": "node dist/main.js",
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit",
+    "check-company-profile": "node scripts/check-company-profile.mjs",
     "generate": "node scripts/ensure-openapi.mjs",
     "dump-openapi": "tsx --tsconfig tsconfig.json scripts/dump-openapi.ts"
   },
