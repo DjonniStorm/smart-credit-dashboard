@@ -239,14 +239,13 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
 
   const amountOk =
     product && !amountError(draft.amount, product.minAmount, product.maxAmount);
+  const term = Number(draft.termMonths);
+  // Платёж показываем только для срока, который клиент ввёл и банк допускает.
+  const termOk =
+    product && term >= product.minTermMonths && term <= product.maxTermMonths;
   const preview =
-    product && amountOk
-      ? estimate(
-          product,
-          catalog.data.keyRate,
-          Number(draft.amount),
-          Number(draft.termMonths) || product.minTermMonths,
-        )
+    product && amountOk && termOk
+      ? estimate(product, catalog.data.keyRate, Number(draft.amount), term)
       : null;
 
   const steps: ReactNode[] = [
@@ -465,7 +464,7 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
           purpose={draft.purpose}
           product={product}
           amount={amountOk ? Number(draft.amount) : null}
-          termMonths={Number(draft.termMonths) || null}
+          termMonths={termOk ? term : null}
           preview={preview}
           onEdit={() => go(0)}
         />

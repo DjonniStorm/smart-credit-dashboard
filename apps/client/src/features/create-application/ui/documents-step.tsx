@@ -43,7 +43,7 @@ export function DocumentsStep({
             onChange([
               ...documents,
               ...files.map((f) => ({
-                id: `${f.name}-${f.size}-${f.lastModified}`,
+                id: crypto.randomUUID(),
                 name: f.name,
                 kind: "other" as const,
                 sizeBytes: f.size,
