@@ -550,6 +550,8 @@ export function createSeed(now: number): MockRecord[] {
         stage: "intake",
         waitingOn: "system",
         hold: null,
+        urgent: false,
+        urgentReason: null,
         comments: [],
         handoff: null,
         blocker: "",

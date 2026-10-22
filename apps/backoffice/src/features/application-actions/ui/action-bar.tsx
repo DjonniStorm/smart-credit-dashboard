@@ -32,14 +32,17 @@ import { formatRub } from "@/shared/lib/money";
 
 import {
   ApproveDialog,
+  CancelDialog,
+  CommentDialog,
   CounterDialog,
+  HandoffDialog,
   HoldDialog,
   RejectDialog,
   RejectIcon,
   RequestDialog,
 } from "./dialogs";
 
-type Dialog = "approve" | "counter" | "request" | "reject" | "pause" | "block";
+type Dialog = "approve" | "counter" | "request" | "reject" | "pause" | "block" | "comment" | "handoff" | "cancel";
 
 const recommendedDialog = {
   approve: "approve",
@@ -55,6 +58,9 @@ const dialogLabel: Record<Dialog, string> = {
   reject: "Отказать",
   pause: "Поставить на паузу",
   block: "Заблокировать",
+  comment: "Добавить комментарий",
+  handoff: "Передать с резюме",
+  cancel: "Отменить заявку",
 };
 
 /** Ответ клиента, которого ждёт заявка. В демо его делает сотрудник. */
@@ -208,6 +214,20 @@ export function ActionBar({
         ]
       : [];
 
+  const terminal = app.status === "rejected" || app.status === "disbursed" || app.waitingOn === "nobody";
+  const contextActions: Item[] = app.hold || terminal
+    ? []
+    : [
+        { key: "comment", label: dialogLabel.comment, run: () => open("comment") },
+        { key: "handoff", label: dialogLabel.handoff, run: () => open("handoff") },
+        { key: "cancel", label: dialogLabel.cancel, run: () => open("cancel") },
+        {
+          key: "urgent",
+          label: app.urgent ? "Снять срочный режим" : "Включить срочный режим",
+          run: () => run({ type: "set_urgent", enabled: !app.urgent, reason: app.urgent ? "" : "Приоритетная обработка" }, app.urgent ? "Срочный режим снят" : "Заявка отмечена как срочная"),
+        },
+      ];
+
   // Красная только у рекомендованного решения, и никогда у отказа.
   // Если одобрить нельзя по лимиту, следующий шаг: передать руководителю.
   const firstDecision = decisions[0];
@@ -225,7 +245,7 @@ export function ActionBar({
   }
 
   // Пока ход за клиентом, процесс двигает только его ответ: он идёт вторым.
-  const rest = [demo, take, toLead, ...decisions, ...transfers, ...holdActions].filter(
+  const rest = [demo, take, toLead, ...decisions, ...transfers, ...holdActions, ...contextActions].filter(
     (i): i is Item => i !== null && i.key !== primary?.key,
   );
   const secondary = rest.find((i) => !i.disabled) ?? null;
@@ -401,6 +421,34 @@ export function ActionBar({
                 : "Заявка заблокирована",
             )
           }
+        />
+      )}
+      {dialog === "comment" && (
+        <CommentDialog
+          opened
+          pending={mutation.isPending}
+          error={mutation.error}
+          onClose={() => setDialog(null)}
+          onSubmit={(action) => run(action, "Комментарий добавлен в историю")}
+        />
+      )}
+      {dialog === "handoff" && (
+        <HandoffDialog
+          opened
+          employees={(employees.data ?? []).filter((e) => e.id !== employee.id)}
+          pending={mutation.isPending}
+          error={mutation.error}
+          onClose={() => setDialog(null)}
+          onSubmit={(action) => run(action, "Заявка передана с резюме")}
+        />
+      )}
+      {dialog === "cancel" && (
+        <CancelDialog
+          opened
+          pending={mutation.isPending}
+          error={mutation.error}
+          onClose={() => setDialog(null)}
+          onSubmit={(action) => run(action, "Заявка отменена")}
         />
       )}
     </Stack>

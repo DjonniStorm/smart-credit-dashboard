@@ -7,6 +7,7 @@
     ".": "./src/index.ts",
     "./cabinet": "./src/cabinet.ts",
     "./application": "./src/application.ts",
+    "./workflow": "./src/workflow.ts",
     "./company-profile": "./src/company-profile.ts"
   },
   "scripts": {

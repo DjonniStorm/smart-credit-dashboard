@@ -137,7 +137,11 @@ export function ApplicationPanel({
                 <RiskBlock app={query.data} />
               </Tabs.Panel>
               <Tabs.Panel value="history" pt="md">
-                <EventTimeline events={query.data.events} />
+                <EventTimeline
+                  events={query.data.events}
+                  comments={query.data.comments}
+                  handoff={query.data.handoff}
+                />
               </Tabs.Panel>
             </Tabs>
           </>

@@ -330,6 +330,8 @@ export const applicationSchema = z.object({
   stage: applicationStageSchema,
   waitingOn: waitingOnSchema,
   hold: applicationHoldSchema.nullable().default(null),
+  urgent: z.boolean().default(false),
+  urgentReason: z.string().nullable().default(null),
   comments: z.array(applicationCommentSchema).default([]),
   handoff: applicationHandoffSchema.nullable().default(null),
   /** Что мешает решению, одной фразой. */

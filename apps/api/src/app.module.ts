@@ -6,6 +6,7 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from "nestjs-zod";
 import { ConfigModule } from "./common/config/config.module.ts";
 import { DatabaseModule } from "./common/database/database.module.ts";
 import { CompaniesModule } from "./modules/companies/companies.module.ts";
+import { ApplicationsModule } from "./modules/applications/applications.module.ts";
 import { ExampleModule } from "./modules/example/example.module.ts";
 import { HealthModule } from "./modules/health/health.module.ts";
 
@@ -16,6 +17,7 @@ import { HealthModule } from "./modules/health/health.module.ts";
     DatabaseModule,
     HealthModule,
     CompaniesModule,
+    ApplicationsModule,
     ExampleModule,
   ],
   providers: [

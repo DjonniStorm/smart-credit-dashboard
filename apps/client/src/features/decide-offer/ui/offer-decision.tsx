@@ -58,7 +58,7 @@ export function OfferDecision({
   const error = accept.error ?? decline.error;
 
   return (
-    <Card>
+    <Card data-testid="offer-decision">
       <Stack gap="md">
         <Group justify="space-between" align="flex-start" gap="sm">
           <Title order={2} size="h3">
@@ -110,6 +110,7 @@ export function OfferDecision({
         </Text>
         <Group gap="sm">
           <Button
+            data-testid="offer-accept"
             onClick={() => accept.mutate()}
             loading={accept.isPending}
             disabled={decline.isPending}
@@ -117,6 +118,7 @@ export function OfferDecision({
             {t.accept}
           </Button>
           <Button
+            data-testid="offer-decline"
             variant="subtle"
             onClick={confirmDecline}
             loading={decline.isPending}

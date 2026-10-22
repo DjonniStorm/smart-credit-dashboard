@@ -14,6 +14,7 @@ import { IconSearch } from "@tabler/icons-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import type { ApplicationStatus } from "@repo/contracts";
 import type { Actor } from "@repo/contracts/application";
 import { StateBlock } from "@repo/ui/state-block";
 
@@ -29,6 +30,17 @@ type ActorFilter = Actor["kind"] | "all";
 
 const PAGE = 50;
 
+type JournalEntry = {
+  id: string;
+  at: string;
+  app: (typeof useApplications extends never ? never : NonNullable<ReturnType<typeof useApplications>["data"]>[number]);
+  actor: Actor;
+  title: string;
+  comment: string | null;
+  toStatus: ApplicationStatus | null;
+  kind?: string;
+};
+
 /** Журнал действий по всем заявкам: кто и когда менял заявку. */
 export function JournalTable() {
   const apps = useApplications();
@@ -36,10 +48,34 @@ export function JournalTable() {
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(PAGE);
 
-  const events = useMemo(() => {
+  const events = useMemo<JournalEntry[]>(() => {
     const q = search.trim().toLowerCase();
     return (apps.data ?? [])
-      .flatMap((a) => a.events.map((e) => ({ ...e, app: a })))
+      .flatMap((a) => [
+        ...a.events.map((e) => ({ ...e, app: a })),
+        ...a.comments.map((comment) => ({
+          id: comment.id,
+          at: comment.at,
+          app: a,
+          actor: comment.author,
+          title: comment.visibility === "handoff" ? "Комментарий для передачи" : "Добавлен комментарий",
+          comment: comment.body,
+          toStatus: null,
+          kind: "comment_added",
+        })),
+        ...(a.handoff
+          ? [{
+              id: a.handoff.id,
+              at: a.handoff.at,
+              app: a,
+              actor: a.handoff.from,
+              title: `Передача заявки сотруднику ${a.handoff.toEmployeeId}`,
+              comment: `${a.handoff.summary} Следующий шаг: ${a.handoff.nextStep}`,
+              toStatus: null,
+              kind: "handoff",
+            }]
+          : []),
+      ])
       .filter((e) => actor === "all" || e.actor.kind === actor)
       .filter(
         (e) =>
