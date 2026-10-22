@@ -9,13 +9,13 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
 
 import { ColorSchemeToggle } from "@repo/ui/color-scheme-toggle";
+import { alfi } from "@repo/ui/alfi";
 import { StateBlock } from "@repo/ui/state-block";
 
 import { useSession, useSignOut } from "@/entities/session";
@@ -54,7 +54,7 @@ export function CabinetShell({ children }: { children: ReactNode }) {
   function reset() {
     resetMockState();
     queryClient.clear();
-    notifications.show({ message: tx.demo.resetDone });
+    alfi.showSuccess(tx.demo.resetDone, { raw: "demo_reset_completed" });
     router.replace("/login");
   }
 

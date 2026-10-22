@@ -501,6 +501,9 @@ importers:
       '@mantine/hooks':
         specifier: 9.7.3
         version: 9.7.3(react@19.2.8)
+      '@mantine/notifications':
+        specifier: 9.7.3
+        version: 9.7.3(@mantine/core@9.7.3(@mantine/hooks@9.7.3(react@19.2.8))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@mantine/hooks@9.7.3(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@repo/contracts':
         specifier: workspace:*
         version: link:../contracts
