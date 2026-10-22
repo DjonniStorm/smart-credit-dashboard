@@ -6,6 +6,7 @@ import {
   demoAccountSchema,
   productCatalogSchema,
 } from "@repo/contracts/cabinet";
+import { companyProfileResponseSchema } from "@repo/contracts/company-profile";
 
 import { ApiError, type CabinetApi } from "./types";
 
@@ -52,6 +53,13 @@ export const httpApi: CabinetApi = {
     call(z.unknown(), "/auth/sign-out", post).then(() => undefined),
 
   getCatalog: () => call(productCatalogSchema, "/products"),
+  getCompanyProfile: (inn) =>
+    call(companyProfileResponseSchema, `/v1/companies/${inn}/profile`),
+  grantBkiConsent: (inn) =>
+    call(companyProfileResponseSchema, `/v1/companies/${inn}/consents/bki`, {
+      ...post,
+      json: { granted: true },
+    }),
   lookupCompany: (inn) => call(companyProfileSchema, `/companies/${inn}/egrul`),
 
   listApplications: () => call(z.array(applicationSchema), "/applications"),
