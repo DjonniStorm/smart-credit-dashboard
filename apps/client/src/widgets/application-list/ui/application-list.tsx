@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Group, Paper, Stack, Text, Title } from "@mantine/core";
+import { Button, Card, Group, Stack, Text, Title } from "@mantine/core";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -22,7 +22,7 @@ import {
 } from "@/entities/application";
 import { useCatalog } from "@/entities/product";
 import { useSession } from "@/entities/session";
-import { formatDate, tx } from "@/shared/i18n";
+import { formatDate, lx, tx } from "@/shared/i18n";
 import { QueryError } from "@/shared/ui/query-state";
 
 const t = tx.home;
@@ -73,7 +73,7 @@ export function ApplicationList() {
     content = (
       <Stack gap="lg">
         {draft && (
-          <Paper withBorder radius="lg" p="lg">
+          <Card>
             <Group justify="space-between" gap="md" align="center">
               <Stack gap={4}>
                 <Group gap="sm">
@@ -106,7 +106,7 @@ export function ApplicationList() {
                 </Button>
               </Group>
             </Group>
-          </Paper>
+          </Card>
         )}
         {sorted.map((app) => {
           const stage = stageOf(app);
@@ -142,10 +142,10 @@ export function ApplicationList() {
   const waiting = apps.data?.find(needsClient);
 
   return (
-    <Stack gap="xl">
+    <Stack gap="lg">
       <Group justify="space-between" align="flex-end" gap="md">
         <Stack gap={6}>
-          <Title order={1}>{t.title}</Title>
+          <Title order={1}>{lx.applications.title}</Title>
           {waiting && (
             <Text>
               <Marker>{t.needsYou(waiting.number)}</Marker>

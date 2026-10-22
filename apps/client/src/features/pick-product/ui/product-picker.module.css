@@ -1,13 +1,13 @@
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
-  gap: calc(var(--mantine-spacing-xl) * 1.5);
+  gap: 24px;
   align-items: start;
 }
 
 .form {
   position: sticky;
-  top: var(--mantine-spacing-lg);
+  top: calc(52px + var(--mantine-spacing-lg));
 }
 
 .purpose[data-checked] {

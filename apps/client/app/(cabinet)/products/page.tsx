@@ -8,10 +8,12 @@ export const metadata: Metadata = { title: tx.products.title };
 
 export default function ProductsPage() {
   return (
-    <Stack gap="xl">
+    <Stack gap="lg">
       <Stack gap={6}>
         <Title order={1}>{tx.products.title}</Title>
-        <Text maw={640}>{tx.products.lead}</Text>
+        <Text c="dimmed" maw={640}>
+          {tx.products.lead}
+        </Text>
       </Stack>
       <ProductPicker />
     </Stack>

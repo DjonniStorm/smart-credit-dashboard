@@ -3,9 +3,9 @@
 import {
   Alert,
   Button,
+  Card,
   Group,
   List,
-  Paper,
   PinInput,
   SimpleGrid,
   Stack,
@@ -66,7 +66,7 @@ export function SignContract({ app }: { app: Application }) {
 
   return (
     <Stack gap="lg">
-      <Paper withBorder radius="lg" p="lg">
+      <Card>
         <Stack gap="md">
           <Title order={2} size="h3">
             {t.terms}
@@ -96,9 +96,9 @@ export function SignContract({ app }: { app: Application }) {
             ))}
           </List>
         </Stack>
-      </Paper>
+      </Card>
 
-      <Paper withBorder radius="lg" p="lg">
+      <Card>
         <Stack gap="md" align="flex-start">
           {!requestCode.data ? (
             <Button
@@ -155,7 +155,7 @@ export function SignContract({ app }: { app: Application }) {
             <InlineError>{requestCode.error.message}</InlineError>
           )}
         </Stack>
-      </Paper>
+      </Card>
     </Stack>
   );
 }

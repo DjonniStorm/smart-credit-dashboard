@@ -2,9 +2,9 @@
 
 import {
   Button,
+  Card,
   Group,
   NumberInput,
-  Paper,
   Radio,
   SimpleGrid,
   Stack,
@@ -85,7 +85,7 @@ export function ProductPicker() {
                 term: String(termNum),
               });
               return (
-                <Paper key={p.id} withBorder radius="lg" p="lg">
+                <Card key={p.id}>
                   <Stack gap="md">
                     <div>
                       <Title order={3}>{p.name}</Title>
@@ -140,7 +140,7 @@ export function ProductPicker() {
                       </Button>
                     </Group>
                   </Stack>
-                </Paper>
+                </Card>
               );
             })}
           </>
@@ -151,54 +151,56 @@ export function ProductPicker() {
 
   return (
     <div className={classes.layout}>
-      <Stack gap="lg" className={classes.form}>
-        <Radio.Group
-          label={t.purposeLabel}
-          value={purpose}
-          onChange={(v) => setPurpose(v as CreditPurpose)}
-        >
-          <Stack gap="xs" mt="xs">
-            {purposes.map((p) => (
-              <Radio.Card
-                key={p}
-                value={p}
-                radius="md"
-                className={classes.purpose}
-              >
-                <Group wrap="nowrap" align="flex-start" gap="sm">
-                  <Radio.Indicator mt={2} color="primary" />
-                  <div>
-                    <Text fw={500}>{tx.purposes[p].label}</Text>
-                    <Text size="sm" c="dimmed">
-                      {tx.purposes[p].hint}
-                    </Text>
-                  </div>
-                </Group>
-              </Radio.Card>
-            ))}
-          </Stack>
-        </Radio.Group>
-        <AmountInput
-          label={t.amountLabel}
-          min={LIMITS.min}
-          max={LIMITS.max}
-          value={amount}
-          onChange={setAmount}
-          onBlur={() => setAmountTouched(true)}
-          showError={amountTouched}
-        />
-        <NumberInput
-          label={t.termLabel}
-          description={t.termDescription}
-          suffix=" мес."
-          min={1}
-          max={60}
-          value={term}
-          onChange={setTerm}
-          hideControls
-          inputMode="numeric"
-        />
-      </Stack>
+      <Card className={classes.form}>
+        <Stack gap="lg">
+          <Radio.Group
+            label={t.purposeLabel}
+            value={purpose}
+            onChange={(v) => setPurpose(v as CreditPurpose)}
+          >
+            <Stack gap="xs" mt="xs">
+              {purposes.map((p) => (
+                <Radio.Card
+                  key={p}
+                  value={p}
+                  radius="md"
+                  className={classes.purpose}
+                >
+                  <Group wrap="nowrap" align="flex-start" gap="sm">
+                    <Radio.Indicator mt={2} color="primary" />
+                    <div>
+                      <Text fw={500}>{tx.purposes[p].label}</Text>
+                      <Text size="sm" c="dimmed">
+                        {tx.purposes[p].hint}
+                      </Text>
+                    </div>
+                  </Group>
+                </Radio.Card>
+              ))}
+            </Stack>
+          </Radio.Group>
+          <AmountInput
+            label={t.amountLabel}
+            min={LIMITS.min}
+            max={LIMITS.max}
+            value={amount}
+            onChange={setAmount}
+            onBlur={() => setAmountTouched(true)}
+            showError={amountTouched}
+          />
+          <NumberInput
+            label={t.termLabel}
+            description={t.termDescription}
+            suffix=" мес."
+            min={1}
+            max={60}
+            value={term}
+            onChange={setTerm}
+            hideControls
+            inputMode="numeric"
+          />
+        </Stack>
+      </Card>
       <div className={classes.results} aria-live="polite">
         {results}
       </div>

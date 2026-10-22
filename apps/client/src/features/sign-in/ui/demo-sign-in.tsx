@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Group, Paper, Stack, Text, Title } from "@mantine/core";
+import { Button, Card, Group, Stack, Text, Title } from "@mantine/core";
 import { useRouter } from "next/navigation";
 
 import { StateBlock } from "@repo/ui/state-block";
@@ -29,7 +29,7 @@ export function DemoSignIn() {
   return (
     <Stack gap="md" component="ul" p={0} m={0} style={{ listStyle: "none" }}>
       {accounts.data.map((a) => (
-        <Paper component="li" key={a.id} withBorder p="lg" radius="lg">
+        <Card component="li" key={a.id}>
           <Group justify="space-between" align="flex-start" gap="lg">
             <Stack gap={4} maw={520}>
               <Title order={3}>{a.company.name}</Title>
@@ -54,7 +54,7 @@ export function DemoSignIn() {
               {t.signInAs(a.person)}
             </Button>
           </Group>
-        </Paper>
+        </Card>
       ))}
     </Stack>
   );

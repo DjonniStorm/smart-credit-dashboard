@@ -2,8 +2,8 @@
 
 import {
   Button,
+  Card,
   FileInput,
-  Paper,
   Stack,
   Text,
   Textarea,
@@ -56,7 +56,7 @@ export function AnswerRequestForm({
   }
 
   return (
-    <Paper withBorder radius="lg" p="lg">
+    <Card>
       <Stack gap="md">
         <Title order={2} size="h3">
           {t.title}
@@ -92,6 +92,6 @@ export function AnswerRequestForm({
           </Button>
         </div>
       </Stack>
-    </Paper>
+    </Card>
   );
 }
