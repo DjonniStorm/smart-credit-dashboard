@@ -9,6 +9,8 @@ from app.ml_pipeline import (
     log_loss,
     rank_auc,
     synthetic_pd_dataset,
+    drift_report,
+    evaluate_model,
 )
 
 
@@ -33,6 +35,15 @@ class MlPipelineTests(unittest.TestCase):
 
     def test_synthetic_dataset_is_reproducible(self) -> None:
         self.assertEqual(synthetic_pd_dataset(20, seed=11), synthetic_pd_dataset(20, seed=11))
+
+    def test_evaluation_and_drift_report(self) -> None:
+        labels = [0, 0, 1, 1]
+        probabilities = [0.1, 0.2, 0.7, 0.9]
+        evaluation = evaluate_model("challenger", labels, probabilities)
+        self.assertEqual(evaluation.model, "challenger")
+        self.assertEqual(evaluation.auc, 1.0)
+        report = drift_report([0.1, 0.2, 0.3], [0.8, 0.9, 1.0])
+        self.assertTrue(report.population_shifted)
 
 
 if __name__ == "__main__":

@@ -1,37 +1,40 @@
-### Архитектура
-- Требования описаны в `REQUIREMENTS.md`
-- Установка базового шаблона - `pnpm dlx create-turbo@latest`. Команды в `TURBO.md`
-Архитектура является монорепозиторием с множеством packages в рамках JS-воркспейса с использованием оркестратора тасок Turborepo и пакетного менеджера pnpm.
+# Архитектура сквозного контура
 
-Структура репозитория:
+```text
+Client cabinet ──HTTP──> API ──> PostgreSQL
+                              ├─> durable jobs ──> Worker
+                              │                    ├─> source adapters
+                              │                    └─> scoring/decision engine
+                              ├─> object storage (documents)
+                              └─> audit/event log
 
-alfa-future/
-├── apps/
-│   ├── client/          # кабинет предпринимателя (бывший web)
-│   ├── backoffice/      # АРМ сотрудника банка (бывший docs)
-│   ├── api/             # заявки, статусы, кредитное решение, БД
-│   ├── scoring/         # Python: оценка риска (правила/баллы)
-│   └── mocks/           # симуляторы БКИ, ЕГРЮЛ/ЕГРИП, ФНС
-├── packages/
-│   ├── ui/              # общие компоненты для client и backoffice
-│   ├── contracts/       # типы API, сгенерированные из OpenAPI
-│   ├── eslint-config/   # из шаблона
-│   └── typescript-config/  # из шаблона
-├── infra/
-│   ├── dev/
-│   │   ├── docker-compose.yml   # только postgres для pnpm dev
-│   │   └── .env.example
-│   └── prod/
-│       ├── docker-compose.yml   # все сервисы + caddy
-│       ├── Caddyfile            # дефолт локалхост
-│       └── .env.example         # секреты, DOMAIN; сам .env в .gitignore
-├── .github/workflows/ci.yml     # проверки на push/PR: lint, check-types, build
-├── docs/
-│   ├── ARCHITECTURE.md  REQUIREMENTS.md  TURBO.md  TRACK.md
-│   ├── diagrams/        # архитектура, диаграмма состояний, модель данных
-│   └── api-collection/  # коллекция запросов (Bruno/Postman)
-├── README.md            # см. внутрь
-├── THIRD_PARTY_NOTICES  # см. внутрь
-├── turbo.json  pnpm-workspace.yaml  package.json
+Backoffice ─────HTTP/SSE────> API
+Scoring service <───────────> API (versioned model + explanations)
+Alfi adapter ───────────────> API (shadow/assist/controlled production)
+```
 
-в каждом apps/* свой Dockerfile, его использует infra/prod
+## Границы ответственности
+
+- **Client** отвечает за ввод данных, документы, оффер и подписание. Источник истины — API.
+- **Backoffice** отвечает за обработку заявки и ручные действия. Решение нельзя изменить без
+  audit event с actor, reason и correlation id.
+- **API** владеет state machine заявки, идемпотентностью, authorization и публикацией jobs.
+- **Worker** выполняет внешние проверки и scoring с retry/timeout/dead-letter.
+- **Scoring** возвращает версионированный результат и объяснение, но не меняет статус сам.
+- **Decision engine** применяет правила продукта и пишет итоговое решение в audit.
+- **Alfi** не имеет права принимать кредитное решение; в production mode его действия ограничены
+  разрешёнными командами и проходят валидацию схемы.
+
+## Безопасность
+
+- PII хранится только в API/storage, во внешние ML/LLM вызовы уходит redacted payload.
+- Все upload/download идут через signed URL и проверку MIME, размера и checksum.
+- Доступ проверяется по роли и tenant/company scope.
+- Audit events append-only; корреляция проходит через `request_id` и `application_id`.
+- Shadow mode не меняет бизнес-состояние; assist mode требует подтверждения сотрудника.
+
+## Наблюдаемость
+
+Минимальные метрики: `job_duration_ms`, `job_retry_total`, `queue_depth`, `source_check_error_total`,
+`scoring_latency_ms`, `decision_total`, `model_drift_psi`, `alfi_fallback_total`. Логи структурированы
+JSON и не содержат исходные документы или незамаскированные идентификаторы.
