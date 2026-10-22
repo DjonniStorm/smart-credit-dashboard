@@ -1,6 +1,6 @@
 "use client";
 
-import { Anchor, Button, Group, List, Stack, Text } from "@mantine/core";
+import { Anchor, Badge, Button, Card, Group, List, Stack, Text } from "@mantine/core";
 import {
   IconAlertCircle,
   IconArrowRight,
@@ -23,6 +23,7 @@ import type {
   Employee,
   RiskBand,
 } from "@repo/contracts/application";
+import { checkAutonomyEligibility, type AutonomyConfig, type AutonomyMetrics } from "@repo/contracts";
 import { Alfi, AlfiState } from "@repo/ui/alfi";
 import { StateBlock } from "@repo/ui/state-block";
 
@@ -90,8 +91,51 @@ export function Summary({ app }: { app: Application }) {
         </div>
       </div>
 
+      <AutonomyStatus app={app} />
+
       <WorkflowStateCards app={app} />
     </Stack>
+  );
+}
+
+const autonomyConfig: AutonomyConfig = {
+  id: "credit-line-v3-standard",
+  modelVersion: "score-v3.2",
+  productId: "working_capital",
+  policyVersion: "policy-2026.10",
+  amountBand: { min: 100_000, max: 5_000_000 },
+  level: "stable",
+  controlWindowEndsAt: "2026-12-31T23:59:59.000Z",
+  minClosedCases: 100,
+  maxManualOverrideRate: 0.1,
+  maxCalibrationError: 0.05,
+};
+
+const autonomyMetrics: AutonomyMetrics = {
+  closedCases: 482,
+  manualOverrideRate: 0.064,
+  calibrationError: 0.031,
+  driftDetected: false,
+  manualHold: false,
+};
+
+function AutonomyStatus({ app }: { app: Application }) {
+  const eligibility = checkAutonomyEligibility(autonomyConfig, autonomyMetrics);
+  const inBand = app.request.amount >= autonomyConfig.amountBand.min && app.request.amount <= autonomyConfig.amountBand.max;
+  const eligible = eligibility.eligible && inBand;
+  return (
+    <Card withBorder radius="md" padding="sm" bg="var(--kk-surface-sunken)">
+      <Group justify="space-between" align="center" mb={4}>
+        <Text size="sm" fw={700}>Автономность решения</Text>
+        <Badge size="sm" color={eligible ? "green" : "gray"} variant="light">
+          {eligible ? "Доступна" : "Только контроль"}
+        </Badge>
+      </Group>
+      <Text size="xs" c="dimmed">{autonomyConfig.modelVersion} · {autonomyConfig.policyVersion} · уровень {autonomyConfig.level}</Text>
+      {!inBand && <Text size="xs" c="orange" mt={4}>Сумма вне диапазона автономного решения.</Text>}
+      {eligible && <Text size="xs" c="dimmed" mt={4}>Контрольное окно открыто · ручное переопределение фиксируется в аудите.</Text>}
+      {!eligible && eligibility.reasons.length > 0 && <Text size="xs" c="dimmed" mt={4}>{eligibility.reasons[0]}</Text>}
+    </Card>
   );
 }
 
