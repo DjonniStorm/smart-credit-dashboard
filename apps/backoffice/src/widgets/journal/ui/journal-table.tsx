@@ -23,6 +23,8 @@ import {
   useApplications,
 } from "@/entities/application";
 
+import classes from "./journal-table.module.css";
+
 type ActorFilter = Actor["kind"] | "all";
 
 const PAGE = 50;
@@ -96,8 +98,13 @@ export function JournalTable() {
           Под этот фильтр не подходит ни одно действие.
         </StateBlock>
       ) : (
-        <div style={{ overflowX: "auto" }}>
-          <Table miw={760} aria-label="Журнал действий">
+        <div className={classes.box}>
+          <Table
+            miw={760}
+            aria-label="Журнал действий"
+            className={classes.table}
+            verticalSpacing={10}
+          >
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>Когда</Table.Th>
@@ -110,18 +117,13 @@ export function JournalTable() {
             <Table.Tbody>
               {events.slice(0, limit).map((e) => (
                 <Table.Tr key={e.id}>
-                  <Table.Td
-                    style={{
-                      whiteSpace: "nowrap",
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
+                  <Table.Td className={classes.when}>
                     {formatDateTime(e.at)}
                   </Table.Td>
                   <Table.Td>
                     <Anchor
                       component={Link}
-                      href={`/applications/${e.app.id}`}
+                      href={`/?open=${e.app.id}`}
                       size="sm"
                       c="var(--mantine-color-text)"
                       underline="always"
@@ -141,7 +143,7 @@ export function JournalTable() {
                       </Text>
                     )}
                   </Table.Td>
-                  <Table.Td>
+                  <Table.Td className={classes.status}>
                     {e.toStatus ? statusLabel[e.toStatus] : ""}
                   </Table.Td>
                 </Table.Tr>

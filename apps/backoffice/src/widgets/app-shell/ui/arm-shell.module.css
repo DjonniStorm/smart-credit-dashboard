@@ -1,76 +1,244 @@
 .header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  border-bottom: 1px solid var(--kk-line);
   background: var(--kk-surface);
+  border-bottom: 1px solid var(--kk-line);
 }
 
-.inner {
-  max-width: 1440px;
-  margin-inline: auto;
-  min-height: 56px;
-  padding-inline: var(--mantine-spacing-lg);
+.navbar {
+  background: var(--kk-bg-rail);
+  border-right: 1px solid var(--kk-line);
+}
+
+.main {
+  background: var(--mantine-color-body);
+  min-height: 100dvh;
+}
+
+.page {
+  padding: 24px;
+}
+
+/* Логотип: знак, название банка, через черту название кабинета. */
+.brand {
   display: flex;
   align-items: center;
-  gap: var(--mantine-spacing-lg);
+  gap: 8px;
+  flex-shrink: 0;
+  color: var(--mantine-color-text);
+  text-decoration: none;
+  border-radius: var(--mantine-radius-sm);
 }
 
-.brand {
-  font-weight: 600;
+.brand:focus-visible {
+  outline: 2px solid var(--kk-brand);
+  outline-offset: 4px;
+}
+
+.brandSign {
+  display: inline-block;
+  font-size: 24px;
+  line-height: 22px;
+  font-weight: 700;
+  color: var(--kk-brand-bright);
+  border-bottom: 3px solid var(--kk-brand-bright);
+}
+
+.brandName {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--kk-brand-bright);
+}
+
+.brandProduct {
+  padding-left: 14px;
+  margin-left: 6px;
+  border-left: 1px solid var(--kk-line);
+  font-size: 14px;
+  color: var(--mantine-color-dimmed);
   white-space: nowrap;
+}
+
+.search {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.searchButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 380px;
+  height: 36px;
+  padding-inline: 12px;
+  border: 1px solid var(--kk-line);
+  border-radius: var(--mantine-radius-md);
+  background: var(--kk-surface-sunken);
+  color: var(--mantine-color-dimmed);
+  font-size: 13px;
+}
+
+.searchButton:hover {
+  border-color: var(--mantine-color-default-border);
+}
+
+.searchButton:focus-visible {
+  outline: 2px solid var(--kk-brand);
+  outline-offset: 1px;
+}
+
+.searchText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.profile {
+  padding: 4px 6px;
+  border-radius: var(--mantine-radius-md);
+}
+
+.profile:hover {
+  background: var(--kk-surface-sunken);
+}
+
+.profile:focus-visible {
+  outline: 2px solid var(--kk-brand);
+  outline-offset: 1px;
+}
+
+.inboxItem {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+}
+
+.inboxItem:hover,
+.inboxItem:focus-visible {
+  background: var(--kk-surface-sunken);
+  outline: none;
+}
+
+.inboxItem:focus-visible {
+  box-shadow: inset 2px 0 0 var(--kk-brand);
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px 10px;
+  overflow-y: auto;
 }
 
 .nav {
   display: flex;
-  gap: 4px;
-  flex: 1;
-  min-width: 0;
-  overflow-x: auto;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.link {
-  padding: 6px 12px;
-  border-radius: var(--mantine-radius-sm);
+.navCaption {
+  padding: 0 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mantine-color-dimmed);
+}
+
+.navItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 8px 0 10px;
+  border-radius: var(--mantine-radius-md);
   color: var(--mantine-color-text);
+  font-size: 14px;
   text-decoration: none;
-  font-size: var(--mantine-font-size-sm);
-  white-space: nowrap;
 }
 
-.link:hover {
+.navItem:hover {
   background: var(--kk-surface-sunken);
 }
 
-/* Активный раздел как NavLink темы: красный текст на brand-soft. */
-.link[aria-current="page"] {
+.navItem:focus-visible {
+  outline: 2px solid var(--kk-brand);
+  outline-offset: -2px;
+}
+
+/* Активный раздел: красный текст на brand-soft и метка слева, как в макете. */
+.navItem[aria-current="page"] {
   background: var(--kk-brand-soft);
   color: var(--kk-brand-text);
   font-weight: 600;
 }
 
-.link:focus-visible {
-  outline: 2px solid var(--mantine-primary-color-filled);
-  outline-offset: 2px;
+.navItem[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--kk-brand);
 }
 
-.main {
-  max-width: 1440px;
-  margin-inline: auto;
-  padding: var(--mantine-spacing-lg);
+.navLabel {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
 }
 
-@media (max-width: 720px) {
-  .inner {
-    flex-wrap: wrap;
-    padding-block: 8px;
-    gap: var(--mantine-spacing-sm);
+.navCount {
+  min-width: 24px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--mantine-color-dimmed);
+}
+
+.navItem[aria-current="page"] .navCount {
+  background: var(--kk-brand);
+  color: var(--kk-on-brand);
+  font-weight: 600;
+}
+
+.railNote {
+  margin-top: auto;
+  padding: 16px 8px 0;
+}
+
+@media (max-width: 62em) {
+  .brandProduct {
+    display: none;
   }
-  .nav {
-    order: 3;
-    flex-basis: 100%;
+}
+
+@media (max-width: 48em) {
+  .searchButton {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
   }
-  .main {
-    padding: var(--mantine-spacing-md);
+  .searchText,
+  .searchKbd {
+    display: none;
+  }
+  .search {
+    justify-content: flex-end;
+  }
+  .page {
+    padding: 16px;
   }
 }

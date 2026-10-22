@@ -1,0 +1,33 @@
+/* Таблица на белой карточке, как очередь; скроллится в своём контейнере. */
+.box {
+  position: relative;
+  overflow-x: auto;
+  border: 1px solid var(--kk-line);
+  border-radius: var(--mantine-radius-lg);
+  background: var(--kk-surface);
+}
+
+.table {
+  font-size: 13px;
+}
+
+.table thead th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mantine-color-dimmed);
+  white-space: nowrap;
+}
+
+.table td,
+.table th {
+  border-bottom: 1px solid var(--kk-line);
+}
+
+.when {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.status {
+  white-space: nowrap;
+}

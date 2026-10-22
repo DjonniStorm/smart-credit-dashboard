@@ -1,21 +1,17 @@
-import { Stack, Text, Title } from "@mantine/core";
 import type { Metadata } from "next";
 
+import { Page } from "@/shared/ui/page";
 import { ProductRules } from "@/widgets/product-rules";
 
-export const metadata: Metadata = { title: "Продукты и правила" };
+export const metadata: Metadata = { title: "Справочники" };
 
 export default function ProductsPage() {
   return (
-    <Stack gap="md">
-      <Stack gap={4}>
-        <Title order={1}>Продукты и правила</Title>
-        <Text c="dimmed">
-          По этим правилам система готовит рекомендацию, а сотрудник принимает
-          решение.
-        </Text>
-      </Stack>
+    <Page
+      title="Справочники"
+      subtitle="Продукты и правила: по ним система готовит рекомендацию, решение принимает сотрудник"
+    >
       <ProductRules />
-    </Stack>
+    </Page>
   );
 }

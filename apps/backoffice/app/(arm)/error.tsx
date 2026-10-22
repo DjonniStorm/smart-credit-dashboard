@@ -13,16 +13,18 @@ export default function ArmError({
   reset: () => void;
 }) {
   return (
-    <StateBlock
-      kind="error"
-      title="Страница не открылась"
-      action={
-        <Button variant="default" onClick={reset}>
-          {t(i18n.defaultLocale, Message.Retry)}
-        </Button>
-      }
-    >
-      {error.message}
-    </StateBlock>
+    <div style={{ padding: 24 }}>
+      <StateBlock
+        kind="error"
+        title="Страница не открылась"
+        action={
+          <Button variant="default" onClick={reset}>
+            {t(i18n.defaultLocale, Message.Retry)}
+          </Button>
+        }
+      >
+        {error.message}
+      </StateBlock>
+    </div>
   );
 }

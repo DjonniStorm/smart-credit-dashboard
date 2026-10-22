@@ -4,7 +4,6 @@ import { Button, Card, Group, Radio, Stack, Text, Title } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Message, i18n, t } from "@repo/i18n";
 import { StateBlock } from "@repo/ui/state-block";
 
 import { roleLabel, signIn, useEmployees } from "@/entities/employee";
@@ -32,10 +31,10 @@ export function SignInForm() {
       >
         <Stack gap="lg">
           <Stack gap={4}>
-            <Title order={1} fz={24}>
-              {t(i18n.defaultLocale, Message.ArmTitle)}
+            <Title order={1} fz={24} lh="30px">
+              Вход в кредитный конвейер
             </Title>
-            <Text c="dimmed">
+            <Text c="dimmed" size="sm">
               Выберите демо-учётку. Пароля нет: это прототип на синтетических
               данных.
             </Text>
