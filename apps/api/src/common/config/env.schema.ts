@@ -5,6 +5,9 @@ export const envSchema = z.object({
   DATABASE_URL: z.string().default("postgres://alfa:alfa@localhost:5432/alfa"),
   SCORING_URL: z.string().default("http://localhost:8000"),
   MOCKS_URL: z.string().default("http://localhost:4100"),
+  WORKER_POLL_MS: z.coerce.number().int().positive().default(1000),
+  STORAGE_ROOT: z.string().default("./.data/storage"),
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
 
 export type Env = z.infer<typeof envSchema>;
