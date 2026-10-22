@@ -1,6 +1,6 @@
 "use client";
 
-import { Anchor, List, Stack, Text } from "@mantine/core";
+import { Anchor, Group, List, Stack, Text } from "@mantine/core";
 import {
   IconAlertCircle,
   IconBuildingBank,
@@ -20,6 +20,7 @@ import type {
   Employee,
   RiskBand,
 } from "@repo/contracts/application";
+import { Alfi, AlfiState } from "@repo/ui/alfi";
 import { StageRail } from "@repo/ui/stage-rail";
 import { StateBlock } from "@repo/ui/state-block";
 
@@ -230,8 +231,52 @@ export function RiskBlock({ app }: { app: Application }) {
           <Text size="xs">{app.blocker}</Text>
         </div>
       )}
+      <Group gap="sm" wrap="nowrap" align="flex-start">
+        <Alfi state={managerAlfiState(app)} size={40} />
+        <Stack gap={2}>
+          <Text size="sm" fw={600}>
+            Альфи
+          </Text>
+          <Text size="xs">{managerAlfiMessage(app)}</Text>
+        </Stack>
+      </Group>
     </section>
   );
+}
+
+function managerAlfiState(app: Application): AlfiState {
+  if (app.waitingOn === "system") {
+    return AlfiState.Checking;
+  }
+  if (app.waitingOn === "client") {
+    return AlfiState.NeedsAnswer;
+  }
+  if (app.status === "rejected") {
+    return AlfiState.Attention;
+  }
+  if (app.waitingOn === "nobody") {
+    return AlfiState.Success;
+  }
+  if (app.decision) {
+    return AlfiState.Explain;
+  }
+  return AlfiState.Idle;
+}
+
+function managerAlfiMessage(app: Application): string {
+  if (app.waitingOn === "system") {
+    return "Источники ещё проверяются. Решение появится после ответа системы.";
+  }
+  if (app.waitingOn === "client") {
+    return "Клиент должен ответить на запрос. После этого заявка вернётся в очередь.";
+  }
+  if (app.status === "rejected") {
+    return "Решение отклонено. Проверьте причину и историю факторов.";
+  }
+  if (app.decision) {
+    return "Рекомендация готова. Сверьте факторы и подтвердите или измените её.";
+  }
+  return app.blocker;
 }
 
 /** Что уже решено: условия, запрос клиенту или причина отказа. */

@@ -13,7 +13,6 @@ import {
   useComputedColorScheme,
   useMantineColorScheme,
 } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
 import {
   IconBell,
   IconChevronDown,
@@ -27,6 +26,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import type { Application, DemoAccount } from "@repo/contracts/cabinet";
+import { alfi } from "@repo/ui/alfi";
 
 import {
   needsClient,
@@ -106,7 +106,7 @@ function Account({ account }: { account: DemoAccount }) {
   function reset() {
     resetMockState();
     queryClient.clear();
-    notifications.show({ message: tx.demo.resetDone });
+    alfi.showSuccess(tx.demo.resetDone, { raw: "demo_reset_completed" });
     router.replace("/login");
   }
 

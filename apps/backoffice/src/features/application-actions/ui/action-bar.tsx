@@ -9,7 +9,6 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
 import { IconAlertCircle, IconDotsVertical } from "@tabler/icons-react";
 import { type ReactNode, useState } from "react";
 
@@ -20,6 +19,7 @@ import type {
   Employee,
   EmployeeAction,
 } from "@repo/contracts/application";
+import { alfi } from "@repo/ui/alfi";
 
 import {
   clientResponseLabel,
@@ -93,7 +93,7 @@ export function ActionBar({
     mutation.mutate(action, {
       onSuccess: () => {
         setDialog(null);
-        notifications.show({ message: done, withBorder: true });
+        showAlfiActionFeedback(action, done);
       },
     });
   }
@@ -340,4 +340,29 @@ export function ActionBar({
       )}
     </Stack>
   );
+}
+
+function showAlfiActionFeedback(action: EmployeeAction, message: string): void {
+  const options = { raw: action.type, withBorder: true };
+
+  switch (action.type) {
+    case "request_info": {
+      alfi.showNeedsInfo(message, options);
+      break;
+    }
+    case "approve":
+    case "counter_offer": {
+      alfi.showOfferReady(message, options);
+      break;
+    }
+    case "reject": {
+      alfi.showDocumentRejected(message, options);
+      break;
+    }
+    case "assign":
+    case "rerun_check": {
+      alfi.showSuccess(message, options);
+      break;
+    }
+  }
 }

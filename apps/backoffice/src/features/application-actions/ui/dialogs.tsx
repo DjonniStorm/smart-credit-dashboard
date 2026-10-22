@@ -24,7 +24,6 @@ import type {
   RejectReason,
 } from "@repo/contracts/application";
 import { AmountInput } from "@repo/ui/amount-input";
-import { alfi } from "@repo/ui/alfi";
 
 import { productLabel } from "@/entities/application";
 import { rejectReasonLabel } from "@/shared/api/arm";
