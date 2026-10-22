@@ -25,14 +25,14 @@ export class ApplicationsController {
   @ApiOperation({ operationId: "ApplicationsController_create" })
   @ApiOkResponse({ type: CreateApplicationResponseDto })
   @ZodSerializerDto(CreateApplicationResponseDto)
-  create(@Body() body: CreateApplicationDto): CreateApplicationResponseDto {
+  async create(@Body() body: CreateApplicationDto): Promise<CreateApplicationResponseDto> {
     return this.applications.create(body);
   }
 
   @Get(":id")
   @ApiOkResponse({ type: ApplicationDto })
   @ZodSerializerDto(ApplicationDto)
-  get(@Param("id") id: string): ApplicationDto {
+  async get(@Param("id") id: string): Promise<ApplicationDto> {
     return this.applications.getApplication(id);
   }
 
@@ -41,7 +41,7 @@ export class ApplicationsController {
   @ApiOperation({ operationId: "ApplicationsController_startCheck" })
   @ApiOkResponse({ type: JobDto })
   @ZodSerializerDto(JobDto)
-  check(@Param("id") id: string, @Body() body: ApplicationCheckDto): JobDto {
+  async check(@Param("id") id: string, @Body() body: ApplicationCheckDto): Promise<JobDto> {
     return this.applications.startCheck(id, body);
   }
 }
@@ -53,7 +53,7 @@ export class JobsController {
   @Get(":id")
   @ApiOkResponse({ type: JobDto })
   @ZodSerializerDto(JobDto)
-  get(@Param("id") id: string): JobDto {
+  async get(@Param("id") id: string): Promise<JobDto> {
     return this.applications.getJob(id);
   }
 }

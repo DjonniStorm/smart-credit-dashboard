@@ -9,6 +9,8 @@ export enum ServiceName {
   Mocks = "mocks",
 }
 
+export * from "./autonomy.js";
+
 export enum HealthStatus {
   Ok = "ok",
   Degraded = "degraded",

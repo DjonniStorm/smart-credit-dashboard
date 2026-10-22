@@ -8,21 +8,19 @@ import type {
 } from "@repo/contracts/workflow";
 
 import { CompaniesService } from "../companies/companies.service.ts";
+import { WorkflowStore } from "./workflow-store.ts";
 
 @Injectable()
 export class ApplicationsService {
-  private readonly applications = new Map<string, ApplicationWorkflow>();
-  private readonly jobs = new Map<string, ScoringJob>();
-  private readonly idempotency = new Map<string, string>();
   private sequence = 1000;
 
-  constructor(private readonly companies: CompaniesService) {}
+  constructor(private readonly companies: CompaniesService, private readonly store: WorkflowStore) {}
 
-  create(input: CreateApplicationRequest): CreateApplicationResponse {
-    const existingJobId = this.idempotency.get(`create:${input.idempotencyKey}`);
+  async create(input: CreateApplicationRequest): Promise<CreateApplicationResponse> {
+    const existingJobId = await this.store.findIdempotent("create", input.idempotencyKey);
     if (existingJobId) {
-      const job = this.jobs.get(existingJobId);
-      const application = job && this.applications.get(job.applicationId);
+      const job = await this.store.getJob(existingJobId);
+      const application = job && await this.store.getApplication(job.applicationId);
       if (job && application) return { application, checkJob: { id: job.id, status: job.status } };
     }
 
@@ -44,31 +42,34 @@ export class ApplicationsService {
       createdAt: now,
       updatedAt: now,
     };
-    this.applications.set(applicationId, application);
+    await this.store.saveApplication(application);
     const job = this.createJob(applicationId, jobId, input.idempotencyKey);
-    this.idempotency.set(`create:${input.idempotencyKey}`, jobId);
+    await this.store.saveJob(job);
+    await this.store.remember("create", input.idempotencyKey, jobId);
+    await this.store.event(applicationId, "application_created", { jobId });
     this.runJob(job, application);
     return { application, checkJob: { id: job.id, status: job.status } };
   }
 
-  getApplication(id: string): ApplicationWorkflow {
-    const application = this.applications.get(id);
+  async getApplication(id: string): Promise<ApplicationWorkflow> {
+    const application = await this.store.getApplication(id);
     if (!application) throw new NotFoundException("Заявка не найдена");
     return application;
   }
 
-  startCheck(id: string, input: ApplicationCheckRequest): ScoringJob {
-    const application = this.getApplication(id);
-    const existing = this.idempotency.get(`check:${id}:${input.idempotencyKey}`);
+  async startCheck(id: string, input: ApplicationCheckRequest): Promise<ScoringJob> {
+    const application = await this.getApplication(id);
+    const existing = await this.store.findIdempotent(`check:${id}`, input.idempotencyKey);
     if (existing) return this.getJob(existing);
     const job = this.createJob(id, `job-${this.sequence++}`, input.idempotencyKey);
-    this.idempotency.set(`check:${id}:${input.idempotencyKey}`, job.id);
+    await this.store.saveJob(job);
+    await this.store.remember(`check:${id}`, input.idempotencyKey, job.id);
     this.runJob(job, application);
     return job;
   }
 
-  getJob(id: string): ScoringJob {
-    const job = this.jobs.get(id);
+  async getJob(id: string): Promise<ScoringJob> {
+    const job = await this.store.getJob(id);
     if (!job) throw new NotFoundException("Задача не найдена");
     return job;
   }
@@ -85,7 +86,6 @@ export class ApplicationsService {
       error: null,
       result: null,
     };
-    this.jobs.set(id, job);
     return job;
   }
 
@@ -96,17 +96,24 @@ export class ApplicationsService {
   private async executeJob(job: ScoringJob, application: ApplicationWorkflow): Promise<void> {
     job.status = "running";
     job.startedAt = new Date().toISOString();
+    await this.store.saveJob(job);
     try {
       const result = await this.companies.check(application.inn);
       job.result = { score: result.scoring.score, model: result.scoring.model };
       job.status = "succeeded";
       application.scoring = job.result;
       application.updatedAt = new Date().toISOString();
+      await this.store.saveApplication(application);
+      await this.store.saveJob(job);
+      await this.store.event(application.id, "scoring_succeeded", { jobId: job.id, score: job.result.score });
     } catch (error) {
       job.status = "failed";
       job.error = error instanceof Error ? error.message : String(error);
+      await this.store.saveJob(job);
+      await this.store.event(application.id, "scoring_failed", { jobId: job.id, error: job.error });
     } finally {
       job.finishedAt = new Date().toISOString();
+      await this.store.saveJob(job);
     }
   }
 }
