@@ -1,6 +1,7 @@
 "use client";
 
 import type { ArmApi } from "../types";
+import { companyProfileForApplication } from "./company-profile";
 import {
   type MockRecord,
   applyAction,
@@ -61,6 +62,14 @@ export const mockArmApi: ArmApi = {
   async getApplication(id) {
     await wait();
     return copy(find(id).app);
+  },
+  async getCompanyProfile(inn) {
+    await wait();
+    const record = advance().find((item) => item.app.applicant.inn === inn);
+    if (!record) {
+      throw new Error("Компания не найдена");
+    }
+    return copy(companyProfileForApplication(record.app));
   },
   async act(id, action, employeeId) {
     await wait();

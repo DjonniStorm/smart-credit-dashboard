@@ -5,11 +5,13 @@ import type {
   Employee,
   EmployeeAction,
 } from "@repo/contracts/application";
+import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
 
 /** Всё, что АРМ спрашивает у бэкенда. Мок и HTTP реализуют один интерфейс. */
 export interface ArmApi {
   listApplications(): Promise<Application[]>;
   getApplication(id: string): Promise<Application>;
+  getCompanyProfile(inn: string): Promise<CompanyProfileResponse>;
   act(
     id: string,
     action: EmployeeAction,
