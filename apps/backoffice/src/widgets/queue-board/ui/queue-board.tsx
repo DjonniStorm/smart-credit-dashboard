@@ -103,6 +103,12 @@ export function QueueBoard({
   const current = Math.min(page, pages);
   const visible = rows.slice((current - 1) * pageSize, current * pageSize);
   const names = new Map((employees.data ?? []).map((e) => [e.id, e.name]));
+  const canTake = (app: Application) =>
+    app.assigneeId !== employee.id && app.waitingOn !== "nobody";
+  // Выбор действует только на строки, которые сейчас видны: после смены
+  // вкладки, фильтра или страницы скрытые заявки не попадут в действие.
+  const selected = visible.filter((r) => checked.has(r.id));
+  const takeable = selected.filter(canTake);
 
   // «/» переводит фокус в поиск откуда угодно, кроме полей ввода.
   useEffect(() => {
@@ -159,7 +165,7 @@ export function QueueBoard({
 
   const allVisibleChecked =
     visible.length > 0 && visible.every((r) => checked.has(r.id));
-  const someVisibleChecked = visible.some((r) => checked.has(r.id));
+  const someVisibleChecked = selected.length > 0;
 
   function toggleVisible() {
     setChecked((prev) => {
@@ -296,8 +302,7 @@ export function QueueBoard({
             <Table.Tbody>
               {visible.map((app) => {
                 const isOpen = app.id === openId;
-                const canTake =
-                  app.assigneeId !== employee.id && app.waitingOn !== "nobody";
+                const rowCanTake = canTake(app);
                 return (
                   <Table.Tr
                     key={app.id}
@@ -306,6 +311,7 @@ export function QueueBoard({
                       else rowRefs.current.delete(app.id);
                     }}
                     className={classes.row}
+                    data-app-id={app.id}
                     data-open={isOpen || undefined}
                     data-checked={checked.has(app.id) || undefined}
                     tabIndex={app.id === rovingId ? 0 : -1}
@@ -391,7 +397,7 @@ export function QueueBoard({
                           >
                             Открыть страницей
                           </Menu.Item>
-                          {canTake && (
+                          {rowCanTake && (
                             <Menu.Item onClick={() => takeIds([app.id])}>
                               Взять в работу
                             </Menu.Item>
@@ -483,20 +489,21 @@ export function QueueBoard({
         searchRef={searchRef}
       />
 
-      {checked.size > 0 && (
+      {selected.length > 0 && (
         <div
           className={classes.bulk}
           role="region"
           aria-label="Выбранные заявки"
         >
           <Text size="sm" fw={500}>
-            Выбрано: {checked.size}
+            Выбрано: {selected.length}
           </Text>
           <Button
             size="xs"
             variant="default"
             loading={assign.isPending}
-            onClick={() => takeIds([...checked])}
+            disabled={takeable.length === 0}
+            onClick={() => takeIds(takeable.map((r) => r.id))}
           >
             Взять в работу
           </Button>

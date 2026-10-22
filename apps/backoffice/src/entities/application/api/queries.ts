@@ -40,28 +40,27 @@ export function useProducts() {
   });
 }
 
-function useApplicationUpdate<V>(
-  id: string,
-  fn: (vars: V) => Promise<Application>,
-) {
+function useApplicationUpdate<V>(fn: (vars: V) => Promise<Application>) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: fn,
+    // Ключ по id из ответа: если панель успела переключиться на другую
+    // заявку, ответ всё равно ляжет в кэш той, по которой был запрос.
     onSuccess: (app) => {
-      qc.setQueryData(armKeys.application(id), app);
+      qc.setQueryData(armKeys.application(app.id), app);
       void qc.invalidateQueries({ queryKey: armKeys.applications() });
     },
   });
 }
 
 export function useApplicationAction(id: string, employeeId: string) {
-  return useApplicationUpdate(id, (action: EmployeeAction) =>
+  return useApplicationUpdate((action: EmployeeAction) =>
     armApi.act(id, action, employeeId),
   );
 }
 
 export function useClientSimulation(id: string) {
-  return useApplicationUpdate(id, (response: ClientResponse) =>
+  return useApplicationUpdate((response: ClientResponse) =>
     armApi.simulateClient(id, response),
   );
 }
@@ -86,7 +85,8 @@ export function useAssignMany(employeeId: string) {
       ),
     onSuccess: (apps) => {
       for (const app of apps) qc.setQueryData(armKeys.application(app.id), app);
-      void qc.invalidateQueries({ queryKey: armKeys.applications() });
     },
+    // При частичной ошибке часть заявок уже назначена: список обновляем всегда.
+    onSettled: () => qc.invalidateQueries({ queryKey: armKeys.applications() }),
   });
 }

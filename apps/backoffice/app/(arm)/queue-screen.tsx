@@ -39,20 +39,38 @@ export function QueueScreen() {
 
   const close = useCallback(() => {
     update({ open: null });
-    returnFocus.current?.focus();
-  }, [update]);
+    // Панель открыли по ссылке (колокольчик, поиск, обзор): фокус на её строку.
+    const back =
+      returnFocus.current ??
+      document.querySelector<HTMLElement>(`[data-app-id="${openId}"]`);
+    back?.focus();
+    returnFocus.current = null;
+  }, [update, openId]);
 
   // Escape закрывает панель, когда фокус не в диалоге или меню.
   useEffect(() => {
     if (!openId) return;
+    // Открытый выпадающий список фильтра закрывается сам, панель не трогаем.
+    // Mantine успевает снять aria-expanded до слушателя на window, поэтому
+    // состояние списка запоминаем в фазе перехвата, до обработчиков React.
+    let listWasOpen = false;
+    function onKeyCapture(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      const t = e.target as HTMLElement;
+      listWasOpen = Boolean(t.closest("[aria-expanded=true]"));
+    }
     function onKey(e: KeyboardEvent) {
-      if (e.key !== "Escape" || e.defaultPrevented) return;
+      if (e.key !== "Escape" || e.defaultPrevented || listWasOpen) return;
       const t = e.target as HTMLElement;
       if (t.closest("[role=dialog], [role=menu], [role=listbox]")) return;
       close();
     }
+    window.addEventListener("keydown", onKeyCapture, true);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKeyCapture, true);
+      window.removeEventListener("keydown", onKey);
+    };
   }, [openId, close]);
 
   // Поверх таблицы (узкий экран) панель забирает фокус, рядом с таблицей нет.
@@ -77,7 +95,12 @@ export function QueueScreen() {
       </div>
       {openId && (
         <aside className={classes.aside} aria-label="Панель заявки">
-          <ApplicationPanel id={openId} onClose={close} titleRef={titleRef} />
+          <ApplicationPanel
+            key={openId}
+            id={openId}
+            onClose={close}
+            titleRef={titleRef}
+          />
         </aside>
       )}
     </div>
