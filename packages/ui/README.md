@@ -117,6 +117,16 @@ alfi.update({
 пользователя, а `raw?: string` хранится отдельно и никогда не выводится.
 Доступны `show`, `hide`, `update` и `clean`.
 
+Для типовых состояний доступны короткие helpers:
+
+```tsx
+alfi.showNeedsInfo("Проверьте банковскую выписку", {
+  raw: "statement_missing",
+});
+alfi.showOfferReady("Условия готовы", { autoClose: 5000 });
+alfi.showAttention("Нужна ручная проверка", { withBorder: true });
+```
+
 Для Next-приложений стандартные SVG должны быть опубликованы в
 `public/alfi/pixel-scout/states/`. В этом репозитории одинаковые наборы лежат в
 `apps/client/public` и `apps/backoffice/public`.

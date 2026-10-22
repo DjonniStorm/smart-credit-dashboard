@@ -30,7 +30,7 @@ import type {
   RejectReason,
 } from "@repo/contracts/application";
 import { AmountInput } from "@repo/ui/amount-input";
-import { alfi, AlfiOperation } from "@repo/ui/alfi";
+import { alfi } from "@repo/ui/alfi";
 
 import { productLabel, useApplicationAction } from "@/entities/application";
 import { useEmployees } from "@/entities/employee";
@@ -98,12 +98,7 @@ export function DecisionActions({
     mutation.mutate(action, {
       onSuccess: () => {
         setDialog(null);
-        alfi.show({
-          operation: operationForAction(action),
-          message: done,
-          raw: action.type,
-          withBorder: true,
-        });
+        showAlfiActionFeedback(action, done);
       },
     });
   }
@@ -267,18 +262,28 @@ export function DecisionActions({
   );
 }
 
-function operationForAction(action: EmployeeAction): AlfiOperation {
+function showAlfiActionFeedback(action: EmployeeAction, message: string): void {
+  const options = { raw: action.type, withBorder: true };
+
   switch (action.type) {
-    case "request_info":
-      return AlfiOperation.NeedsInfo;
+    case "request_info": {
+      alfi.showNeedsInfo(message, options);
+      break;
+    }
     case "approve":
-    case "counter_offer":
-      return AlfiOperation.OfferReady;
-    case "reject":
-      return AlfiOperation.DocumentRejected;
+    case "counter_offer": {
+      alfi.showOfferReady(message, options);
+      break;
+    }
+    case "reject": {
+      alfi.showDocumentRejected(message, options);
+      break;
+    }
     case "assign":
-    case "rerun_check":
-      return AlfiOperation.ActionCompleted;
+    case "rerun_check": {
+      alfi.showSuccess(message, options);
+      break;
+    }
   }
 }
 

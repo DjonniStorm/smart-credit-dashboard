@@ -15,7 +15,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
 
 import { ColorSchemeToggle } from "@repo/ui/color-scheme-toggle";
-import { alfi, AlfiOperation } from "@repo/ui/alfi";
+import { alfi } from "@repo/ui/alfi";
 import { StateBlock } from "@repo/ui/state-block";
 
 import { useSession, useSignOut } from "@/entities/session";
@@ -54,11 +54,7 @@ export function CabinetShell({ children }: { children: ReactNode }) {
   function reset() {
     resetMockState();
     queryClient.clear();
-    alfi.show({
-      operation: AlfiOperation.ActionCompleted,
-      message: tx.demo.resetDone,
-      raw: "demo_reset_completed",
-    });
+    alfi.showSuccess(tx.demo.resetDone, { raw: "demo_reset_completed" });
     router.replace("/login");
   }
 

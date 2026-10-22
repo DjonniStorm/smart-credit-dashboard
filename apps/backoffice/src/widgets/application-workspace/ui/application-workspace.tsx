@@ -101,8 +101,12 @@ function BackLink() {
 }
 
 function defaultTab(app: Application): Tab {
-  if (app.stage === "enrichment" || app.stage === "intake") return "checks";
-  if (app.decision) return "decision";
+  if (app.stage === "enrichment" || app.stage === "intake") {
+    return "checks";
+  }
+  if (app.decision) {
+    return "decision";
+  }
   return "data";
 }
 
@@ -318,11 +322,21 @@ function Workspace({
 }
 
 function managerAlfiState(app: Application): AlfiState {
-  if (app.waitingOn === "system") return AlfiState.Checking;
-  if (app.waitingOn === "client") return AlfiState.NeedsAnswer;
-  if (app.status === "rejected") return AlfiState.Attention;
-  if (app.waitingOn === "nobody") return AlfiState.Success;
-  if (app.decision) return AlfiState.Explain;
+  if (app.waitingOn === "system") {
+    return AlfiState.Checking;
+  }
+  if (app.waitingOn === "client") {
+    return AlfiState.NeedsAnswer;
+  }
+  if (app.status === "rejected") {
+    return AlfiState.Attention;
+  }
+  if (app.waitingOn === "nobody") {
+    return AlfiState.Success;
+  }
+  if (app.decision) {
+    return AlfiState.Explain;
+  }
   return AlfiState.Idle;
 }
 

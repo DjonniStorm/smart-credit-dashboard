@@ -176,20 +176,32 @@ function AlfiContext({ app }: { app: Application }) {
 }
 
 function clientAlfiState(app: Application): AlfiState {
-  if (app.status === "needs_client") return AlfiState.NeedsAnswer;
-  if (app.status === "in_review") return AlfiState.Checking;
-  if (app.status === "rejected") return AlfiState.Attention;
+  if (app.status === "needs_client") {
+    return AlfiState.NeedsAnswer;
+  }
+  if (app.status === "in_review") {
+    return AlfiState.Checking;
+  }
+  if (app.status === "rejected") {
+    return AlfiState.Attention;
+  }
   if (app.status === "counter_offer" || app.status === "approved") {
     return AlfiState.Success;
   }
-  if (app.status === "disbursed") return AlfiState.Success;
+  if (app.status === "disbursed") {
+    return AlfiState.Success;
+  }
   return AlfiState.Greeting;
 }
 
 function clientAlfiMessage(app: Application): string {
   if (app.status === "needs_client") {
-    return app.requests.find((request) => !request.answer)?.question ??
-      "Банк ждёт уточнение по заявке.";
+    const request = app.requests.find((item) => !item.answer);
+    if (request?.question) {
+      return request.question;
+    }
+
+    return "Банк ждёт уточнение по заявке.";
   }
   if (app.status === "in_review") {
     return `Проверяю данные заявки: ${app.checksPassed} из 3 проверок завершено.`;
