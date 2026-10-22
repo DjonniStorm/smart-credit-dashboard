@@ -17,6 +17,7 @@ import { useState } from "react";
 
 import type {
   Application,
+  ApplicationStage,
   CheckSource,
   CheckState,
   Employee,
@@ -34,6 +35,7 @@ import {
   riskLabel,
   stageLabel,
   stageOrder,
+  waitingLabel,
 } from "@/entities/application";
 import { RerunCheckButton } from "@/features/application-actions";
 import { rejectReasonLabel } from "@/shared/api/arm";
@@ -136,9 +138,20 @@ const workflowDescription: Record<
 
 /** Интерактивный путь заявки: состояние берётся из доменного Application. */
 export function WorkflowStateCards({ app }: { app: Application }) {
-  const [selected, setSelected] = useState(app.stage);
+  const selectionKey = `${app.id}:${app.stage}:${app.status}`;
+  const [selection, setSelection] = useState<{
+    key: string;
+    stage: ApplicationStage;
+  } | null>(null);
+
+  const selectedStage =
+    selection?.key === selectionKey ? selection.stage : app.stage;
   const current = stageOrder.indexOf(app.stage);
-  const selectedMeta = workflowDescription[selected];
+  const selectedMeta = workflowDescription[selectedStage];
+  const isTerminal =
+    app.status === "rejected" ||
+    app.status === "disbursed" ||
+    app.waitingOn === "nobody";
 
   return (
     <section
@@ -156,54 +169,52 @@ export function WorkflowStateCards({ app }: { app: Application }) {
           Путь заявки
         </Text>
         <Text size="xs" c="dimmed">
-          {current + 1} из {stageOrder.length} ·{" "}
-          {app.waitingOn === "client" ? "ход клиента" : "ход банка"}
+          {current + 1} из {stageOrder.length} · {waitingLabel[app.waitingOn]}
         </Text>
       </Group>
-      <div
+      <ol
         className={classes.workflowGrid}
-        role="list"
         aria-label="Этапы заявки"
       >
         {stageOrder.map((stage, index) => {
-          const isDone = index < current;
+          const isDone = index < current || (isTerminal && index === current);
           const isCurrent = index === current;
-          const isSelected = stage === selected;
+          const isSelected = stage === selectedStage;
           return (
-            <Button
-              key={stage}
-              variant="subtle"
-              color="dark"
-              className={classes.workflowCard}
-              data-state={
-                isDone
-                  ? "done"
-                  : isCurrent
-                    ? app.waitingOn === "client"
-                      ? "waiting"
-                      : "current"
-                    : "next"
-              }
-              data-selected={isSelected}
-              onClick={() => setSelected(stage)}
-              role="listitem"
-              aria-pressed={isSelected}
-            >
-              <span className={classes.workflowIndex}>
-                {isDone ? "✓" : index + 1}
-              </span>
-              <span className={classes.workflowText}>
-                <strong>{stageLabel[stage]}</strong>
-                <small>{workflowDescription[stage].short}</small>
-              </span>
-            </Button>
+            <li key={stage} className={classes.workflowItem}>
+              <Button
+                variant="subtle"
+                color="dark"
+                className={classes.workflowCard}
+                data-state={
+                  isDone
+                    ? "done"
+                    : isCurrent
+                      ? isTerminal ||
+                        app.waitingOn === "client" ||
+                        app.waitingOn === "system"
+                        ? "waiting"
+                        : "current"
+                      : "next"
+                }
+                data-selected={isSelected}
+                onClick={() => setSelection({ key: selectionKey, stage })}
+                aria-pressed={isSelected}
+                aria-current={isCurrent ? "step" : undefined}
+              >
+                <span className={classes.workflowText}>
+                  <strong>{stageLabel[stage]}</strong>
+                  <small>{workflowDescription[stage].short}</small>
+                </span>
+              </Button>
+            </li>
           );
         })}
-      </div>
+      </ol>
       <div className={classes.workflowDetail} aria-live="polite">
         <div>
           <Text size="xs" fw={700}>
-            {stageLabel[selected]}
+            {stageLabel[selectedStage]}
           </Text>
           <Text size="xs" c="dimmed">
             {selectedMeta.detail}
