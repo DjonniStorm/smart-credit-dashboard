@@ -1,6 +1,6 @@
 # Архитектура сквозного контура
 
-Диаграммы по реальному коду: [компоненты](diagrams/01-architecture.md), [статусы заявки](diagrams/02-application-statuses.md), [последовательность подачи и решения](diagrams/03-submission-sequence.md), [модель данных](diagrams/04-data-model.md). Схема ниже описывает целевой контур и местами шире текущей реализации.
+Диаграммы по реальному коду: [компоненты](diagrams/01-architecture.md), [статусы заявки](diagrams/02-application-statuses.md), [последовательность подачи и решения](diagrams/03-submission-sequence.md), [таблицы](diagrams/04-data-model.md), [сущности](diagrams/05-entity-model.md), [расхождения с plan.md](diagrams/plan-discrepancies.md). Схема ниже описывает целевой контур и местами шире текущей реализации.
 
 ```text
 Client cabinet ──HTTP──> API ──> PostgreSQL

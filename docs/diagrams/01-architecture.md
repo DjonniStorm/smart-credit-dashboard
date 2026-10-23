@@ -22,6 +22,7 @@ flowchart LR
     companies["CompaniesModule<br/>/v1/companies"]
     auth["AuthModule<br/>/v1/auth, демо-сессии"]
     catalog["CatalogModule<br/>/v1/products, /v1/employees"]
+    autonomy["AutonomyStore<br/>политики автономности"]
     health["HealthModule<br/>/health"]
     worker["QueueWorkerService<br/>опрос раз в WORKER_POLL_MS"]
     decision["decide()<br/>детерминированные правила"]
@@ -30,6 +31,7 @@ flowchart LR
     storage["StorageService<br/>файлы на диске"]
   end
 
+  seed["pnpm --filter api db:seed<br/>запускается вручную"]
   scoring["apps/scoring (Python) :8000<br/>POST /v1/score"]
   db[("PostgreSQL 18")]
   disk[("STORAGE_ROOT")]
@@ -45,6 +47,7 @@ flowchart LR
   applications --> store
   applications --> decision
   applications --> companies
+  applications --> autonomy
   worker -->|"claim job"| store
   worker --> applications
   auth --> demo
@@ -53,6 +56,8 @@ flowchart LR
   companies -->|"POST /v1/score"| scoring
   store --> db
   demo -->|"demo_*"| db
+  autonomy -->|"autonomy_policies"| db
+  seed -.->|"demo_*, autonomy_policies, 3 заявки"| db
   companies -.->|"company_bki_consents"| db
   storage -.-> disk
 ```
@@ -61,17 +66,19 @@ SVG: [01-architecture.svg](01-architecture.svg)
 
 ## Зависимости
 
-| Откуда                      | Куда          | Как                                              |
-| --------------------------- | ------------- | ------------------------------------------------ |
-| client, backoffice          | api           | HTTP, `/api/*` проксируется Next.js на `API_URL` |
-| api                         | scoring       | HTTP, `POST /v1/score`, таймаут 5 с              |
-| api                         | PostgreSQL    | TypeORM, очередь через `FOR UPDATE SKIP LOCKED`  |
-| client, backoffice, scoring | друг с другом | напрямую не общаются                             |
+| Откуда                      | Куда                | Как                                                              |
+| --------------------------- | ------------------- | ---------------------------------------------------------------- |
+| client, backoffice          | api                 | HTTP, `/api/*` проксируется Next.js на `API_URL`                 |
+| api                         | scoring             | HTTP, `POST /v1/score`, таймаут 5 с                              |
+| api                         | PostgreSQL          | TypeORM, очередь через `FOR UPDATE SKIP LOCKED`                  |
+| api                         | `autonomy_policies` | снимок политики и метрик для `GET /v1/applications/{id}/context` |
+| client, backoffice, scoring | друг с другом       | напрямую не общаются                                             |
 
 Типы запросов и ответов лежат в `packages/contracts`, клиент API сгенерирован в `packages/sdk`.
 
 ## Что не нарисовано, потому что в коде этого нет
 
+- Seed не входит ни в compose, ни в `apps/api/Dockerfile`. После `docker compose up` таблицы `demo_*` пусты: нет демо-учёток, нет `demo_sources`, и каждая задача скоринга после трёх попыток падает с «Синтетические источники не найдены». Пока seed не выполнен вручную, контур в Docker не работает.
 - ЕГРЮЛ, ФНС и БКИ не отдельный сервис: `apps/mocks` удалён, `CompaniesService` читает ответы источников из таблицы `demo_sources`, которую заполняет `pnpm db:seed`.
 - Отдельного процесса worker нет: `QueueWorkerService` работает внутри процесса api.
 - Object storage в compose нет: `StorageService` пишет в локальную папку.

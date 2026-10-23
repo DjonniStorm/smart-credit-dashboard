@@ -2,19 +2,23 @@
 
 Исходники в Mermaid, GitHub рендерит их в самих `.md`. Рядом лежат SVG для просмотра вне GitHub.
 
-| Диаграмма        | Файл                                                     | Что показывает                                       |
-| ---------------- | -------------------------------------------------------- | ---------------------------------------------------- |
-| Архитектура      | [01-architecture.md](01-architecture.md)                 | сервисы, порты, прокси, зависимости между ними       |
-| Статусы заявки   | [02-application-statuses.md](02-application-statuses.md) | публичные статусы, внутренние этапы, их соответствие |
-| Подача и решение | [03-submission-sequence.md](03-submission-sequence.md)   | клиент, api, воркер, моки, scoring, АРМ              |
-| Модель данных    | [04-data-model.md](04-data-model.md)                     | таблицы PostgreSQL и связи                           |
+| Диаграмма        | Файл                                                     | Что показывает                                              |
+| ---------------- | -------------------------------------------------------- | ----------------------------------------------------------- |
+| Архитектура      | [01-architecture.md](01-architecture.md)                 | сервисы, порты, прокси, ручной seed, зависимости между ними |
+| Статусы заявки   | [02-application-statuses.md](02-application-statuses.md) | четыре словаря статусов, маппинг, переходы по плану, этапы  |
+| Подача и решение | [03-submission-sequence.md](03-submission-sequence.md)   | клиент, api, воркер, scoring, АРМ                           |
+| Таблицы          | [04-data-model.md](04-data-model.md)                     | таблицы PostgreSQL и связи                                  |
+| Сущности         | [05-entity-model.md](05-entity-model.md)                 | доменные сущности по `packages/contracts`                   |
+| Расхождения      | [plan-discrepancies.md](plan-discrepancies.md)           | где код отличается от `plan.md`                             |
 
-Диаграммы описывают код на момент создания. Там, где `plan.md` и код расходятся, на это указано в тексте.
+Диаграммы описывают код на момент создания. Там, где `plan.md` и код расходятся, на это указано в тексте и в списке расхождений.
 
 ## Перерисовать SVG
 
+Из корня репозитория:
+
 ```bash
-npx -y @mermaid-js/mermaid-cli -i docs/diagrams/01-architecture.md -o docs/diagrams/01-architecture.svg
+node docs/diagrams/render.mjs
 ```
 
-Для файла с несколькими диаграммами `mmdc` добавляет к имени `-1`, `-2`: переименуйте результат в имена из таблиц выше. Если Chromium для puppeteer не скачан, передайте `-p` с конфигом, где указан `executablePath` установленного Chrome.
+Скрипт рисует все SVG из mermaid-блоков в `.md` через `@mermaid-js/mermaid-cli`. Если Chromium для puppeteer не скачан, передайте путь к установленному Chrome в `CHROME_PATH`. Новый блок в файле нужно добавить в список `sources` в `render.mjs`.

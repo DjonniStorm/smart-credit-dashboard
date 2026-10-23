@@ -11,7 +11,7 @@
 
 ## Как статусы превращаются друг в друга
 
-`apps/api/.../api-mapper.ts` переводит хранимый статус в публичный, а `api-mapper.ts` в `apps/client` и `apps/backoffice` переводит публичный в статус интерфейса. Сплошные стрелки это то, что код делает сейчас. Серые состояния в API никто не выставляет, значения есть только в контракте.
+`apps/api/.../api-mapper.ts` переводит хранимый статус в публичный, а `api-mapper.ts` в `apps/client` и `apps/backoffice` переводит публичный в статус интерфейса. Сплошной показан единственный путь, который проходит в рантайме: в `applications.status` пишется только `in_review` (`ApplicationsService.create`, `scripts/seed-demo.ts`), и ни скоринг, ни воркер статус не меняют. Серые состояния и пунктирные стрелки есть в маппинге, но не достигаются.
 
 ```mermaid
 flowchart LR
@@ -44,27 +44,38 @@ flowchart LR
     u7["disbursed"]
   end
 
-  d1 --> p1 --> u1
-  d2 --> p2 --> u2
-  d3 --> p3 --> u3
-  d4 --> p4 --> u4
+  d2 ==> p2 ==> u2
+  d1 -.-> p1 -.-> u1
+  d3 -.-> p3 -.-> u3
+  d4 -.-> p4 -.-> u4
   p4 -.->|"offerKind counter"| u5
-  d5 --> p5 --> u6
-  p6 -->|"остальные значения"| u2
-  p7 --> u7
-  p8 --> u6
+  d5 -.-> p5 -.-> u6
+  p6 -.->|"остальные значения"| u2
+  p7 -.-> u7
+  p8 -.-> u6
 
   classDef unused fill:#eee,stroke:#999,color:#555
-  class p6,p7,p8,u5,u7 unused
+  class d1,d3,d4,d5,p1,p3,p4,p5,p6,p7,p8,u1,u3,u4,u5,u6,u7 unused
 ```
 
 SVG: [02-statuses-mapping.svg](02-statuses-mapping.svg)
 
-Две особенности маппинга. API всегда отдаёт `offerKind: initial`, поэтому `counter_offer` в интерфейсах недостижим. Интерфейсы сворачивают `SUBMITTED`, `VALIDATING`, `ACCEPTED`, `SIGNING` и `BLOCKED` в `in_review`, то есть заблокированная или подписываемая заявка выглядит как «на рассмотрении».
+Три особенности маппинга. API всегда отдаёт `offerKind: initial`, поэтому `counter_offer` в интерфейсах недостижим. Интерфейсы сворачивают `SUBMITTED`, `VALIDATING`, `ACCEPTED`, `SIGNING` и `BLOCKED` в `in_review`, то есть заблокированная или подписываемая заявка выглядела бы как «на рассмотрении». `OFFERED` без `offerKind` превращается в `approved`.
+
+## Где решение видно без смены статуса
+
+Статус остаётся `in_review`, а решение клиент и сотрудник всё равно видят. Оно выводится из скоринга и сохранённой рекомендации.
+
+| Где                                                                        | Откуда берётся                                                                          | Что получается                                                                                                                                                                               |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Кабинет, `decisionOf` в `apps/client/src/shared/api/cabinet/api-mapper.ts` | `scoring.recommendation` при статусе `UNDER_REVIEW`                                     | `decision.outcome`: `approved`, `counter_offer` или `rejected`; для `request_info` и `manual_review` решения нет. Условия оффера: сумма и срок заявки, `ratePercent: 0`, `monthlyPayment: 0` |
+| Кабинет, `checksPassed`                                                    | наличие `scoring`                                                                       | `3`, если скоринг есть, иначе `0`                                                                                                                                                            |
+| АРМ, `toArmApplication`                                                    | наличие `scoring`                                                                       | `stage: decision`, `waitingOn: employee`; без `scoring` это `scoring` и `system`                                                                                                             |
+| АРМ, `GET /v1/applications/{id}/context`                                   | `applications.decision` (пишет `executeJob`), `application_events`, `autonomy_policies` | рекомендация, правила `decide()`, аудит, снимок автономности                                                                                                                                 |
 
 ## Публичные статусы и переходы по plan.md
 
-Таблица допустимых переходов из `plan.md` («Статусы и переходы»). В коде её нет: ни в `apps/api`, ни в интерфейсах нет проверки допустимости перехода. Единственная запись статуса: `WorkflowStore.saveApplication` при создании пишет `in_review`. Цветом выделено состояние, в которое заявка попадает при создании: `UNDER_REVIEW`, минуя `DRAFT`, `SUBMITTED` и `VALIDATING`.
+Таблица допустимых переходов из `plan.md` («Статусы и переходы»). В коде её нет: ни в `apps/api`, ни в интерфейсах нет проверки допустимости перехода. Единственная запись статуса: `WorkflowStore.saveApplication` при создании пишет `in_review`. Цветом выделено единственное состояние, в которое заявка попадает при создании: `UNDER_REVIEW`, минуя `DRAFT`, `SUBMITTED` и `VALIDATING`.
 
 ```mermaid
 stateDiagram-v2
