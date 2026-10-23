@@ -48,7 +48,10 @@ export class CompaniesService {
     const scoringUrl = this.config.getOrThrow("SCORING_URL", { infer: true });
     const sources = await this.data.getSources(inn);
     if (!sources) {
-      throw new SourceCheckError("sources", `Синтетические источники не найдены для ${inn}`);
+      throw new SourceCheckError(
+        "sources",
+        `Синтетические источники не найдены для ${inn}`,
+      );
     }
     const { egrul, bki, fns } = sources;
 
@@ -65,7 +68,10 @@ export class CompaniesService {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     }).catch((error: unknown) => {
-      throw new SourceCheckError("scoring", error instanceof Error ? error.message : String(error));
+      throw new SourceCheckError(
+        "scoring",
+        error instanceof Error ? error.message : String(error),
+      );
     });
 
     return { inn, sources: { egrul, bki, fns }, scoring };

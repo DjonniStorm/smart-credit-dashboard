@@ -4,8 +4,6 @@ import { after, before, describe, test } from "node:test";
 
 import { DataSource } from "typeorm";
 
-import { SourceCheckError } from "../src/modules/companies/companies.service.ts";
-
 import { runMigrations } from "../src/common/database/migration-runner.ts";
 import { ApplicationsService } from "../src/modules/applications/applications.service.ts";
 import { QueueWorkerService } from "../src/modules/applications/queue-worker.service.ts";
@@ -13,12 +11,16 @@ import {
   MAX_JOB_ATTEMPTS,
   WorkflowStore,
 } from "../src/modules/applications/workflow-store.ts";
+import { SourceCheckError } from "../src/modules/companies/companies.service.ts";
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
 const databaseRequired = Boolean(process.env.CI);
 
 test("в CI задан TEST_DATABASE_URL", { skip: !databaseRequired }, () => {
-  assert.ok(databaseUrl, "TEST_DATABASE_URL не задан: тесты на Postgres не должны молча пропускаться в CI");
+  assert.ok(
+    databaseUrl,
+    "TEST_DATABASE_URL не задан: тесты на Postgres не должны молча пропускаться в CI",
+  );
 });
 
 const checkResult = {
@@ -84,7 +86,10 @@ class FlakyStore extends WorkflowStore {
 
 describe(
   "applications workflow on Postgres",
-  { skip: databaseUrl || databaseRequired ? false : "TEST_DATABASE_URL не задан" },
+  {
+    skip:
+      databaseUrl || databaseRequired ? false : "TEST_DATABASE_URL не задан",
+  },
   () => {
     const schema = `t_${randomUUID().replaceAll("-", "")}`;
     let db: DataSource;
@@ -103,7 +108,9 @@ describe(
       service: ApplicationsService,
       leaseMs = 60_000,
     ) =>
-      new QueueWorkerService(store, service, { getOrThrow: () => leaseMs } as never);
+      new QueueWorkerService(store, service, {
+        getOrThrow: () => leaseMs,
+      } as never);
 
     before(async () => {
       const admin = new DataSource({ type: "postgres", url: databaseUrl });
@@ -294,17 +301,30 @@ describe(
       companyCheck = async () => checkResult;
       const store = makeStore();
       const service = makeService(store);
-      const created = await service.create(input("checks-key-001", "7709012345"));
+      const created = await service.create(
+        input("checks-key-001", "7709012345"),
+      );
       await makeWorker(store, service).drain();
-      const rows = await db.query("select source, status, response from source_checks where job_id=$1 order by source", [created.checkJob.id]);
-      assert.deepEqual(rows.map((r: { source: string; status: string }) => [r.source, r.status]), [
-        ["bki", "ok"],
-        ["egrul", "ok"],
-        ["fns", "ok"],
-        ["scoring", "ok"],
-      ]);
+      const rows = await db.query(
+        "select source, status, response from source_checks where job_id=$1 order by source",
+        [created.checkJob.id],
+      );
+      assert.deepEqual(
+        rows.map((r: { source: string; status: string }) => [
+          r.source,
+          r.status,
+        ]),
+        [
+          ["bki", "ok"],
+          ["egrul", "ok"],
+          ["fns", "ok"],
+          ["scoring", "ok"],
+        ],
+      );
       assert.ok(rows.every((r: { response: unknown }) => r.response === null));
-      assert.ok((await service.getApplication(created.application.id)).decision);
+      assert.ok(
+        (await service.getApplication(created.application.id)).decision,
+      );
     });
 
     test("ошибка источника пишется в source_checks с именем источника", async () => {
@@ -313,37 +333,62 @@ describe(
       };
       const store = makeStore();
       const service = makeService(store);
-      const created = await service.create(input("checks-key-002", "7710123456"));
+      const created = await service.create(
+        input("checks-key-002", "7710123456"),
+      );
       await makeWorker(store, service).drain();
-      const rows = await db.query("select source, status, error from source_checks where job_id=$1", [created.checkJob.id]);
-      assert.deepEqual(rows, [{ source: "scoring", status: "failed", error: "scoring -> 502" }]);
+      const rows = await db.query(
+        "select source, status, error from source_checks where job_id=$1",
+        [created.checkJob.id],
+      );
+      assert.deepEqual(rows, [
+        { source: "scoring", status: "failed", error: "scoring -> 502" },
+      ]);
     });
 
     test("поздний воркер не перезаписывает задачу, которую забрала другая попытка", async () => {
       companyCheck = async () => checkResult;
       const store = makeStore();
       const service = makeService(store);
-      const created = await service.create(input("late-key-0001", "7711234567"));
+      const created = await service.create(
+        input("late-key-0001", "7711234567"),
+      );
       const stale = await store.claimNextQueuedJob();
       assert.ok(stale);
-      await db.query("update scoring_jobs set started_at = now() - interval '5 minutes' where id=$1", [stale.id]);
+      await db.query(
+        "update scoring_jobs set started_at = now() - interval '5 minutes' where id=$1",
+        [stale.id],
+      );
       assert.equal(await store.recoverStaleJobs(60_000), 1);
       const current = await store.claimNextQueuedJob();
       assert.equal(current?.attempts, 2);
 
       const lateResult = { score: 1, model: "late" };
-      assert.equal(await store.completeJob(stale, { result: lateResult, decision: null, checks: [], eventPayload: {} }), false);
+      assert.equal(
+        await store.completeJob(stale, {
+          result: lateResult,
+          decision: null,
+          checks: [],
+          eventPayload: {},
+        }),
+        false,
+      );
       assert.equal(await store.failJob(stale, "late", null), null);
       const job = await service.getJob(created.checkJob.id);
       assert.equal(job.status, "running");
       assert.equal(job.attempts, 2);
-      assert.equal((await service.getApplication(created.application.id)).scoring, null);
+      assert.equal(
+        (await service.getApplication(created.application.id)).scoring,
+        null,
+      );
     });
 
     test("recovery пишет scoring_failed, когда попытки закончились", async () => {
       const store = makeStore();
       const service = makeService(store);
-      const created = await service.create(input("stale-key-003", "7712345678"));
+      const created = await service.create(
+        input("stale-key-003", "7712345678"),
+      );
       await db.query(
         "update scoring_jobs set status='running', attempts=$2, started_at = now() - interval '5 minutes' where id=$1",
         [created.checkJob.id, MAX_JOB_ATTEMPTS],

@@ -203,7 +203,12 @@ export class WorkflowStore {
         [job.applicationId, outcome.result, outcome.decision],
       );
       await this.sourceChecksIn(manager, job.id, outcome.checks);
-      await this.eventIn(manager, job.applicationId, "scoring_succeeded", outcome.eventPayload);
+      await this.eventIn(
+        manager,
+        job.applicationId,
+        "scoring_succeeded",
+        outcome.eventPayload,
+      );
       return true;
     });
   }
@@ -224,7 +229,14 @@ export class WorkflowStore {
         await manager.query(
           `update scoring_jobs set status=$2, error=$3, next_attempt_at=$4, finished_at=$5
            where id=$1 and status='running' and attempts=$6 returning id`,
-          [job.id, status, error, retryAt, retryAt ? null : new Date(), job.attempts],
+          [
+            job.id,
+            status,
+            error,
+            retryAt,
+            retryAt ? null : new Date(),
+            job.attempts,
+          ],
         ),
       );
       if (owned.length === 0) {
@@ -257,12 +269,17 @@ export class WorkflowStore {
         ),
       );
       for (const row of rows) {
-        await this.eventIn(manager, String(row.application_id), "scoring_failed", {
-          jobId: String(row.id),
-          error: STALE_JOB_ERROR,
-          attempt: Number(row.attempts),
-          willRetry: row.status === "queued",
-        });
+        await this.eventIn(
+          manager,
+          String(row.application_id),
+          "scoring_failed",
+          {
+            jobId: String(row.id),
+            error: STALE_JOB_ERROR,
+            attempt: Number(row.attempts),
+            willRetry: row.status === "queued",
+          },
+        );
       }
       return rows.length;
     });
