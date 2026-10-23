@@ -1,12 +1,8 @@
 "use client";
 
-import { useId, useState, type CSSProperties, type JSX } from "react";
+import { type CSSProperties, type JSX, useId, useState } from "react";
 
-import {
-  alfiStateAssets,
-  alfiStateMeta,
-  AlfiState,
-} from "./alfi-state";
+import { AlfiState, alfiStateAssets, alfiStateMeta } from "./alfi-state";
 import classes from "./alfi.module.css";
 
 export type AlfiProps = {
@@ -39,8 +35,9 @@ export function Alfi({
     string | undefined
   >();
   const descriptionId = useId();
+  const replay = useReplayCount(state);
   const meta = alfiStateMeta[state];
-  const defaultSrc = getDefaultSource(state, assetBasePath);
+  const defaultSrc = withReplay(getDefaultSource(state, assetBasePath), replay);
   const resolvedSrc = src ?? defaultSrc;
   const currentSrc = getCurrentSource(
     resolvedSrc,
@@ -88,6 +85,25 @@ export function Alfi({
       </span>
     </span>
   );
+}
+
+/**
+ * Сколько раз эмоция менялась. Браузер переиспользует уже загруженный SVG
+ * вместе с закончившейся анимацией, поэтому новый номер в адресе заставляет
+ * проиграть её заново при возврате к той же эмоции.
+ */
+function useReplayCount(state: AlfiState): number {
+  const [shown, setShown] = useState(state);
+  const [count, setCount] = useState(0);
+  if (shown !== state) {
+    setShown(state);
+    setCount(count + 1);
+  }
+  return count;
+}
+
+function withReplay(source: string, replay: number): string {
+  return replay === 0 ? source : `${source}?play=${replay}`;
 }
 
 function getDefaultSource(
