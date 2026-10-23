@@ -2,8 +2,10 @@
 
 import { useSyncExternalStore } from "react";
 
-// Демо-вход: в браузере хранится только id выбранной учётки. Пароля нет,
-// настоящая авторизация сотрудника будет через api.
+import { armApi } from "@/shared/api/arm";
+
+// Демо-вход: пароля нет, роль важнее подлинности. Подлинность сессии держит api
+// (cookie сотрудника), в браузере хранится только id выбранной учётки.
 const KEY = "arm-session";
 const listeners = new Set<() => void>();
 
@@ -38,6 +40,12 @@ export function signIn(employeeId: string) {
 }
 
 export function signOut() {
+  void armApi.signOutEmployee().catch(() => undefined);
+  clearSession();
+}
+
+/** Забыть выбранную учётку, не трогая сессию на сервере: она уже истекла. */
+export function clearSession() {
   try {
     localStorage.removeItem(KEY);
   } finally {

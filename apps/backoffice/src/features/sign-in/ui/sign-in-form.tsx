@@ -7,6 +7,7 @@ import { useState } from "react";
 import { StateBlock } from "@repo/ui/state-block";
 
 import { roleLabel, signIn, useEmployees } from "@/entities/employee";
+import { armApi } from "@/shared/api/arm";
 import { formatRub } from "@/shared/lib/money";
 
 /**
@@ -18,6 +19,8 @@ export function SignInForm() {
   const router = useRouter();
   const [choice, setChoice] = useState<string | null>(null);
   const selected = choice ?? employees.data?.[0]?.id ?? null;
+  const [pending, setPending] = useState(false);
+  const [signInError, setSignInError] = useState<string | null>(null);
 
   return (
     <Card maw={460} w="100%" mx="auto">
@@ -25,8 +28,16 @@ export function SignInForm() {
         onSubmit={(e) => {
           e.preventDefault();
           if (!selected) return;
-          signIn(selected);
-          router.replace("/");
+          setPending(true);
+          setSignInError(null);
+          armApi
+            .signInEmployee(selected)
+            .then(() => {
+              signIn(selected);
+              router.replace("/");
+            })
+            .catch((error: Error) => setSignInError(error.message))
+            .finally(() => setPending(false));
         }}
       >
         <Stack gap="lg">
@@ -92,7 +103,12 @@ export function SignInForm() {
             </Radio.Group>
           )}
 
-          <Button type="submit" disabled={!selected}>
+          {signInError && (
+            <Text size="sm" c="var(--kk-danger)" role="alert">
+              {signInError}
+            </Text>
+          )}
+          <Button type="submit" disabled={!selected} loading={pending}>
             Войти
           </Button>
         </Stack>

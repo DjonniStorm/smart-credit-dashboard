@@ -30,38 +30,98 @@ function statusOf(application: ApiApplication): Application["status"] {
   }
 }
 
+function annuityPayment(
+  amount: number,
+  termMonths: number,
+  ratePct: number,
+): number {
+  const monthly = ratePct / 100 / 12;
+  if (monthly === 0) {
+    return Math.round(amount / termMonths);
+  }
+  return Math.round((amount * monthly) / (1 - (1 + monthly) ** -termMonths));
+}
+
 function decisionOf(application: ApiApplication): Application["decision"] {
   const scoring = application.scoring;
   if (!scoring) {
     return null;
   }
-  if (scoring.recommendation === "request_info" || scoring.recommendation === "manual_review") {
+  const factors = scoring.factors.map((factor) => {
+    return {
+      label: factor.label,
+      value: factor.value,
+      source: factor.source ?? "scoring",
+      effect:
+        factor.impact >= 0 ? ("positive" as const) : ("negative" as const),
+      note: "Фактор baseline scoring",
+    };
+  });
+  const advice = scoring.nextActions[0] ?? null;
+
+  // Решение сотрудника важнее рекомендации скоринга.
+  if (application.status === "OFFERED" && application.offer) {
+    const { amount, termMonths, ratePct } = application.offer;
+    const counter = application.offerKind === "counter";
+    return {
+      outcome: counter ? "counter_offer" : "approved",
+      decidedAt: application.updatedAt,
+      summary:
+        application.clientComments.at(-1)?.body ??
+        (counter
+          ? "Сотрудник банка предложил другие условия"
+          : "Заявка одобрена сотрудником банка"),
+      offer: {
+        amount,
+        termMonths,
+        ratePercent: ratePct,
+        monthlyPayment: annuityPayment(amount, termMonths, ratePct),
+      },
+      factors,
+      advice,
+    };
+  }
+  if (application.status === "REJECTED" || application.status === "CANCELLED") {
+    return {
+      outcome: "rejected",
+      decidedAt: application.updatedAt,
+      summary:
+        application.clientComments.at(-1)?.body ??
+        scoring.reasons[0] ??
+        "Банк отказал в заявке",
+      offer: null,
+      factors,
+      advice,
+    };
+  }
+  if (
+    scoring.recommendation === "request_info" ||
+    scoring.recommendation === "manual_review"
+  ) {
     return null;
   }
-  const outcome = scoring.recommendation === "counter_offer" ? "counter_offer" :
-    scoring.recommendation === "reject" ? "rejected" : "approved";
+  const outcome =
+    scoring.recommendation === "counter_offer"
+      ? "counter_offer"
+      : scoring.recommendation === "reject"
+        ? "rejected"
+        : "approved";
   return {
     outcome,
     decidedAt: application.updatedAt,
-    summary: scoring.reasons[0] ?? "Решение сформировано по результатам проверки",
-    offer: outcome === "rejected"
-      ? null
-      : {
-          amount: application.amount,
-          termMonths: application.termMonths,
-          ratePercent: 0,
-          monthlyPayment: 0,
-        },
-    factors: scoring.factors.map((factor) => {
-      return {
-        label: factor.label,
-        value: factor.value,
-        source: factor.source ?? "scoring",
-        effect: factor.impact >= 0 ? "positive" : "negative",
-        note: "Фактор baseline scoring",
-      };
-    }),
-    advice: scoring.nextActions[0] ?? null,
+    summary:
+      scoring.reasons[0] ?? "Решение сформировано по результатам проверки",
+    offer:
+      outcome === "rejected"
+        ? null
+        : {
+            amount: application.amount,
+            termMonths: application.termMonths,
+            ratePercent: 0,
+            monthlyPayment: 0,
+          },
+    factors,
+    advice,
   };
 }
 
@@ -102,7 +162,9 @@ export function toCabinetApplication(
   };
 }
 
-export function toCompanyProfile(response: CompanyProfileResponse): CompanyProfile {
+export function toCompanyProfile(
+  response: CompanyProfileResponse,
+): CompanyProfile {
   return {
     inn: response.profile.inn,
     ogrn: response.profile.ogrn,
