@@ -3,20 +3,20 @@
 import { z } from "zod";
 
 import { applicationStatusSchema, innSchema } from "@repo/contracts";
-import { apiScoringSchema } from "./api.js";
 
+import { apiScoringSchema } from "./api.ts";
 import {
   creditProductIdSchema,
   creditProductSchema,
   creditPurposeSchema,
-} from "./product-catalog.js";
+} from "./product-catalog.ts";
 
 export {
   creditProductSchema,
   creditPurposeSchema,
   type CreditProduct,
   type CreditPurpose,
-} from "./product-catalog.js";
+} from "./product-catalog.ts";
 
 export const legalFormSchema = z.enum(["ip", "ooo"]);
 export type LegalForm = z.infer<typeof legalFormSchema>;

@@ -3,23 +3,27 @@
 // На api: createZodDto(schema) из nestjs-zod.
 import { z } from "zod";
 
-export enum ServiceName {
-  Api = "api",
-  Scoring = "scoring",
-}
+// Объект вместо enum: Node запускает workspace-пакеты без трансформации типов.
+export const ServiceName = {
+  Api: "api",
+  Scoring: "scoring",
+} as const;
+export type ServiceName = (typeof ServiceName)[keyof typeof ServiceName];
 
-export * from "./autonomy.js";
-export * from "./product-catalog.js";
+export * from "./autonomy.ts";
+export * from "./product-catalog.ts";
 
-export enum HealthStatus {
-  Ok = "ok",
-  Degraded = "degraded",
-}
+export const HealthStatus = {
+  Ok: "ok",
+  Degraded: "degraded",
+} as const;
+export type HealthStatus = (typeof HealthStatus)[keyof typeof HealthStatus];
 
-export enum CheckState {
-  Up = "up",
-  Down = "down",
-}
+export const CheckState = {
+  Up: "up",
+  Down: "down",
+} as const;
+export type CheckState = (typeof CheckState)[keyof typeof CheckState];
 
 export const serviceNameSchema = z.enum(ServiceName);
 
