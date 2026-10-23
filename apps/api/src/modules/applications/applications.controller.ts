@@ -22,10 +22,13 @@ import {
   apiApplicationContextSchema,
   apiApplicationResponseSchema,
   apiApplicationSchema,
+  apiAutonomyAuditSchema,
+  apiAutonomySnapshotSchema,
   apiCheckRequestSchema,
   apiCreateApplicationSchema,
   apiJobSchema,
   apiQueueItemSchema,
+  autonomyPolicyActionRequestSchema,
 } from "@repo/contracts/api";
 import type { DemoSession } from "@repo/contracts/api";
 import type { Employee } from "@repo/contracts/application";
@@ -44,6 +47,7 @@ import {
   EmployeeSessionGuard,
 } from "../auth/employee-session.guard.ts";
 import { ApplicationsService } from "./applications.service.ts";
+import { AutonomyStore } from "./autonomy.store.ts";
 import { ApplyApplicationActionCommand } from "./commands/apply-application-action.command.ts";
 import { ApplyClientActionCommand } from "./commands/apply-client-action.command.ts";
 
@@ -66,6 +70,14 @@ class ClientActionResponseDto extends createZodDto(
   clientActionResponseSchema,
 ) {}
 class JobDto extends createZodDto(apiJobSchema) {}
+class AutonomySnapshotDto extends createZodDto(apiAutonomySnapshotSchema) {}
+class AutonomySnapshotListDto extends createZodDto(
+  apiAutonomySnapshotSchema.array(),
+) {}
+class AutonomyAuditDto extends createZodDto(apiAutonomyAuditSchema.array()) {}
+class AutonomyPolicyActionDto extends createZodDto(
+  autonomyPolicyActionRequestSchema,
+) {}
 
 @Controller("v1/applications")
 export class ApplicationsController {
@@ -178,5 +190,48 @@ export class JobsController {
   @ZodSerializerDto(JobDto)
   async get(@Param("id") id: string): Promise<JobDto> {
     return this.applications.getApiJob(id);
+  }
+}
+
+@Controller("v1/autonomy")
+export class AutonomyController {
+  constructor(private readonly autonomy: AutonomyStore) {}
+
+  @Get("policies")
+  @UseGuards(EmployeeSessionGuard)
+  @ApiOkResponse({ type: AutonomySnapshotListDto })
+  @ZodSerializerDto(AutonomySnapshotListDto)
+  policies(): Promise<AutonomySnapshotDto[]> {
+    return this.autonomy.listSnapshots();
+  }
+
+  @Get("policies/:productId")
+  @UseGuards(EmployeeSessionGuard)
+  @ApiOkResponse({ type: AutonomySnapshotDto })
+  @ZodSerializerDto(AutonomySnapshotDto)
+  policy(@Param("productId") productId: string): Promise<AutonomySnapshotDto> {
+    return this.autonomy.getSnapshot(productId as never);
+  }
+
+  @Get("policies/:productId/audit")
+  @UseGuards(EmployeeSessionGuard)
+  @ApiOkResponse({ type: AutonomyAuditDto })
+  @ZodSerializerDto(AutonomyAuditDto)
+  audit(@Param("productId") productId: string): Promise<AutonomyAuditDto> {
+    return this.autonomy.listAudit(productId as never);
+  }
+
+  @Post("policies/:productId/actions")
+  @HttpCode(200)
+  @UseGuards(EmployeeSessionGuard)
+  @ApiOkResponse({ type: AutonomySnapshotDto })
+  @ApiForbiddenResponse({ description: "Требуется роль руководителя" })
+  @ZodSerializerDto(AutonomySnapshotDto)
+  action(
+    @Param("productId") productId: string,
+    @Body() body: AutonomyPolicyActionDto,
+    @CurrentEmployee() employee: Employee,
+  ): Promise<AutonomySnapshotDto> {
+    return this.autonomy.applyPolicyAction(productId as never, body, employee);
   }
 }

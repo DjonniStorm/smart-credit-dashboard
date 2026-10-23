@@ -25,6 +25,7 @@ export class ApplicationActionsService {
     request: ApplicationActionRequest,
     employee: Employee,
   ): Promise<ApiApplicationContext> {
+    await this.store.expireAutoOffer(applicationId);
     const employeeIds = new Set(
       (await this.data.listEmployees()).map((item) => item.id),
     );
@@ -53,6 +54,13 @@ export class ApplicationActionsService {
           request.idempotencyKey,
         );
       }
+      await tx.applyAutonomyAction(
+        current,
+        outcome.application,
+        request.action.type,
+        employee,
+        request.idempotencyKey,
+      );
       await tx.saveManagement(outcome.application);
       if (outcome.comment) {
         await tx.addComment(outcome.comment);

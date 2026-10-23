@@ -31,6 +31,8 @@ export function applicationFromRow(row: Row): ApplicationWorkflow {
     checkJobId: (row.check_job_id as string | null) ?? null,
     scoring: (row.scoring as ApplicationWorkflow["scoring"]) ?? null,
     decision: (row.decision as ApplicationWorkflow["decision"]) ?? null,
+    autonomyCase:
+      (row.autonomy_case as ApplicationWorkflow["autonomyCase"]) ?? null,
     createdAt: iso(row.created_at),
     updatedAt: iso(row.updated_at),
   };

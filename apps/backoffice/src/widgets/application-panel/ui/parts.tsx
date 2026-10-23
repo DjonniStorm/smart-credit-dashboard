@@ -1,6 +1,15 @@
 "use client";
 
-import { Anchor, Badge, Button, Card, Group, List, Stack, Text } from "@mantine/core";
+import {
+  Anchor,
+  Badge,
+  Button,
+  Card,
+  Group,
+  List,
+  Stack,
+  Text,
+} from "@mantine/core";
 import {
   IconAlertCircle,
   IconArrowRight,
@@ -38,9 +47,8 @@ import {
 } from "@/entities/application";
 import { RerunCheckButton } from "@/features/application-actions";
 import { rejectReasonLabel } from "@/shared/api/arm";
-
-import { purposeLabel } from "@/shared/lib/purpose";
 import { formatRub } from "@/shared/lib/money";
+import { purposeLabel } from "@/shared/lib/purpose";
 
 import classes from "./application-panel.module.css";
 
@@ -105,26 +113,97 @@ function AutonomyStatus({ app }: { app: Application }) {
   if (!snapshot) {
     return (
       <Card withBorder radius="md" padding="sm" bg="var(--kk-surface-sunken)">
-        <Text size="sm" fw={700}>{tx.summary.autonomy}</Text>
-        <Text size="xs" c="dimmed" mt={4}>{tx.summary.policyUnavailable}</Text>
+        <Text size="sm" fw={700}>
+          {tx.summary.autonomy}
+        </Text>
+        <Text size="xs" c="dimmed" mt={4}>
+          {tx.summary.policyUnavailable}
+        </Text>
       </Card>
     );
   }
-  const { config, eligibility } = snapshot;
-  const inBand = app.request.amount >= config.amountBand.min && app.request.amount <= config.amountBand.max;
-  const eligible = eligibility.eligible && inBand;
+  const { config, metrics, eligibility } = snapshot;
+  const inBand =
+    app.request.amount >= config.amountBand.min &&
+    app.request.amount <= config.amountBand.max;
+  const eligible =
+    snapshot.case?.mode === "controlled"
+      ? snapshot.case.eligible &&
+        snapshot.case.disposition === "auto_offer_sent"
+      : !snapshot.case && eligibility.eligible && inBand;
   return (
     <Card withBorder radius="md" padding="sm" bg="var(--kk-surface-sunken)">
       <Group justify="space-between" align="center" mb={4}>
-        <Text size="sm" fw={700}>{tx.summary.autonomy}</Text>
+        <Text size="sm" fw={700}>
+          {tx.summary.autonomy}
+        </Text>
         <Badge size="sm" color={eligible ? "green" : "gray"} variant="light">
           {eligible ? tx.summary.available : tx.summary.manualControl}
         </Badge>
       </Group>
-      <Text size="xs" c="dimmed">{tx.summary.policyMeta(config.modelVersion, config.policyVersion, config.level)}</Text>
-      <Text size="xs" c="dimmed" mt={4}>{tx.summary.controlWindow(eligibility.controlWindow === "open" ? tx.summary.windowOpen : tx.summary.windowClosed)}</Text>
-      {!inBand && <Text size="xs" c="orange" mt={4}>{tx.summary.amountOutOfBand}</Text>}
-      {!eligible && eligibility.reasons.length > 0 && <Text size="xs" c="dimmed" mt={4}>{eligibility.reasons[0]}</Text>}
+      <Text size="xs" c="dimmed">
+        {tx.summary.policyMeta(
+          config.modelVersion,
+          config.policyVersion,
+          config.level,
+        )}
+      </Text>
+      {snapshot.case && (
+        <Text size="xs" c="dimmed">
+          {tx.summary.mode(snapshot.case.mode)}
+        </Text>
+      )}
+      <Text size="xs" c="dimmed">
+        {tx.summary.metrics(metrics.closedCases, metrics.eligibleCases)}
+      </Text>
+      <Text size="xs" c="dimmed">
+        {tx.summary.overrides(
+          metrics.manualOverrides,
+          `${Math.round(metrics.manualOverrideRate * 100)}%`,
+        )}
+      </Text>
+      <Text size="xs" c="dimmed">
+        {tx.summary.calibration(
+          metrics.calibrationStatus === "available"
+            ? `${Math.round(metrics.calibrationError * 1000) / 10}%`
+            : "нет данных",
+        )}
+      </Text>
+      <Text size="xs" c="dimmed">
+        {tx.summary.drift(tx.summary.driftLabel(metrics.driftStatus))}
+      </Text>
+      {snapshot.case && (
+        <Text size="xs" fw={600}>
+          {snapshot.case.disposition === "auto_offer_sent"
+            ? tx.summary.caseStatus.auto
+            : snapshot.case.disposition === "intercepted"
+              ? tx.summary.caseStatus.intercepted
+              : snapshot.case.disposition === "expired"
+                ? tx.summary.caseStatus.expired
+                : snapshot.case.disposition === "declined"
+                  ? tx.summary.caseStatus.declined
+                  : snapshot.case.disposition === "confirmed"
+                    ? tx.summary.caseStatus.confirmed
+                    : tx.summary.caseStatus.manual}
+        </Text>
+      )}
+      <Text size="xs" c="dimmed" mt={4}>
+        {tx.summary.controlWindow(
+          eligibility.controlWindow === "open"
+            ? tx.summary.windowOpen
+            : tx.summary.windowClosed,
+        )}
+      </Text>
+      {!inBand && (
+        <Text size="xs" c="orange" mt={4}>
+          {tx.summary.amountOutOfBand}
+        </Text>
+      )}
+      {!eligible && eligibility.reasons.length > 0 && (
+        <Text size="xs" c="dimmed" mt={4}>
+          {eligibility.reasons[0]}
+        </Text>
+      )}
     </Card>
   );
 }
@@ -163,13 +242,11 @@ export function WorkflowStateCards({ app }: { app: Application }) {
           {tx.workflow.title}
         </Text>
         <Text size="xs" c="dimmed">
-          {tx.workflow.stepOf(current + 1, stageOrder.length)} · {waitingLabel[app.waitingOn]}
+          {tx.workflow.stepOf(current + 1, stageOrder.length)} ·{" "}
+          {waitingLabel[app.waitingOn]}
         </Text>
       </Group>
-      <ol
-        className={classes.workflowGrid}
-        aria-label={tx.workflow.stepsLabel}
-      >
+      <ol className={classes.workflowGrid} aria-label={tx.workflow.stepsLabel}>
         {stageOrder.map((stage, index) => {
           const isDone = index < current || (isTerminal && index === current);
           const isCurrent = index === current;
@@ -274,10 +351,14 @@ export function CheckResults({
             </Text>
             <span className={classes.checkState} data-tone={view.tone}>
               <view.icon size={16} stroke={1.75} aria-hidden />
-              <span>{c.state === "pending" ? tx.checks.state[c.state] : c.summary}</span>
+              <span>
+                {c.state === "pending" ? tx.checks.state[c.state] : c.summary}
+              </span>
             </span>
             <Text size="xs" c="dimmed" className={classes.checkTime}>
-              {c.respondedAt ? formatDateTimeFull(c.respondedAt) : tx.checks.noResponse}
+              {c.respondedAt
+                ? formatDateTimeFull(c.respondedAt)
+                : tx.checks.noResponse}
             </Text>
             {c.state === "unavailable" && (
               <div className={classes.checkAction}>
@@ -322,20 +403,20 @@ export function RiskBlock({ app }: { app: Application }) {
           <Text size="sm" className={classes.num}>
             <Text span fw={700} size="md">
               {app.scoring.score}
-            </Text>{" "}{tx.risk.scoreOf}
+            </Text>{" "}
+            {tx.risk.scoreOf}
           </Text>
         </div>
       ) : (
         <Text size="sm" c="dimmed">
-          {app.waitingOn === "system"
-            ? tx.risk.waitingScore
-            : tx.risk.noScore}
+          {app.waitingOn === "system" ? tx.risk.waitingScore : tx.risk.noScore}
         </Text>
       )}
       {app.decision && (
         <div className={classes.reason}>
           <Text size="xs" fw={600}>
-            {tx.risk.recommendation}: {recommendationLabel[app.decision.recommendation]}
+            {tx.risk.recommendation}:{" "}
+            {recommendationLabel[app.decision.recommendation]}
           </Text>
           <Text size="xs">{app.decision.explanation}</Text>
         </div>
@@ -417,7 +498,9 @@ function managerAlfiMessage(app: Application): string {
     return tx.risk.approved;
   }
   if (app.decision) {
-    return tx.risk.recommendationHint(recommendationLabel[app.decision.recommendation]);
+    return tx.risk.recommendationHint(
+      recommendationLabel[app.decision.recommendation],
+    );
   }
   return app.blocker;
 }

@@ -40,6 +40,44 @@ export function useProducts() {
   });
 }
 
+export function useAutonomyPolicies() {
+  return useQuery({
+    queryKey: armKeys.autonomyPolicies(),
+    queryFn: () => armApi.listAutonomyPolicies(),
+    staleTime: 0,
+  });
+}
+
+export function useAutonomyPolicyAction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      productId,
+      request,
+    }: {
+      productId: string;
+      request: Parameters<typeof armApi.applyAutonomyPolicyAction>[1];
+    }) => armApi.applyAutonomyPolicyAction(productId, request),
+    onSuccess: (snapshot, variables) => {
+      queryClient.setQueryData(
+        armKeys.autonomyPolicy(variables.productId),
+        snapshot,
+      );
+      void queryClient.invalidateQueries({
+        queryKey: armKeys.autonomyPolicies(),
+      });
+    },
+  });
+}
+
+export function useAutonomyAudit(productId: string) {
+  return useQuery({
+    queryKey: armKeys.autonomyAudit(productId),
+    queryFn: () => armApi.listAutonomyAudit(productId),
+    staleTime: 0,
+  });
+}
+
 function useApplicationUpdate<V>(fn: (vars: V) => Promise<Application>) {
   const qc = useQueryClient();
   return useMutation({
@@ -49,6 +87,7 @@ function useApplicationUpdate<V>(fn: (vars: V) => Promise<Application>) {
     onSuccess: (app) => {
       qc.setQueryData(armKeys.application(app.id), app);
       void qc.invalidateQueries({ queryKey: armKeys.applications() });
+      void qc.invalidateQueries({ queryKey: armKeys.autonomyPolicies() });
     },
   });
 }

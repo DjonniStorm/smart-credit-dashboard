@@ -19,6 +19,7 @@ import {
   employeeActionSchema,
   rejectReasonSchema,
 } from "./application.ts";
+import { autonomyCaseSchema } from "./autonomy.ts";
 import { creditPurposeSchema } from "./product-catalog.ts";
 
 export {
@@ -62,6 +63,7 @@ export const applicationWorkflowSchema = z.object({
       details: apiScoringSchema.optional(),
     })
     .nullable(),
+  autonomyCase: autonomyCaseSchema.nullable().default(null),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

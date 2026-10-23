@@ -6,9 +6,10 @@ import type { DemoAccountApi, DemoSession } from "@repo/contracts/api";
 import type { Employee } from "@repo/contracts/application";
 
 import {
-  type DemoSourceRecord,
   type DemoCompanyProfileScenario,
+  type DemoSourceRecord,
   demoAccounts,
+  demoAutonomyPolicies,
   demoCompanyProfileScenarios,
   demoEmployees,
   demoSources,
@@ -92,10 +93,12 @@ export class DemoDataStore implements OnModuleInit {
   }
 
   getCompanyProfileScenario(inn: string): DemoCompanyProfileScenario {
-    return demoCompanyProfileScenarios[inn] ?? {
-      unavailableSources: [],
-      discrepancies: [],
-    };
+    return (
+      demoCompanyProfileScenarios[inn] ?? {
+        unavailableSources: [],
+        discrepancies: [],
+      }
+    );
   }
 
   async createSession(
@@ -148,6 +151,13 @@ export class DemoDataStore implements OnModuleInit {
         `insert into demo_sources(inn,payload) values($1,$2)
          on conflict(inn) do update set payload=excluded.payload`,
         [inn, sources],
+      );
+    }
+    for (const [productId, policy] of Object.entries(demoAutonomyPolicies)) {
+      await this.db.query(
+        `insert into autonomy_policies(product_id,payload) values($1,$2)
+         on conflict(product_id) do update set payload=excluded.payload`,
+        [productId, policy],
       );
     }
   }

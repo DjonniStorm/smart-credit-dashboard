@@ -25,7 +25,7 @@ export class EmployeeSessionGuard implements CanActivate {
     request.employee = await this.auth.employeeSession(
       readCookie(request, employeeCookieName),
     );
-    return true;
+    return Boolean(request.employee);
   }
 }
 

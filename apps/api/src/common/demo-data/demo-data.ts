@@ -1,8 +1,11 @@
 import type { AutonomyConfig, AutonomyMetrics } from "@repo/contracts";
 import type { BkiReport, EgrulRecord, FnsProfile } from "@repo/contracts";
 import type { ApiProductId, DemoAccountApi } from "@repo/contracts/api";
-import type { CompanyDiscrepancy, CompanySource } from "@repo/contracts/company-profile";
 import type { Employee } from "@repo/contracts/application";
+import type {
+  CompanyDiscrepancy,
+  CompanySource,
+} from "@repo/contracts/company-profile";
 
 export interface DemoSourceRecord {
   egrul: EgrulRecord;
@@ -26,6 +29,12 @@ const sharedAutonomyMetrics: AutonomyMetrics = {
   calibrationError: 0.031,
   driftDetected: false,
   manualHold: false,
+  eligibleCases: 482,
+  manualOverrides: 31,
+  calibrationSamples: 482,
+  calibrationStatus: "available",
+  driftStatus: "clear",
+  computedAt: "2026-10-23T00:00:00.000Z",
 };
 
 export const demoAutonomyPolicies: Record<ApiProductId, DemoAutonomyPolicy> = {
@@ -41,6 +50,10 @@ export const demoAutonomyPolicies: Record<ApiProductId, DemoAutonomyPolicy> = {
       minClosedCases: 100,
       maxManualOverrideRate: 0.1,
       maxCalibrationError: 0.05,
+      minConfidence: 0.8,
+      minGrade: "B",
+      controlWindowMinutes: 30,
+      revision: 0,
     },
     metrics: sharedAutonomyMetrics,
   },
@@ -56,6 +69,10 @@ export const demoAutonomyPolicies: Record<ApiProductId, DemoAutonomyPolicy> = {
       minClosedCases: 100,
       maxManualOverrideRate: 0.1,
       maxCalibrationError: 0.05,
+      minConfidence: 0.8,
+      minGrade: "B",
+      controlWindowMinutes: 30,
+      revision: 0,
     },
     metrics: sharedAutonomyMetrics,
   },
@@ -71,6 +88,10 @@ export const demoAutonomyPolicies: Record<ApiProductId, DemoAutonomyPolicy> = {
       minClosedCases: 100,
       maxManualOverrideRate: 0.1,
       maxCalibrationError: 0.05,
+      minConfidence: 0.8,
+      minGrade: "B",
+      controlWindowMinutes: 30,
+      revision: 0,
     },
     metrics: sharedAutonomyMetrics,
   },
@@ -86,6 +107,10 @@ export const demoAutonomyPolicies: Record<ApiProductId, DemoAutonomyPolicy> = {
       minClosedCases: 100,
       maxManualOverrideRate: 0.1,
       maxCalibrationError: 0.05,
+      minConfidence: 0.8,
+      minGrade: "B",
+      controlWindowMinutes: 30,
+      revision: 0,
     },
     metrics: sharedAutonomyMetrics,
   },
@@ -181,7 +206,10 @@ export const demoSources: Record<string, DemoSourceRecord> = {
   },
 };
 
-export const demoCompanyProfileScenarios: Record<string, DemoCompanyProfileScenario> = {
+export const demoCompanyProfileScenarios: Record<
+  string,
+  DemoCompanyProfileScenario
+> = {
   "9903000033": {
     unavailableSources: ["bank_turnover"],
     discrepancies: [

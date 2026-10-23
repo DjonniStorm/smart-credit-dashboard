@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { roleLabel, signOut, useSignedInEmployee } from "@/entities/employee";
 import { formatRub } from "@/shared/lib/money";
 
+import { AutonomyPolicySettings } from "./autonomy-policy-settings";
 import classes from "./settings.module.css";
 
 /** Настройки сотрудника: учётка, тема, сброс демо-данных. */
@@ -66,6 +67,7 @@ export function Settings() {
         </Stack>
       </Card>
 
+      <AutonomyPolicySettings />
     </div>
   );
 }

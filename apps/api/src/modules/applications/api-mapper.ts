@@ -84,6 +84,7 @@ export function toApiApplication(
     offerKind: offerKind(application),
     checkJobId: application.checkJobId,
     scoring: readScoring(application.scoring?.details),
+    autonomyCase: application.autonomyCase,
     offer: application.offer,
     requestedInfo: application.requestedInfo,
     rejectReason: application.rejectReason,

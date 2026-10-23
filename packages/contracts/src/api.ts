@@ -13,7 +13,12 @@ import {
   waitingOnSchema,
   workflowStatusSchema,
 } from "./application-parts.ts";
-import { autonomyConfigSchema, autonomyMetricsSchema } from "./autonomy.ts";
+import {
+  autonomyCaseSchema,
+  autonomyConfigSchema,
+  autonomyLevelSchema,
+  autonomyMetricsSchema,
+} from "./autonomy.ts";
 import {
   companyProfileResponseSchema,
   companySourceSnapshotSchema,
@@ -123,6 +128,7 @@ export type ApiAuditEvent = z.infer<typeof apiAuditEventSchema>;
 export const apiAutonomySnapshotSchema = z.object({
   config: autonomyConfigSchema,
   metrics: autonomyMetricsSchema,
+  case: autonomyCaseSchema.nullable().default(null),
   eligibility: z.object({
     eligible: z.boolean(),
     reasons: z.array(z.string()),
@@ -130,6 +136,40 @@ export const apiAutonomySnapshotSchema = z.object({
   }),
 });
 export type ApiAutonomySnapshot = z.infer<typeof apiAutonomySnapshotSchema>;
+
+export const autonomyPolicyActionSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("pause"), reason: z.string().min(1).max(500) }),
+  z.object({
+    type: z.literal("set_level"),
+    level: autonomyLevelSchema.extract(["new", "verified", "stable"]),
+    reason: z.string().min(1).max(500),
+  }),
+]);
+export const autonomyPolicyActionRequestSchema = z.object({
+  action: autonomyPolicyActionSchema,
+  idempotencyKey: z.string().min(8).max(128),
+  expectedRevision: z.number().int().nonnegative(),
+});
+export type AutonomyPolicyActionRequest = z.infer<
+  typeof autonomyPolicyActionRequestSchema
+>;
+
+export const apiAutonomyAuditSchema = z.object({
+  productId: z.string(),
+  policyId: z.string(),
+  applicationId: z.string().nullable(),
+  actorId: z.string(),
+  actorRole: z.string(),
+  action: z.string(),
+  fromLevel: autonomyLevelSchema,
+  toLevel: autonomyLevelSchema,
+  reason: z.string(),
+  idempotencyKey: z.string(),
+  metricsBefore: autonomyMetricsSchema,
+  metricsAfter: autonomyMetricsSchema,
+  createdAt: z.string(),
+});
+export type ApiAutonomyAudit = z.infer<typeof apiAutonomyAuditSchema>;
 
 export const apiJobStatusSchema = z.enum([
   "queued",
@@ -151,6 +191,7 @@ export const apiApplicationSchema = z.object({
   offerKind: offerKindSchema.nullable(),
   checkJobId: z.string().nullable(),
   scoring: apiScoringSchema.nullable(),
+  autonomyCase: autonomyCaseSchema.nullable().default(null),
   /** Условия, которые сотрудник предложил клиенту. */
   offer: offerTermsSchema.nullable().default(null),
   requestedInfo: z.array(z.string()).default([]),

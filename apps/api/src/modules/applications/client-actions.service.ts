@@ -27,6 +27,7 @@ export class ClientActionsService {
     request: ClientActionRequest,
     session: DemoSession,
   ): Promise<ClientActionResponse> {
+    await this.store.expireAutoOffer(applicationId);
     await this.store.inTransaction(async (tx) => {
       const current = await tx.lockApplication(applicationId);
       // Чужая заявка выглядит так же, как несуществующая: номер не подтверждается.
@@ -43,6 +44,13 @@ export class ClientActionsService {
         current,
         request.action,
         new Date().toISOString(),
+      );
+      await tx.applyAutonomyAction(
+        current,
+        outcome.application,
+        request.action.type,
+        { id: session.account.id, role: "client" },
+        request.idempotencyKey,
       );
       await tx.saveManagement(outcome.application);
       const eventId = await tx.appendEvent(applicationId, outcome.event.kind, {

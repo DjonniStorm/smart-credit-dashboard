@@ -36,6 +36,7 @@ export async function seedApplication(
     checkJobId: null,
     scoring: { score: 80, model: "baseline", recommendation: "approve" },
     decision: null,
+    autonomyCase: null,
     createdAt: now,
     updatedAt: now,
     ...patch,

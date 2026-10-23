@@ -65,6 +65,7 @@ function mapApplication(
     urgent: management.urgent,
     urgentReason: management.urgentReason,
     autonomy: context?.autonomy,
+    autonomyCase: application.autonomyCase,
     comments: management.comments,
     handoff: management.handoff,
     blocker: management.blocker,
@@ -150,6 +151,12 @@ const eventKinds = new Set([
   "comment_added",
   "handoff",
   "hold",
+  "autonomy_candidate",
+  "autonomy_auto_offer",
+  "autonomy_intercepted",
+  "autonomy_expired",
+  "autonomy_override",
+  "autonomy_policy_changed",
 ]);
 
 const armStatusByWorkflow: Record<string, Application["status"]> = {
@@ -171,6 +178,17 @@ function toArmEvent(event: ApiAuditEvent): Application["events"][number] {
     Object.entries(event.metadata).map(([key, value]) => [key, String(value)]),
   );
   const byEmployee = metadata.actorKind === "employee";
+  const eventTitle =
+    metadata.title ??
+    {
+      autonomy_candidate: "Кейс допущен к автономности",
+      autonomy_auto_offer: "Автоодобрение отправлено на контроль",
+      autonomy_intercepted: "Автоодобрение перехвачено",
+      autonomy_expired: "Контрольное окно автоодобрения закрыто",
+      autonomy_override: "Автономная рекомендация переопределена",
+      autonomy_policy_changed: "Политика автономности изменена",
+    }[event.kind] ??
+    event.kind;
   return {
     id: event.id,
     applicationId: event.applicationId,
@@ -178,7 +196,7 @@ function toArmEvent(event: ApiAuditEvent): Application["events"][number] {
     actor: byEmployee
       ? { kind: "employee", name: metadata.actorName ?? "Сотрудник" }
       : { kind: "system", name: "Система" },
-    title: metadata.title ?? event.kind,
+    title: eventTitle,
     comment:
       metadata.comment && metadata.comment !== "null" ? metadata.comment : null,
     fromStatus: armStatusByWorkflow[metadata.fromStatus ?? ""] ?? null,

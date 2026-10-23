@@ -1,4 +1,9 @@
 import type {
+  ApiAutonomyAudit,
+  ApiAutonomySnapshot,
+  AutonomyPolicyActionRequest,
+} from "@repo/contracts/api";
+import type {
   Application,
   ClientResponse,
   Employee,
@@ -31,4 +36,11 @@ export interface ArmApi {
   currentEmployee(): Promise<Employee | null>;
   /** Вернуть демо-данные к началу. */
   reset(): Promise<void>;
+  listAutonomyPolicies(): Promise<ApiAutonomySnapshot[]>;
+  getAutonomyPolicy(productId: string): Promise<ApiAutonomySnapshot>;
+  listAutonomyAudit(productId: string): Promise<ApiAutonomyAudit[]>;
+  applyAutonomyPolicyAction(
+    productId: string,
+    request: AutonomyPolicyActionRequest,
+  ): Promise<ApiAutonomySnapshot>;
 }

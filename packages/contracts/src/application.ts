@@ -16,6 +16,7 @@ import {
   rejectReasonSchema,
   waitingOnSchema,
 } from "./application-parts.ts";
+import { autonomyCaseSchema } from "./autonomy.ts";
 import {
   creditProductIdSchema,
   creditPurposeSchema,
@@ -236,6 +237,10 @@ export const employeeActionSchema = z.discriminatedUnion("type", [
     enabled: z.boolean(),
     reason: z.string().max(500).default(""),
   }),
+  z.object({
+    type: z.literal("intercept_autonomy"),
+    reason: z.string().min(1).max(500),
+  }),
 ]);
 export type EmployeeAction = z.infer<typeof employeeActionSchema>;
 /** Команда АРМ: employeeActionSchema является версируемым command-контрактом. */
@@ -261,7 +266,19 @@ export const applicationEventSchema = z.object({
   toStatus: applicationStatusSchema.nullable(),
   /** Тип аудита; optional для чтения старых событий. */
   kind: z
-    .enum(["status_changed", "action", "comment_added", "handoff", "hold"])
+    .enum([
+      "status_changed",
+      "action",
+      "comment_added",
+      "handoff",
+      "hold",
+      "autonomy_candidate",
+      "autonomy_auto_offer",
+      "autonomy_intercepted",
+      "autonomy_expired",
+      "autonomy_override",
+      "autonomy_policy_changed",
+    ])
     .optional(),
   /** Небольшой набор структурированных параметров без сырых payload. */
   metadata: z.record(z.string(), z.string()).optional(),
@@ -289,6 +306,7 @@ export const applicationSchema = z.object({
   request: loanRequestSchema,
   checks: z.array(sourceCheckSchema),
   scoring: scoringResultSchema.nullable(),
+  autonomyCase: autonomyCaseSchema.nullable().default(null),
   decision: creditDecisionSchema.nullable(),
   offer: offerTermsSchema.nullable(),
   requestedInfo: z.array(z.string()),

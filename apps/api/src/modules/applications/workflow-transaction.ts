@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import type { EntityManager } from "typeorm";
 
+import { autonomyMetricsSchema } from "@repo/contracts";
 import type { ApplicationComment } from "@repo/contracts/application";
 import type { ApplicationWorkflow } from "@repo/contracts/workflow";
 
@@ -65,7 +66,7 @@ export class WorkflowTransaction {
       `update applications set status=$2, offer=$3, requested_info=$4, reject_reason=$5,
        hold=$6, urgent=$7, urgent_reason=$8, assignee_id=$9, handoff=$10,
        check_job_id=$11, scoring=$12, decision=$13, updated_at=$14,
-       client_reply=$15, deal=$16, cancelled_by=$17 where id=$1`,
+       client_reply=$15, deal=$16, cancelled_by=$17, autonomy_case=$18 where id=$1`,
       [
         application.id,
         application.status,
@@ -84,8 +85,119 @@ export class WorkflowTransaction {
         application.clientReply,
         application.deal,
         application.cancelledBy,
+        application.autonomyCase,
       ],
     );
+  }
+
+  async applyAutonomyAction(
+    current: ApplicationWorkflow,
+    next: ApplicationWorkflow,
+    actionType: string,
+    actor: { id: string; role: string },
+    idempotencyKey: string,
+  ): Promise<void> {
+    const currentCase = current.autonomyCase;
+    if (!currentCase) {
+      return;
+    }
+    const rows = await this.manager.query(
+      "select payload from autonomy_policies where product_id=$1 for update",
+      [current.productId],
+    );
+    const row = rows[0] as Record<string, unknown> | undefined;
+    if (!row) {
+      return;
+    }
+    const payload = row.payload as Record<string, unknown>;
+    const metrics = autonomyMetricsSchema.parse(payload.metrics);
+    const isManualOverride = [
+      "intercept_autonomy",
+      "counter_offer",
+      "reject",
+      "request_info",
+    ].includes(actionType);
+    const shouldCountOverride =
+      currentCase.eligible && isManualOverride && !currentCase.overrideCounted;
+    const shouldClose =
+      ["accept_offer", "reject", "cancel", "decline_offer", "sign"].includes(actionType) &&
+      !currentCase.closed;
+    if (!shouldCountOverride && !shouldClose) {
+      return;
+    }
+    const manualOverrides =
+      metrics.manualOverrides + (shouldCountOverride ? 1 : 0);
+    const closedCases = metrics.closedCases + (shouldClose ? 1 : 0);
+    const eligibleCases = Math.max(metrics.eligibleCases, 0);
+    const nextMetrics = {
+      ...metrics,
+      manualOverrides,
+      closedCases,
+      manualOverrideRate:
+        eligibleCases === 0 ? 0 : manualOverrides / eligibleCases,
+      computedAt: new Date().toISOString(),
+    };
+    if (shouldCountOverride || shouldClose) {
+      await this.manager.query(
+        `update autonomy_policies set payload=$2, updated_at=now()
+          where product_id=$1`,
+        [current.productId, { ...payload, metrics: nextMetrics }],
+      );
+      await this.manager.query(
+        `insert into autonomy_policy_audits
+          (product_id, policy_id, application_id, actor_id, actor_role, action,
+           from_level, to_level, reason, idempotency_key, metrics_before, metrics_after)
+         values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+        [
+          current.productId,
+          currentCase.policyId,
+          current.id,
+          actor.id,
+          actor.role,
+          actionType,
+          currentCase.mode === "controlled" ? "stable" : "verified",
+          currentCase.mode === "controlled" ? "stable" : "verified",
+          next.autonomyCase?.disposition === "intercepted"
+            ? "Перехват автоодобрения"
+            : "Завершение автономного кейса",
+          idempotencyKey,
+          metrics,
+          nextMetrics,
+        ],
+      );
+    }
+    if (shouldCountOverride) {
+      await this.manager.query(
+        `insert into application_events(application_id, kind, payload)
+         values($1, 'autonomy_override', $2)`,
+        [
+          current.id,
+          {
+            actionType,
+            actorKind: actor.role === "client" ? "client" : "employee",
+            actorId: actor.id,
+            policyId: currentCase.policyId,
+            reason:
+              next.autonomyCase?.disposition === "intercepted"
+                ? "Перехват автоодобрения"
+                : "Ручное решение поверх допуска",
+          },
+        ],
+      );
+    }
+    next.autonomyCase = {
+      ...currentCase,
+      overrideCounted: currentCase.overrideCounted || shouldCountOverride,
+      closed: currentCase.closed || shouldClose,
+      disposition:
+        next.autonomyCase?.disposition === "intercepted"
+          ? "intercepted"
+          : actionType === "decline_offer"
+            ? "declined"
+            : shouldClose
+              ? "confirmed"
+              : currentCase.disposition,
+    };
   }
 
   async appendEvent(
