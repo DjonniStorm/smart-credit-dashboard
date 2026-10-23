@@ -7,6 +7,7 @@ import { CompaniesModule } from "../companies/companies.module.ts";
 import { ApplicationActionsService } from "./application-actions.service.ts";
 import {
   ApplicationsController,
+  AutonomyController,
   JobsController,
 } from "./applications.controller.ts";
 import { ApplicationsService } from "./applications.service.ts";
@@ -19,7 +20,7 @@ import { WorkflowStore } from "./workflow-store.ts";
 
 @Module({
   imports: [CompaniesModule, AuthModule, CatalogModule, DemoDataModule],
-  controllers: [ApplicationsController, JobsController],
+  controllers: [ApplicationsController, AutonomyController, JobsController],
   providers: [
     ApplicationsService,
     ApplicationActionsService,

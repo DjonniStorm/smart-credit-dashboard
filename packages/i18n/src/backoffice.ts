@@ -9,6 +9,36 @@ type ApplicationStage =
 type CheckSource = "egrul" | "fns" | "bki";
 type CheckState = "passed" | "pending" | "warning" | "failed" | "unavailable";
 
+const autonomyLevelLabels: Record<string, string> = {
+  new: "новый",
+  verified: "проверенный",
+  stable: "стабильный",
+  paused: "приостановлен",
+};
+const autonomyModeLabels: Record<string, string> = {
+  shadow: "теневой",
+  assist: "с подсказкой",
+  controlled: "управляемый",
+};
+const autonomyDriftLabels: Record<string, string> = {
+  clear: "не обнаружен",
+  detected: "обнаружен",
+  unavailable: "нет данных",
+};
+const autonomyAuditActionLabels: Record<string, string> = {
+  pause: "Отключение сценария",
+  set_level: "Изменение уровня",
+  intercept_autonomy: "Перехват автоодобрения",
+  manager_override: "Ручное переопределение",
+  autonomy_candidate: "Кандидат автономности",
+  auto_offer: "Автоодобрение",
+  autonomy_expired: "Истечение окна контроля",
+};
+
+function labelFor(labels: Record<string, string>, value: string): string {
+  return labels[value] ?? value;
+}
+
 const ru = {
   application: {
     queue: "Очередь заявок",
@@ -73,11 +103,26 @@ const ru = {
     policyUnavailable: "Данные policy ещё не загружены.",
     available: "Доступна",
     manualControl: "Только контроль",
-    policyMeta: (model: string, policy: string, level: string) => `${model} · ${policy} · уровень ${level}`,
+    mode: (mode: string) => `Режим: ${labelFor(autonomyModeLabels, mode)}`,
+    levelLabel: (level: string) => labelFor(autonomyLevelLabels, level),
+    driftLabel: (status: string) => labelFor(autonomyDriftLabels, status),
+    policyMeta: (model: string, policy: string, level: string) => `${model} · ${policy} · уровень ${labelFor(autonomyLevelLabels, level)}`,
     controlWindow: (state: string) => `Контрольное окно: ${state}.`,
     windowOpen: "открыто",
     windowClosed: "закрыто",
     amountOutOfBand: "Сумма вне диапазона автономного решения.",
+    metrics: (closed: number, eligible: number) => `Закрытые кейсы: ${closed} · кандидаты: ${eligible}`,
+    overrides: (count: number, rate: string) => `Переопределения: ${count} (${rate})`,
+    calibration: (error: string) => `Калибровка: ${error}`,
+    drift: (status: string) => `Drift: ${status}`,
+    caseStatus: {
+      manual: "Только ручной контроль",
+      auto: "Автоодобрение отправлено",
+      intercepted: "Автоодобрение перехвачено",
+      expired: "Контрольное окно закрыто",
+      declined: "Клиент отказался от предложения",
+      confirmed: "Автоодобрение подтверждено",
+    },
     inn: "ИНН",
     ogrn: (legalForm: string) => legalForm === "ip" ? "ОГРНИП" : "ОГРН",
   },
@@ -182,6 +227,29 @@ const ru = {
       assignee: "Ответственный",
     },
     productRules: "Как считается скоринг и правила продуктов",
+  },
+  autonomy: {
+    title: "Автономность сценариев",
+    empty: "Политики автономности не загружены.",
+    level: "Уровень",
+    levelLabel: (level: string) => labelFor(autonomyLevelLabels, level),
+    metrics: "Метрики",
+    calibration: "Калибровка",
+    drift: "Drift",
+    driftLabel: (status: string) => labelFor(autonomyDriftLabels, status),
+    noData: "нет данных",
+    auditEntry: (action: string, reason: string) => `Журнал: ${labelFor(autonomyAuditActionLabels, action)} · ${reason}`,
+    pause: "Отключить сценарий",
+    strict: "Вернуть строгий уровень",
+    stable: "Вернуть стабильный уровень",
+    reasonTitle: "Причина изменения",
+    reasonPlaceholder: "Например, нужна дополнительная проверка качества",
+    cancel: "Отмена",
+    confirm: "Сохранить",
+    paused: "сценарий отключён",
+    controlWindow: (minutes: number) => `окно контроля: ${minutes} мин.`,
+    cases: (closed: number, eligible: number) => `кейсы ${closed}, кандидаты ${eligible}`,
+    overrides: (count: number, rate: string) => `переопределения ${count} (${rate})`,
   },
 } as const;
 

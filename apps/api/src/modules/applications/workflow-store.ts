@@ -5,6 +5,11 @@ import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource, EntityManager } from "typeorm";
 
 import type { ApiAuditEvent } from "@repo/contracts/api";
+import {
+  autonomyConfigSchema,
+  autonomyMetricsSchema,
+  checkAutonomyEligibility,
+} from "@repo/contracts";
 import type { ApplicationComment } from "@repo/contracts/application";
 import type {
   ApplicationWorkflow,
@@ -170,6 +175,37 @@ export class WorkflowStore {
     return this.applicationIn(this.db.manager, id);
   }
 
+  /** Возвращает просроченную автооферту в ручное рассмотрение до чтения карточки. */
+  async expireAutoOffer(id: string): Promise<void> {
+    await this.db.transaction(async (manager) => {
+      const tx = new WorkflowTransaction(manager);
+      const application = await tx.lockApplication(id);
+      const endsAt = application?.autonomyCase?.controlWindowEndsAt;
+      if (
+        !application ||
+        application.autonomyCase?.disposition !== "auto_offer_sent" ||
+        !endsAt ||
+        new Date() < new Date(endsAt)
+      ) {
+        return;
+      }
+      application.status = "in_review";
+      application.offer = null;
+      application.autonomyCase = {
+        ...application.autonomyCase,
+        disposition: "expired",
+      };
+      application.updatedAt = new Date().toISOString();
+      await tx.saveManagement(application);
+      await tx.appendEvent(id, "autonomy_expired", {
+        title: "Контрольное окно автоодобрения закрыто",
+        comment: "Заявка возвращена в ручное рассмотрение",
+        actorKind: "system",
+        actorName: "Кредитный конвейер",
+      });
+    });
+  }
+
   async listApplications(): Promise<ApplicationWorkflow[]> {
     const rows = rowsOf(
       await this.db.query(
@@ -208,6 +244,9 @@ export class WorkflowStore {
     outcome: {
       result: JobResult;
       decision: ApplicationWorkflow["decision"];
+      status?: ApplicationWorkflow["status"];
+      offer?: ApplicationWorkflow["offer"];
+      autonomyCase?: ApplicationWorkflow["autonomyCase"];
       checks: SourceCheck[];
       eventPayload: unknown;
     },
@@ -223,17 +262,134 @@ export class WorkflowStore {
       if (owned.length === 0) {
         return false;
       }
+      let autonomyCase = outcome.autonomyCase;
+      let decision = outcome.decision;
+      let status = outcome.status;
+      let offer = outcome.offer;
+      let eventPayload = outcome.eventPayload;
+      if (autonomyCase?.eligible) {
+        const applicationRows = rowsOf(
+          await manager.query(
+            "select product_id from applications where id=$1",
+            [job.applicationId],
+          ),
+        );
+        const productId = String(applicationRows[0]?.product_id ?? "");
+        const policyRows = rowsOf(
+          await manager.query(
+            "select payload from autonomy_policies where product_id=$1 for update",
+            [productId],
+          ),
+        );
+        const policyPayload = policyRows[0]?.payload as
+          | Record<string, unknown>
+          | undefined;
+        const config = policyPayload
+          ? autonomyConfigSchema.parse(policyPayload.config)
+          : null;
+        const metrics = policyPayload
+          ? autonomyMetricsSchema.parse(policyPayload.metrics)
+          : null;
+        const currentEligibility =
+          config && metrics
+            ? checkAutonomyEligibility(config, metrics)
+            : { eligible: false, reasons: ["Политика автономности недоступна"] };
+        const policyChanged =
+          !config ||
+          config.revision !== autonomyCase.policyRevision ||
+          config.level !== "stable" ||
+          !currentEligibility.eligible;
+        if (policyChanged) {
+          autonomyCase = {
+            ...autonomyCase,
+            mode: "assist",
+            eligible: false,
+            disposition: "manual_required",
+            reasons: [
+              ...new Set([
+                ...autonomyCase.reasons,
+                ...currentEligibility.reasons,
+                "Политика изменилась до автоодобрения",
+              ]),
+            ],
+            controlWindowOpenedAt: null,
+            controlWindowEndsAt: null,
+            autoDecisionAt: null,
+          };
+          if (decision) {
+            decision = { ...decision, autonomyMode: "assist" };
+          }
+          status = undefined;
+          offer = null;
+          eventPayload = {
+            ...(typeof eventPayload === "object" && eventPayload
+              ? eventPayload
+              : {}),
+            autonomyMode: "assist",
+            autonomyDisposition: "manual_required",
+          };
+        }
+      }
       await manager.query(
-        `update applications set scoring=$2, decision=$3, updated_at=now() where id=$1`,
-        [job.applicationId, outcome.result, outcome.decision],
+        `update applications
+            set scoring=$2, decision=$3, status=coalesce($4, status),
+                offer=coalesce($5, offer), autonomy_case=$6, updated_at=now()
+          where id=$1`,
+        [
+          job.applicationId,
+          outcome.result,
+          decision,
+          status ?? null,
+          offer ?? null,
+          autonomyCase ?? null,
+        ],
       );
+      if (autonomyCase?.eligible) {
+        const applicationRows = rowsOf(
+          await manager.query(
+            "select product_id from applications where id=$1",
+            [job.applicationId],
+          ),
+        );
+        await this.recordAutonomyCandidate(
+          manager,
+          String(applicationRows[0]?.product_id ?? ""),
+        );
+      }
       await this.sourceChecksIn(manager, job.id, outcome.checks);
       await this.eventIn(
         manager,
         job.applicationId,
         "scoring_succeeded",
-        outcome.eventPayload,
+        eventPayload,
       );
+      if (autonomyCase) {
+        await this.eventIn(
+          manager,
+          job.applicationId,
+          "autonomy_candidate",
+          {
+            policyId: autonomyCase.policyId,
+            policyVersion: autonomyCase.policyVersion,
+            policyRevision: autonomyCase.policyRevision,
+            mode: autonomyCase.mode,
+            recommendation: autonomyCase.recommendation,
+            eligible: autonomyCase.eligible,
+          },
+        );
+        if (autonomyCase.disposition === "auto_offer_sent") {
+          await this.eventIn(
+            manager,
+            job.applicationId,
+            "autonomy_auto_offer",
+            {
+              policyId: autonomyCase.policyId,
+              controlWindowEndsAt:
+                autonomyCase.controlWindowEndsAt ?? "",
+            },
+          );
+        }
+      }
       return true;
     });
   }
@@ -338,6 +494,37 @@ export class WorkflowStore {
         [jobId, check.source, check.status, check.error ?? null],
       );
     }
+  }
+
+  private async recordAutonomyCandidate(
+    manager: EntityManager,
+    productId: string,
+  ): Promise<void> {
+    const rows = rowsOf(
+      await manager.query(
+        "select payload from autonomy_policies where product_id=$1 for update",
+        [productId],
+      ),
+    );
+    const row = rows[0];
+    if (!row) {
+      return;
+    }
+    const payload = row.payload as Record<string, unknown>;
+    const metrics = autonomyMetricsSchema.parse(payload.metrics);
+    const eligibleCases = metrics.eligibleCases + 1;
+    const nextMetrics = {
+      ...metrics,
+      eligibleCases,
+      manualOverrideRate:
+        eligibleCases === 0 ? 0 : metrics.manualOverrides / eligibleCases,
+      computedAt: new Date().toISOString(),
+    };
+    await manager.query(
+      `update autonomy_policies set payload=$2, updated_at=now()
+        where product_id=$1`,
+      [productId, { ...payload, metrics: nextMetrics }],
+    );
   }
 
   private async claimKey(

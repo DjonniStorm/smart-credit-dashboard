@@ -16,6 +16,7 @@ import { roleLabel, signOut, useSignedInEmployee } from "@/entities/employee";
 import { formatRub } from "@/shared/lib/money";
 
 import classes from "./settings.module.css";
+import { AutonomyPolicySettings } from "./autonomy-policy-settings";
 
 /** Настройки сотрудника: учётка, тема, сброс демо-данных. */
 export function Settings() {
@@ -65,6 +66,8 @@ export function Settings() {
           />
         </Stack>
       </Card>
+
+      <AutonomyPolicySettings />
 
     </div>
   );

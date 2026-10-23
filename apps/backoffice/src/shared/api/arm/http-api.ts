@@ -2,9 +2,14 @@
 
 import {
   type ApiApplicationContext,
+  type ApiAutonomyAudit,
+  type ApiAutonomySnapshot,
   type ApiProductCatalog,
   type ApiQueueItem,
   apiApplicationContextSchema,
+  apiAutonomyAuditSchema,
+  apiAutonomySnapshotSchema,
+  autonomyPolicyActionRequestSchema,
   apiProductCatalogSchema,
   apiQueueItemSchema,
 } from "@repo/contracts/api";
@@ -115,5 +120,31 @@ export const httpArmApi: ArmApi = {
   },
   reset: async () => {
     throw new Error("Сброс демо-данных выполняется командой db:seed");
+  },
+  listAutonomyPolicies: () =>
+    request<ApiAutonomySnapshot[]>(
+      "/autonomy/policies",
+      apiAutonomySnapshotSchema.array(),
+    ),
+  getAutonomyPolicy: (productId) =>
+    request<ApiAutonomySnapshot>(
+      `/autonomy/policies/${productId}`,
+      apiAutonomySnapshotSchema,
+    ),
+  listAutonomyAudit: (productId) =>
+    request<ApiAutonomyAudit[]>(
+      `/autonomy/policies/${productId}/audit`,
+      apiAutonomyAuditSchema.array(),
+    ),
+  applyAutonomyPolicyAction: (productId, body) => {
+    const parsedBody = autonomyPolicyActionRequestSchema.parse(body);
+    return request<ApiAutonomySnapshot>(
+      `/autonomy/policies/${productId}/actions`,
+      apiAutonomySnapshotSchema,
+      {
+        method: "POST",
+        body: JSON.stringify(parsedBody),
+      },
+    );
   },
 };

@@ -16,6 +16,7 @@ import {
   CounterDialog,
   HandoffDialog,
   HoldDialog,
+  InterceptDialog,
   RejectDialog,
   RequestDialog,
 } from "./dialogs";
@@ -122,6 +123,18 @@ export function ActionDialogs({
         <CancelDialog
           {...common}
           onSubmit={(action) => run(action, "Заявка отменена")}
+        />
+      );
+    case "intercept":
+      return (
+        <InterceptDialog
+          {...common}
+          onSubmit={(reason) =>
+            run(
+              { type: "intercept_autonomy", reason },
+              "Автоодобрение перехвачено",
+            )
+          }
         />
       );
     default:

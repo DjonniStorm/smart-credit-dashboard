@@ -4,6 +4,9 @@ export {
   useApplications,
   useAssignMany,
   useClientSimulation,
+  useAutonomyPolicies,
+  useAutonomyAudit,
+  useAutonomyPolicyAction,
   useProducts,
   useResetDemo,
 } from "./api/queries";

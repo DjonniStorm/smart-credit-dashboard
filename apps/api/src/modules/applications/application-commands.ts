@@ -33,7 +33,13 @@ export interface CommandContext {
 }
 
 export interface CommandEvent {
-  kind: "status_changed" | "action" | "comment_added" | "handoff" | "hold";
+  kind:
+    | "status_changed"
+    | "action"
+    | "comment_added"
+    | "handoff"
+    | "hold"
+    | "autonomy_intercepted";
   title: string;
   comment: string | null;
   metadata: Record<string, string>;
@@ -67,6 +73,11 @@ export function runCommand(
       current.hold.state === "blocked"
         ? "Заявка заблокирована: сначала снимите блокировку"
         : "Заявка на паузе: сначала верните её в работу",
+    );
+  }
+  if (current.autonomyCase?.disposition === "auto_offer_sent" && action.type !== "intercept_autonomy") {
+    throw new ConflictException(
+      "Автоодобрение ожидает контроля: сначала перехватите его или дождитесь ответа клиента",
     );
   }
   if (isClosed(current)) {
@@ -291,6 +302,33 @@ export function runCommand(
         action.reason || null,
         { urgent: String(action.enabled) },
       );
+    }
+    case "intercept_autonomy": {
+      const autonomyCase = current.autonomyCase;
+      if (!autonomyCase || autonomyCase.disposition !== "auto_offer_sent") {
+        throw new ConflictException("Активное автоодобрение не найдено");
+      }
+      if (current.status !== "approved") {
+        throw new ConflictException("Автоодобрение уже принято клиентом");
+      }
+      if (
+        autonomyCase.controlWindowEndsAt !== null &&
+        new Date(ctx.now) >= new Date(autonomyCase.controlWindowEndsAt)
+      ) {
+        throw new ConflictException("Окно перехвата автоодобрения закрыто");
+      }
+      next.status = "in_review";
+      next.offer = null;
+      next.autonomyCase = {
+        ...autonomyCase,
+        disposition: "intercepted",
+        overrideCounted: true,
+      };
+      return plain("autonomy_intercepted", "Автоодобрение перехвачено", action.reason, {
+        autonomyDisposition: "intercepted",
+        policyId: autonomyCase.policyId,
+        policyRevision: String(autonomyCase.policyRevision),
+      });
     }
   }
 }

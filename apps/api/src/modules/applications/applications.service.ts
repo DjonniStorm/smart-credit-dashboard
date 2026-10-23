@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, Optional } from "@nestjs/common";
 
 import type { ScoreResponse } from "@repo/contracts";
+import { productRate } from "@repo/contracts/product-catalog";
 import type {
   ApiApplication,
   ApiApplicationContext,
   ApiApplicationResponse,
+  ApiAutonomySnapshot,
   ApiJob,
   ApiQueueItem,
 } from "@repo/contracts/api";
@@ -21,6 +23,7 @@ import {
   CompaniesService,
   SourceCheckError,
 } from "../companies/companies.service.ts";
+import { CatalogService } from "../catalog/catalog.service.ts";
 import { CompanyProfileService } from "../companies/company-profile.service.ts";
 import {
   toApiApplication,
@@ -45,6 +48,7 @@ export class ApplicationsService {
     private readonly profiles: CompanyProfileService,
     private readonly autonomy: AutonomyStore,
     private readonly store: WorkflowStore,
+    @Optional() private readonly catalog?: CatalogService,
   ) {}
 
   async create(
@@ -62,13 +66,20 @@ export class ApplicationsService {
   /** Очередь АРМ: заявки с управленческим состоянием, только для сотрудников. */
   async listQueue(): Promise<ApiQueueItem[]> {
     const applications = await this.store.listApplications();
-    return applications.map((application) => ({
+    await Promise.all(
+      applications.map((application) =>
+        this.store.expireAutoOffer(application.id),
+      ),
+    );
+    const refreshedApplications = await this.store.listApplications();
+    return refreshedApplications.map((application) => ({
       application: toApiApplication(application),
       management: toApiManagement(application, []),
     }));
   }
 
   async getApiApplication(id: string): Promise<ApiApplication> {
+    await this.store.expireAutoOffer(id);
     const application = await this.getApplication(id);
     return toApiApplication(
       application,
@@ -77,6 +88,7 @@ export class ApplicationsService {
   }
 
   async getApiApplicationContext(id: string): Promise<ApiApplicationContext> {
+    await this.store.expireAutoOffer(id);
     const application = await this.getApplication(id);
     const companyProfile: CompanyProfileResponse =
       await this.profiles.getProfile(application.inn);
@@ -92,6 +104,7 @@ export class ApplicationsService {
       decision: application.decision,
       autonomy: await this.autonomy.getSnapshot(
         application.productId as ApiApplication["productId"],
+        application.autonomyCase,
       ),
       audit: await this.store.listEvents(application.id),
     };
@@ -150,7 +163,65 @@ export class ApplicationsService {
         throw new Error(`Заявка ${job.applicationId} не найдена`);
       }
       const result = await this.companies.check(application.inn, application);
-      const decision = decide(application, result.scoring as ScoreResponse);
+      let autonomy: ApiAutonomySnapshot | null = null;
+      if (this.autonomy && typeof this.autonomy.getSnapshot === "function") {
+        try {
+          autonomy = await this.autonomy.getSnapshot(
+            application.productId as ApiApplication["productId"],
+          );
+        } catch {
+          autonomy = null;
+        }
+      }
+      const decision = decide(
+        application,
+        result.scoring as ScoreResponse,
+        autonomy ?? undefined,
+      );
+      const now = new Date();
+      const controlWindowEndsAt =
+        autonomy && decision.autonomyMode === "controlled"
+          ? new Date(
+              now.getTime() + autonomy.config.controlWindowMinutes * 60_000,
+            ).toISOString()
+          : null;
+      const autonomyCase: ApplicationWorkflow["autonomyCase"] = autonomy
+        ? {
+            policyId: autonomy.config.id,
+            policyVersion: autonomy.config.policyVersion,
+            policyRevision: autonomy.config.revision,
+            mode: decision.autonomyMode,
+            recommendation: decision.recommendation,
+            eligible: decision.autonomyMode === "controlled",
+            reasons: autonomy.eligibility.reasons,
+            disposition:
+              decision.autonomyMode === "controlled"
+                ? "auto_offer_sent"
+                : "manual_required",
+            controlWindowOpenedAt: controlWindowEndsAt
+              ? now.toISOString()
+              : null,
+            controlWindowEndsAt,
+            overrideCounted: false,
+            closed: false,
+            autoDecisionAt: controlWindowEndsAt ? now.toISOString() : null,
+          }
+        : null;
+      const catalog = this.catalog?.getCatalog();
+      const product = catalog?.products.find(
+        (item) => item.id === application.productId,
+      );
+      const offer =
+        product &&
+        decision.autonomyMode === "controlled" &&
+        decision.recommendation === "approve"
+          ? {
+              productId: product.id,
+              amount: application.amount,
+              termMonths: application.termMonths,
+              ratePct: productRate(product, catalog?.keyRate ?? 0),
+            }
+          : null;
       await this.store.completeJob(job, {
         result: {
           score: result.scoring.score,
@@ -159,6 +230,9 @@ export class ApplicationsService {
           details: toApiScoring(result.scoring),
         },
         decision: toApiDecision(decision),
+        status: offer ? "approved" : undefined,
+        offer,
+        autonomyCase,
         checks: ["egrul", "bki", "fns", "scoring"].map((source) => ({
           source,
           status: "ok" as const,
@@ -171,6 +245,7 @@ export class ApplicationsService {
           rules: decision.rules,
           reasons: decision.reasons,
           autonomyMode: decision.autonomyMode,
+          autonomyDisposition: autonomyCase?.disposition ?? null,
         },
       });
     } catch (error) {

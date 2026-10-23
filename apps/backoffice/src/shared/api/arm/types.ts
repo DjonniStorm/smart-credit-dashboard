@@ -6,6 +6,11 @@ import type {
 } from "@repo/contracts/application";
 import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
 import type { CreditProduct } from "@repo/contracts/product-catalog";
+import type {
+  ApiAutonomyAudit,
+  ApiAutonomySnapshot,
+  AutonomyPolicyActionRequest,
+} from "@repo/contracts/api";
 
 /** Продукт каталога и его ставка при текущей ключевой: ключевая + спред. */
 export type ArmProduct = CreditProduct & { ratePct: number };
@@ -31,4 +36,11 @@ export interface ArmApi {
   currentEmployee(): Promise<Employee | null>;
   /** Вернуть демо-данные к началу. */
   reset(): Promise<void>;
+  listAutonomyPolicies(): Promise<ApiAutonomySnapshot[]>;
+  getAutonomyPolicy(productId: string): Promise<ApiAutonomySnapshot>;
+  listAutonomyAudit(productId: string): Promise<ApiAutonomyAudit[]>;
+  applyAutonomyPolicyAction(
+    productId: string,
+    request: AutonomyPolicyActionRequest,
+  ): Promise<ApiAutonomySnapshot>;
 }

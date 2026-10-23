@@ -13,7 +13,8 @@ export type DialogKind =
   | "block"
   | "comment"
   | "handoff"
-  | "cancel";
+  | "cancel"
+  | "intercept";
 
 export interface ActionItem {
   key: string;
@@ -35,6 +36,7 @@ export const dialogLabel: Record<DialogKind, string> = {
   comment: "Добавить комментарий",
   handoff: "Передать с резюме",
   cancel: "Отменить заявку",
+  intercept: "Перехватить автоодобрение",
 };
 
 const recommendedDialog = {
@@ -72,6 +74,11 @@ export function buildActionLayout(input: BuildInput): ActionLayout {
   const closed = app.waitingOn === "nobody";
   const canDecide =
     !app.hold && app.stage === "decision" && app.waitingOn === "employee";
+  const canIntercept =
+    !app.hold &&
+    app.autonomyCase?.disposition === "auto_offer_sent" &&
+    (!app.autonomyCase.controlWindowEndsAt ||
+      Date.now() < Date.parse(app.autonomyCase.controlWindowEndsAt));
   const overLimit = app.request.amount > employee.approvalLimit;
   const lead = employees.find((e) => e.role === "lead" && e.id !== employee.id);
 
@@ -118,6 +125,14 @@ export function buildActionLayout(input: BuildInput): ActionLayout {
         run: () => open(k),
       }))
     : [];
+
+  const intercept: ActionItem | null = canIntercept
+    ? {
+        key: "intercept",
+        label: dialogLabel.intercept,
+        run: () => open("intercept"),
+      }
+    : null;
 
   const transfers: ActionItem[] =
     app.hold || closed
@@ -190,7 +205,9 @@ export function buildActionLayout(input: BuildInput): ActionLayout {
   // Если одобрить нельзя по лимиту, следующий шаг: передать руководителю.
   const firstDecision = decisions[0];
   let primary: ActionItem | null = null;
-  if (
+  if (intercept) {
+    primary = intercept;
+  } else if (
     firstDecision &&
     firstDecision.key !== "reject" &&
     !firstDecision.disabled
@@ -203,6 +220,7 @@ export function buildActionLayout(input: BuildInput): ActionLayout {
   }
 
   const rest = [
+    intercept,
     take,
     toLead,
     ...decisions,

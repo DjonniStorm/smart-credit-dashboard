@@ -110,9 +110,12 @@ function AutonomyStatus({ app }: { app: Application }) {
       </Card>
     );
   }
-  const { config, eligibility } = snapshot;
+  const { config, metrics, eligibility } = snapshot;
   const inBand = app.request.amount >= config.amountBand.min && app.request.amount <= config.amountBand.max;
-  const eligible = eligibility.eligible && inBand;
+    const eligible =
+      snapshot.case?.mode === "controlled"
+        ? snapshot.case.eligible && snapshot.case.disposition === "auto_offer_sent"
+        : !snapshot.case && eligibility.eligible && inBand;
   return (
     <Card withBorder radius="md" padding="sm" bg="var(--kk-surface-sunken)">
       <Group justify="space-between" align="center" mb={4}>
@@ -122,6 +125,41 @@ function AutonomyStatus({ app }: { app: Application }) {
         </Badge>
       </Group>
       <Text size="xs" c="dimmed">{tx.summary.policyMeta(config.modelVersion, config.policyVersion, config.level)}</Text>
+        {snapshot.case && (
+          <Text size="xs" c="dimmed">{tx.summary.mode(snapshot.case.mode)}</Text>
+        )}
+      <Text size="xs" c="dimmed">
+        {tx.summary.metrics(metrics.closedCases, metrics.eligibleCases)}
+      </Text>
+      <Text size="xs" c="dimmed">
+        {tx.summary.overrides(
+          metrics.manualOverrides,
+          `${Math.round(metrics.manualOverrideRate * 100)}%`,
+        )}
+      </Text>
+      <Text size="xs" c="dimmed">
+        {tx.summary.calibration(
+          metrics.calibrationStatus === "available"
+            ? `${Math.round(metrics.calibrationError * 1000) / 10}%`
+            : "нет данных",
+        )}
+      </Text>
+        <Text size="xs" c="dimmed">{tx.summary.drift(tx.summary.driftLabel(metrics.driftStatus))}</Text>
+      {snapshot.case && (
+        <Text size="xs" fw={600}>
+          {snapshot.case.disposition === "auto_offer_sent"
+            ? tx.summary.caseStatus.auto
+            : snapshot.case.disposition === "intercepted"
+              ? tx.summary.caseStatus.intercepted
+                : snapshot.case.disposition === "expired"
+                  ? tx.summary.caseStatus.expired
+                  : snapshot.case.disposition === "declined"
+                    ? tx.summary.caseStatus.declined
+                    : snapshot.case.disposition === "confirmed"
+                      ? tx.summary.caseStatus.confirmed
+                      : tx.summary.caseStatus.manual}
+        </Text>
+      )}
       <Text size="xs" c="dimmed" mt={4}>{tx.summary.controlWindow(eligibility.controlWindow === "open" ? tx.summary.windowOpen : tx.summary.windowClosed)}</Text>
       {!inBand && <Text size="xs" c="orange" mt={4}>{tx.summary.amountOutOfBand}</Text>}
       {!eligible && eligibility.reasons.length > 0 && <Text size="xs" c="dimmed" mt={4}>{eligibility.reasons[0]}</Text>}

@@ -1,4 +1,6 @@
 import type { ScoreResponse } from "@repo/contracts";
+import { checkAutonomyEligibility } from "@repo/contracts";
+import type { ApiAutonomySnapshot } from "@repo/contracts/api";
 import type { ApplicationWorkflow } from "@repo/contracts/workflow";
 
 export type DecisionRecommendation =
@@ -19,10 +21,10 @@ export interface DecisionResult {
 export function decide(
   application: ApplicationWorkflow,
   scoring: ScoreResponse,
+  autonomy?: ApiAutonomySnapshot,
 ): DecisionResult {
   const rules: DecisionResult["rules"] = [];
   const readinessIndex = scoring.readiness_index ?? 0;
-  const confidence = scoring.confidence ?? 0;
   const reasons = scoring.reasons ?? [];
   if (readinessIndex < 100) {
     rules.push({
@@ -88,21 +90,22 @@ export function decide(
       autonomyMode: "shadow",
     };
   }
-  if (
-    scoring.recommendation === "approve" &&
-    confidence >= 0.8 &&
-    application.amount <= 5_000_000
-  ) {
+  if (scoring.recommendation === "approve") {
+    const mode = autonomy
+      ? resolveAutonomyMode(application, scoring, autonomy)
+      : "assist";
     rules.push({
       id: "approval-limit",
       outcome: "pass",
-      detail: "Сумма и confidence в пределах автономного лимита",
+      detail: autonomy
+        ? "Условия допуска автономности взяты из policy"
+        : "Рекомендация готова к ручному подтверждению",
     });
     return {
       recommendation: "approve",
       reasons,
       rules,
-      autonomyMode: "assist",
+      autonomyMode: mode,
     };
   }
   rules.push({
@@ -116,4 +119,49 @@ export function decide(
     rules,
     autonomyMode: "shadow",
   };
+}
+
+function resolveAutonomyMode(
+  application: ApplicationWorkflow,
+  scoring: ScoreResponse,
+  autonomy: ApiAutonomySnapshot,
+): DecisionResult["autonomyMode"] {
+  if (autonomy.config.level === "paused") {
+    return "shadow";
+  }
+  if (autonomy.config.level === "new") {
+    return "shadow";
+  }
+  if (autonomy.config.level === "verified") {
+    return "assist";
+  }
+  const eligibility = checkAutonomyEligibility(
+    autonomy.config,
+    autonomy.metrics,
+  );
+  if (
+    autonomy.metrics.calibrationStatus !== "available" ||
+    autonomy.metrics.driftStatus !== "clear"
+  ) {
+    return "assist";
+  }
+  const gradeRank: Record<string, number> = { A: 4, B: 3, C: 2, D: 1 };
+  const grade = scoring.grade ?? "D";
+  const minimumGrade = autonomy.config.minGrade;
+  const confidence = scoring.confidence ?? 0;
+  const missingSources = scoring.missing_sources ?? [];
+  const amountInBand =
+    application.amount >= autonomy.config.amountBand.min &&
+    application.amount <= autonomy.config.amountBand.max;
+  if (
+    eligibility.eligible &&
+    amountInBand &&
+    confidence >= autonomy.config.minConfidence &&
+    (gradeRank[grade] ?? 0) >= (gradeRank[minimumGrade] ?? 0) &&
+    scoring.readiness_index === 100 &&
+    missingSources.length === 0
+  ) {
+    return "controlled";
+  }
+  return "assist";
 }

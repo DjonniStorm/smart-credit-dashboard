@@ -119,6 +119,131 @@
           "Companies"
         ]
       }
+    },
+    "/v1/autonomy/policies": {
+      "get": {
+        "operationId": "AutonomyController_policies",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutonomySnapshotListDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Autonomy"
+        ]
+      }
+    },
+    "/v1/autonomy/policies/{productId}": {
+      "get": {
+        "operationId": "AutonomyController_policy",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutonomySnapshotDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Autonomy"
+        ]
+      }
+    },
+    "/v1/autonomy/policies/{productId}/audit": {
+      "get": {
+        "operationId": "AutonomyController_audit",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutonomyAuditListDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Autonomy"
+        ]
+      }
+    },
+    "/v1/autonomy/policies/{productId}/actions": {
+      "post": {
+        "operationId": "AutonomyController_action",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutonomyPolicyActionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutonomySnapshotDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Autonomy"
+        ]
+      }
     }
   },
   "info": {
@@ -656,6 +781,901 @@
         },
         "required": [
           "granted"
+        ]
+      },
+      "AutonomySnapshotListDto": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "config": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "modelVersion": {
+                  "type": "string"
+                },
+                "productId": {
+                  "type": "string"
+                },
+                "policyVersion": {
+                  "type": "string"
+                },
+                "amountBand": {
+                  "type": "object",
+                  "properties": {
+                    "min": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "max": {
+                      "type": "number",
+                      "exclusiveMinimum": true,
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "min",
+                    "max"
+                  ]
+                },
+                "level": {
+                  "type": "string",
+                  "enum": [
+                    "new",
+                    "verified",
+                    "stable",
+                    "paused"
+                  ]
+                },
+                "controlWindowEndsAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "minClosedCases": {
+                  "default": 100,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "maxManualOverrideRate": {
+                  "default": 0.1,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "maxCalibrationError": {
+                  "default": 0.05,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "minConfidence": {
+                  "default": 0.8,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "minGrade": {
+                  "default": "B",
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "C",
+                    "D"
+                  ]
+                },
+                "controlWindowMinutes": {
+                  "default": 30,
+                  "type": "integer",
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991,
+                  "minimum": 0
+                },
+                "revision": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "id",
+                "modelVersion",
+                "productId",
+                "policyVersion",
+                "amountBand",
+                "level",
+                "controlWindowEndsAt"
+              ]
+            },
+            "metrics": {
+              "type": "object",
+              "properties": {
+                "closedCases": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "manualOverrideRate": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "calibrationError": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "driftDetected": {
+                  "type": "boolean"
+                },
+                "manualHold": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "eligibleCases": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "manualOverrides": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "calibrationSamples": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "calibrationStatus": {
+                  "default": "available",
+                  "type": "string",
+                  "enum": [
+                    "available",
+                    "unavailable"
+                  ]
+                },
+                "driftStatus": {
+                  "default": "clear",
+                  "type": "string",
+                  "enum": [
+                    "clear",
+                    "detected",
+                    "unavailable"
+                  ]
+                },
+                "computedAt": {
+                  "default": "1970-01-01T00:00:00.000Z",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "closedCases",
+                "manualOverrideRate",
+                "calibrationError",
+                "driftDetected"
+              ]
+            },
+            "case": {
+              "type": "object",
+              "properties": {
+                "policyId": {
+                  "type": "string"
+                },
+                "policyVersion": {
+                  "type": "string"
+                },
+                "policyRevision": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "shadow",
+                    "assist",
+                    "controlled"
+                  ]
+                },
+                "recommendation": {
+                  "type": "string"
+                },
+                "eligible": {
+                  "type": "boolean"
+                },
+                "reasons": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "disposition": {
+                  "type": "string",
+                  "enum": [
+                    "manual_required",
+                    "auto_offer_sent",
+                    "confirmed",
+                    "intercepted",
+                    "expired",
+                    "declined"
+                  ]
+                },
+                "controlWindowOpenedAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "controlWindowEndsAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "overrideCounted": {
+                  "type": "boolean"
+                },
+                "closed": {
+                  "type": "boolean"
+                },
+                "autoDecisionAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "policyId",
+                "policyVersion",
+                "policyRevision",
+                "mode",
+                "recommendation",
+                "eligible",
+                "reasons",
+                "disposition",
+                "controlWindowOpenedAt",
+                "controlWindowEndsAt",
+                "overrideCounted",
+                "closed",
+                "autoDecisionAt"
+              ],
+              "default": null,
+              "nullable": true
+            },
+            "eligibility": {
+              "type": "object",
+              "properties": {
+                "eligible": {
+                  "type": "boolean"
+                },
+                "reasons": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "controlWindow": {
+                  "type": "string",
+                  "enum": [
+                    "open",
+                    "closed"
+                  ]
+                }
+              },
+              "required": [
+                "eligible",
+                "reasons",
+                "controlWindow"
+              ]
+            }
+          },
+          "required": [
+            "config",
+            "metrics",
+            "eligibility"
+          ]
+        }
+      },
+      "AutonomySnapshotDto": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "modelVersion": {
+                "type": "string"
+              },
+              "productId": {
+                "type": "string"
+              },
+              "policyVersion": {
+                "type": "string"
+              },
+              "amountBand": {
+                "type": "object",
+                "properties": {
+                  "min": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "max": {
+                    "type": "number",
+                    "exclusiveMinimum": true,
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "min",
+                  "max"
+                ]
+              },
+              "level": {
+                "type": "string",
+                "enum": [
+                  "new",
+                  "verified",
+                  "stable",
+                  "paused"
+                ]
+              },
+              "controlWindowEndsAt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "minClosedCases": {
+                "default": 100,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "maxManualOverrideRate": {
+                "default": 0.1,
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "maxCalibrationError": {
+                "default": 0.05,
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minConfidence": {
+                "default": 0.8,
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minGrade": {
+                "default": "B",
+                "type": "string",
+                "enum": [
+                  "A",
+                  "B",
+                  "C",
+                  "D"
+                ]
+              },
+              "controlWindowMinutes": {
+                "default": 30,
+                "type": "integer",
+                "exclusiveMinimum": true,
+                "maximum": 9007199254740991,
+                "minimum": 0
+              },
+              "revision": {
+                "default": 0,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "id",
+              "modelVersion",
+              "productId",
+              "policyVersion",
+              "amountBand",
+              "level",
+              "controlWindowEndsAt"
+            ]
+          },
+          "metrics": {
+            "type": "object",
+            "properties": {
+              "closedCases": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "manualOverrideRate": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "calibrationError": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "driftDetected": {
+                "type": "boolean"
+              },
+              "manualHold": {
+                "default": false,
+                "type": "boolean"
+              },
+              "eligibleCases": {
+                "default": 0,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "manualOverrides": {
+                "default": 0,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "calibrationSamples": {
+                "default": 0,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "calibrationStatus": {
+                "default": "available",
+                "type": "string",
+                "enum": [
+                  "available",
+                  "unavailable"
+                ]
+              },
+              "driftStatus": {
+                "default": "clear",
+                "type": "string",
+                "enum": [
+                  "clear",
+                  "detected",
+                  "unavailable"
+                ]
+              },
+              "computedAt": {
+                "default": "1970-01-01T00:00:00.000Z",
+                "type": "string"
+              }
+            },
+            "required": [
+              "closedCases",
+              "manualOverrideRate",
+              "calibrationError",
+              "driftDetected"
+            ]
+          },
+          "case": {
+            "type": "object",
+            "properties": {
+              "policyId": {
+                "type": "string"
+              },
+              "policyVersion": {
+                "type": "string"
+              },
+              "policyRevision": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "shadow",
+                  "assist",
+                  "controlled"
+                ]
+              },
+              "recommendation": {
+                "type": "string"
+              },
+              "eligible": {
+                "type": "boolean"
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "disposition": {
+                "type": "string",
+                "enum": [
+                  "manual_required",
+                  "auto_offer_sent",
+                  "confirmed",
+                  "intercepted",
+                  "expired",
+                  "declined"
+                ]
+              },
+              "controlWindowOpenedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "controlWindowEndsAt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "overrideCounted": {
+                "type": "boolean"
+              },
+              "closed": {
+                "type": "boolean"
+              },
+              "autoDecisionAt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "policyId",
+              "policyVersion",
+              "policyRevision",
+              "mode",
+              "recommendation",
+              "eligible",
+              "reasons",
+              "disposition",
+              "controlWindowOpenedAt",
+              "controlWindowEndsAt",
+              "overrideCounted",
+              "closed",
+              "autoDecisionAt"
+            ],
+            "default": null,
+            "nullable": true
+          },
+          "eligibility": {
+            "type": "object",
+            "properties": {
+              "eligible": {
+                "type": "boolean"
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "controlWindow": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "closed"
+                ]
+              }
+            },
+            "required": [
+              "eligible",
+              "reasons",
+              "controlWindow"
+            ]
+          }
+        },
+        "required": [
+          "config",
+          "metrics",
+          "eligibility"
+        ]
+      },
+      "AutonomyAuditListDto": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "productId": {
+              "type": "string"
+            },
+            "policyId": {
+              "type": "string"
+            },
+            "applicationId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "actorId": {
+              "type": "string"
+            },
+            "actorRole": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            },
+            "fromLevel": {
+              "type": "string",
+              "enum": [
+                "new",
+                "verified",
+                "stable",
+                "paused"
+              ]
+            },
+            "toLevel": {
+              "type": "string",
+              "enum": [
+                "new",
+                "verified",
+                "stable",
+                "paused"
+              ]
+            },
+            "reason": {
+              "type": "string"
+            },
+            "idempotencyKey": {
+              "type": "string"
+            },
+            "metricsBefore": {
+              "type": "object",
+              "properties": {
+                "closedCases": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "manualOverrideRate": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "calibrationError": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "driftDetected": {
+                  "type": "boolean"
+                },
+                "manualHold": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "eligibleCases": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "manualOverrides": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "calibrationSamples": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "calibrationStatus": {
+                  "default": "available",
+                  "type": "string",
+                  "enum": [
+                    "available",
+                    "unavailable"
+                  ]
+                },
+                "driftStatus": {
+                  "default": "clear",
+                  "type": "string",
+                  "enum": [
+                    "clear",
+                    "detected",
+                    "unavailable"
+                  ]
+                },
+                "computedAt": {
+                  "default": "1970-01-01T00:00:00.000Z",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "closedCases",
+                "manualOverrideRate",
+                "calibrationError",
+                "driftDetected"
+              ]
+            },
+            "metricsAfter": {
+              "type": "object",
+              "properties": {
+                "closedCases": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "manualOverrideRate": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "calibrationError": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "driftDetected": {
+                  "type": "boolean"
+                },
+                "manualHold": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "eligibleCases": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "manualOverrides": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "calibrationSamples": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "calibrationStatus": {
+                  "default": "available",
+                  "type": "string",
+                  "enum": [
+                    "available",
+                    "unavailable"
+                  ]
+                },
+                "driftStatus": {
+                  "default": "clear",
+                  "type": "string",
+                  "enum": [
+                    "clear",
+                    "detected",
+                    "unavailable"
+                  ]
+                },
+                "computedAt": {
+                  "default": "1970-01-01T00:00:00.000Z",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "closedCases",
+                "manualOverrideRate",
+                "calibrationError",
+                "driftDetected"
+              ]
+            },
+            "createdAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "productId",
+            "policyId",
+            "applicationId",
+            "actorId",
+            "actorRole",
+            "action",
+            "fromLevel",
+            "toLevel",
+            "reason",
+            "idempotencyKey",
+            "metricsBefore",
+            "metricsAfter",
+            "createdAt"
+          ]
+        }
+      },
+      "AutonomyPolicyActionDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "pause"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "type",
+                  "reason"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "set_level"
+                    ]
+                  },
+                  "level": {
+                    "type": "string",
+                    "enum": [
+                      "new",
+                      "verified",
+                      "stable"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "type",
+                  "level",
+                  "reason"
+                ]
+              }
+            ]
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "action",
+          "idempotencyKey",
+          "expectedRevision"
         ]
       }
     }

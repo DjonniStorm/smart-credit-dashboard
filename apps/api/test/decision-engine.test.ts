@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { ScoreResponse } from "@repo/contracts";
+import type { ApiAutonomySnapshot } from "@repo/contracts/api";
 
 import { decide } from "../src/modules/applications/decision-engine.ts";
 
@@ -14,6 +15,40 @@ const scoring = {
   readiness_index: 100,
   confidence: 1,
 } satisfies ScoreResponse;
+
+const stableAutonomy: ApiAutonomySnapshot = {
+  config: {
+    id: "policy-working-capital",
+    modelVersion: "score-v3",
+    productId: "working_capital",
+    policyVersion: "policy-2026.10",
+    amountBand: { min: 100_000, max: 5_000_000 },
+    level: "stable",
+    controlWindowEndsAt: "2099-12-31T23:59:59.000Z",
+    minClosedCases: 100,
+    maxManualOverrideRate: 0.1,
+    maxCalibrationError: 0.05,
+    minConfidence: 0.8,
+    minGrade: "B",
+    controlWindowMinutes: 30,
+    revision: 2,
+  },
+  metrics: {
+    closedCases: 150,
+    manualOverrideRate: 0.03,
+    calibrationError: 0.02,
+    driftDetected: false,
+    manualHold: false,
+    eligibleCases: 150,
+    manualOverrides: 5,
+    calibrationSamples: 150,
+    calibrationStatus: "available",
+    driftStatus: "clear",
+    computedAt: "2026-10-23T00:00:00.000Z",
+  },
+  eligibility: { eligible: true, reasons: [], controlWindow: "open" },
+  case: null,
+};
 
 test("scoring reject is not downgraded to manual review", () => {
   const result = decide(application, {
@@ -57,4 +92,25 @@ test("approve is blocked while a stop-factor source is missing", () => {
   } satisfies ScoreResponse);
   assert.equal(result.recommendation, "manual_review");
   assert.ok(result.rules.some((rule) => rule.id === "source-gap"));
+});
+
+test("stable policy allows controlled approval when all gates pass", () => {
+  const result = decide(
+    application,
+    { ...scoring, recommendation: "approve", grade: "A" },
+    stableAutonomy,
+  );
+  assert.equal(result.autonomyMode, "controlled");
+});
+
+test("verified policy keeps approval under assist control", () => {
+  const result = decide(
+    application,
+    { ...scoring, recommendation: "approve", grade: "A" },
+    {
+      ...stableAutonomy,
+      config: { ...stableAutonomy.config, level: "verified" },
+    },
+  );
+  assert.equal(result.autonomyMode, "assist");
 });
