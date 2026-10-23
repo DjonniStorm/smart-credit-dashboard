@@ -9,8 +9,7 @@ import type {
 import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
 
 /**
- * Всё, что кабинет клиента берёт у бэкенда. Реализации: mock.ts (браузер,
- * localStorage) и http.ts (api). Какая используется, решает index.ts.
+ * Всё, что кабинет клиента берёт у бэкенда. Реализация использует HTTP API.
  */
 export interface CabinetApi {
   listDemoAccounts(): Promise<DemoAccount[]>;

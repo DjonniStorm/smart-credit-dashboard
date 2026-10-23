@@ -7,7 +7,7 @@ import { StateBlock } from "@repo/ui/state-block";
 import { useProducts } from "@/entities/application";
 import { formatRub } from "@/shared/lib/money";
 
-// Описание совпадает с мок-моделью в shared/api/arm/mock/engine.ts.
+// Описание соответствует синтетическому baseline scoring в API.
 const FACTORS: [string, string][] = [
   ["Срок работы бизнеса", "от 3 лет +10, от 1 года +4, меньше года −8"],
   [
