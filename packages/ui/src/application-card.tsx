@@ -80,7 +80,9 @@ export function ApplicationCard({
       <Divider my="md" color="var(--kk-line)" />
 
       <Group justify="space-between" align="center" gap="sm" wrap="wrap">
-        <Text maw={380}>{nextStep}</Text>
+        <Text component="div" maw={380}>
+          {nextStep}
+        </Text>
         {action}
       </Group>
     </Card>
