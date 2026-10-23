@@ -23,7 +23,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import type { Application, Decision } from "@repo/contracts/cabinet";
-import { Alfi, AlfiState } from "@repo/ui/alfi";
 import { ApplicationStatusBadge } from "@repo/ui/application-status";
 import { Marker } from "@repo/ui/marker";
 import { formatRub } from "@repo/ui/money";
@@ -44,6 +43,7 @@ import {
   useApplication,
 } from "@/entities/application";
 import { useCatalog } from "@/entities/product";
+import { alfiTargets } from "@/features/alfi-assistant";
 import { AnswerRequestForm } from "@/features/answer-request";
 import { OfferDecision } from "@/features/decide-offer";
 import { SignContract } from "@/features/sign-contract";
@@ -142,8 +142,6 @@ function Detail({ app }: { app: Application }) {
     <Stack gap="lg">
       <Header app={app} />
 
-      <AlfiContext app={app} />
-
       <HealthIndices app={app} />
 
       <UrgencyIndicator app={app} />
@@ -152,26 +150,28 @@ function Detail({ app }: { app: Application }) {
 
       <div className={classes.layout}>
         <Stack gap="lg" className={classes.main}>
-          <Card component="section" aria-labelledby="path-title">
-            <Stack gap="md">
-              <Title order={2} size="h3" id="path-title">
-                {lx.detail.path}
-              </Title>
-              <StageRail
-                stages={stages}
-                current={stage.current}
-                waitingForClient={stage.waitingForClient}
-              />
-              <Text aria-live="polite">
-                {stage.waitingForClient ? (
-                  <Marker>{nextStepOf(app)}</Marker>
-                ) : (
-                  nextStepOf(app)
-                )}
-              </Text>
-            </Stack>
-          </Card>
-          <StagePanel app={app} />
+          <Stack gap="lg" data-alfi-target={alfiTargets.nextStep}>
+            <Card component="section" aria-labelledby="path-title">
+              <Stack gap="md">
+                <Title order={2} size="h3" id="path-title">
+                  {lx.detail.path}
+                </Title>
+                <StageRail
+                  stages={stages}
+                  current={stage.current}
+                  waitingForClient={stage.waitingForClient}
+                />
+                <Text aria-live="polite">
+                  {stage.waitingForClient ? (
+                    <Marker>{nextStepOf(app)}</Marker>
+                  ) : (
+                    nextStepOf(app)
+                  )}
+                </Text>
+              </Stack>
+            </Card>
+            <StagePanel app={app} />
+          </Stack>
           {app.requests
             .filter((r) => r.answer)
             .map((r) => (
@@ -188,7 +188,9 @@ function Detail({ app }: { app: Application }) {
                 </Stack>
               </Card>
             ))}
-          <DecisionCard app={app} />
+          <div data-alfi-target={alfiTargets.decision}>
+            <DecisionCard app={app} />
+          </div>
         </Stack>
         <Stack gap="lg" className={classes.aside}>
           <Card>
@@ -201,64 +203,6 @@ function Detail({ app }: { app: Application }) {
       </div>
     </Stack>
   );
-}
-
-function AlfiContext({ app }: { app: Application }) {
-  const state = clientAlfiState(app);
-  return (
-    <Card padding="md">
-      <Group gap="sm" wrap="nowrap" align="flex-start">
-        <Alfi state={state} size={48} />
-        <Stack gap={2}>
-          <Text fw={600}>Альфи</Text>
-          <Text size="sm">{clientAlfiMessage(app)}</Text>
-        </Stack>
-      </Group>
-    </Card>
-  );
-}
-
-function clientAlfiState(app: Application): AlfiState {
-  if (app.status === "needs_client") {
-    return AlfiState.NeedsAnswer;
-  }
-  if (app.status === "in_review") {
-    return AlfiState.Checking;
-  }
-  if (app.status === "rejected") {
-    return AlfiState.Attention;
-  }
-  if (app.status === "counter_offer" || app.status === "approved") {
-    return AlfiState.Success;
-  }
-  if (app.status === "disbursed") {
-    return AlfiState.Success;
-  }
-  return AlfiState.Greeting;
-}
-
-function clientAlfiMessage(app: Application): string {
-  if (app.status === "needs_client") {
-    const request = app.requests.find((item) => !item.answer);
-    if (request?.question) {
-      return request.question;
-    }
-
-    return "Банк ждёт уточнение по заявке.";
-  }
-  if (app.status === "in_review") {
-    return `Проверяю данные заявки: ${app.checksPassed} из 3 проверок завершено.`;
-  }
-  if (app.status === "rejected") {
-    return "Посмотрите причину решения и рекомендации для следующей заявки.";
-  }
-  if (app.status === "counter_offer" || app.status === "approved") {
-    return "Условия готовы. Проверьте предложение и следующий шаг.";
-  }
-  if (app.status === "disbursed") {
-    return "Выдача завершена. Здесь можно посмотреть условия кредита.";
-  }
-  return nextStepOf(app);
 }
 
 const outcomeTone = {

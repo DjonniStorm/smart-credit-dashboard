@@ -8,6 +8,7 @@ import { type ReactNode, useEffect } from "react";
 import { StateBlock } from "@repo/ui/state-block";
 
 import { SignedInProvider, useCurrentEmployee } from "@/entities/employee";
+import { ArmAlfi } from "@/features/alfi-assistant";
 
 import classes from "./arm-shell.module.css";
 import { BrandMark } from "./brand-mark";
@@ -97,7 +98,10 @@ export function ArmShell({ children }: { children: ReactNode }) {
 
       <AppShell.Main>
         {employee && !error ? (
-          <SignedInProvider employee={employee}>{children}</SignedInProvider>
+          <SignedInProvider employee={employee}>
+            {children}
+            <ArmAlfi employeeId={employee.id} />
+          </SignedInProvider>
         ) : (
           <div className={classes.page}>{content}</div>
         )}

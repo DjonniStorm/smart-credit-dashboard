@@ -9,6 +9,7 @@ import { StateBlock } from "@repo/ui/state-block";
 
 import { needsClient, useApplications } from "@/entities/application";
 import { useSession } from "@/entities/session";
+import { CabinetAlfi } from "@/features/alfi-assistant";
 import { tx } from "@/shared/i18n";
 import { QueryError } from "@/shared/ui/query-state";
 
@@ -75,6 +76,7 @@ export function CabinetShell({ children }: { children: ReactNode }) {
         <Text size="xs" c="dimmed" className={classes.note}>
           {tx.demo.footer}
         </Text>
+        {account && <CabinetAlfi />}
       </AppShell.Main>
     </AppShell>
   );
