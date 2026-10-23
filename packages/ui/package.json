@@ -27,6 +27,7 @@
     "@mantine/hooks": "9.7.3",
     "@mantine/notifications": "9.7.3",
     "@repo/contracts": "workspace:*",
+    "@repo/i18n": "workspace:*",
     "@tabler/icons-react": "3.49.0",
     "motion": "12.23.24",
     "react": "19.2.8",

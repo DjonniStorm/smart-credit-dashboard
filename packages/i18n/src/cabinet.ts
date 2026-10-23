@@ -1,5 +1,5 @@
-import { negotiationRu } from "./cabinet-negotiation";
-import { Locale } from "./locale";
+import { negotiationRu } from "./cabinet-negotiation.js";
+import { Locale } from "./locale.js";
 
 // Тексты кабинета клиента. Отдельный словарь, чтобы страницы кабинета
 // не делили enum Message с АРМ. Английской версии пока нет: en отдаёт ru.
@@ -312,6 +312,62 @@ const ru = {
     toApplication: "К заявке",
   },
   negotiation: negotiationRu,
+  companyPassport: {
+    title: "Паспорт компании",
+    unavailableTitle: "Паспорт пока недоступен",
+    unavailableText: "Данные компании ещё не получены.",
+    errorTitle: "Паспорт компании не загрузился",
+    retry: "Повторить",
+    inn: "ИНН",
+    ogrn: "ОГРН/ОГРНИП",
+    legalForm: "Форма",
+    ip: "ИП",
+    ooo: "ООО",
+    director: "Руководитель",
+    okved: "ОКВЭД",
+    region: "Регион",
+    registeredAt: "Дата регистрации",
+    address: "Адрес",
+    profileConfirmed: "Профиль подтверждён",
+    sourcesTitle: "Источники данных",
+    checkedAt: (date: string) => `Проверено: ${date}`,
+    notChecked: "ещё не проверено",
+    nextStep: (reason: string) => `Следующий шаг: ${reason}`,
+    bkiRequiredTitle: "БКИ ещё не открыто",
+    bkiRequiredText:
+      "Факты БКИ появятся после согласия клиента. Отсутствие согласия не является отказом.",
+    grantBkiConsent: "Разрешить запрос данных БКИ",
+    bkiBackofficeText: "Согласие выдаётся в кабинете клиента.",
+    bkiGranted: (date: string) => `Согласие на БКИ получено: ${date}`,
+    financialTitle: "Финансовый контекст",
+    loading: "Загружаем паспорт компании",
+    alfi: {
+      discrepancyTitle: "Найдены расхождения",
+      discrepancyMessage:
+        "Откройте источник и проверьте значения перед продолжением.",
+      manualCheckTitle: "Нужна ручная проверка",
+      manualCheckMessage:
+        "Источник не ответил автоматически. Это не отказ по заявке.",
+      consentTitle: "Нужно согласие на БКИ",
+      consentMessage:
+        "После согласия банк сможет показать кредитные обязательства компании.",
+      readyTitle: "Паспорт готов",
+      readyMessage: "Основные сведения компании подтверждены источниками.",
+    },
+    sourceLabels: {
+      egrul: "ЕГРЮЛ/ЕГРИП",
+      fns: "ФНС",
+      bki: "БКИ",
+      bank_turnover: "Обороты по счёту",
+    },
+    stateLabels: {
+      confirmed: "Подтверждено",
+      pending: "Ожидает действия",
+      discrepancy: "Есть расхождение",
+      unavailable: "Источник недоступен",
+      manual_check: "Нужна ручная проверка",
+    },
+  },
   notFound: {
     title: "Такой страницы нет",
     text: "Ссылка устарела или в адресе опечатка.",
