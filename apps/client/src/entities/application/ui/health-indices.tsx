@@ -29,7 +29,7 @@ function clamp(value: number) {
 function financialHealth(app: Application) {
   const { avgMonthlyTurnover, monthlyDebtPayments, revenueLastYear } =
     app.financials;
-  if (avgMonthlyTurnover <= 0 || revenueLastYear <= 0) return 0;
+  if (avgMonthlyTurnover <= 0 || revenueLastYear <= 0) return null;
 
   const debtLoad = monthlyDebtPayments / avgMonthlyTurnover;
   const turnoverConsistency = (avgMonthlyTurnover * 12) / revenueLastYear;
@@ -68,10 +68,12 @@ function Index({
   label,
   value,
   hint,
+  emptyText = "Завершено",
 }: {
   label: string;
   value: number | null;
   hint: string;
+  emptyText?: string;
 }) {
   const currentTone = value === null ? null : tone(value);
   return (
@@ -84,7 +86,7 @@ function Index({
       </Group>
       {value === null ? (
         <Text size="sm" c="dimmed">
-          Завершено
+          {emptyText}
         </Text>
       ) : (
         <Progress
@@ -134,6 +136,7 @@ export function HealthIndices({ app }: { app: Application }) {
           <Index
             label="Финансовое здоровье"
             value={health}
+            emptyText="Нет данных об оборотах"
             hint="Обороты и долговая нагрузка"
           />
           <Index
