@@ -3,6 +3,7 @@ import { ApiOkResponse, ApiOperation } from "@nestjs/swagger";
 import { ZodSerializerDto, createZodDto } from "nestjs-zod";
 import {
   apiApplicationResponseSchema,
+  apiApplicationContextSchema,
   apiApplicationSchema,
   apiCheckRequestSchema,
   apiCreateApplicationSchema,
@@ -13,6 +14,7 @@ import { ApplicationsService } from "./applications.service.ts";
 
 class CreateApplicationDto extends createZodDto(apiCreateApplicationSchema) {}
 class CreateApplicationResponseDto extends createZodDto(apiApplicationResponseSchema) {}
+class ApplicationContextDto extends createZodDto(apiApplicationContextSchema) {}
 class ApplicationCheckDto extends createZodDto(apiCheckRequestSchema) {}
 class ApplicationDto extends createZodDto(apiApplicationSchema) {}
 class ApplicationListDto extends createZodDto(apiApplicationSchema.array()) {}
@@ -35,6 +37,14 @@ export class ApplicationsController {
   @ZodSerializerDto(CreateApplicationResponseDto)
   async create(@Body() body: CreateApplicationDto): Promise<CreateApplicationResponseDto> {
     return this.applications.createApiApplication(body);
+  }
+
+  @Get(":id/context")
+  @ApiOperation({ operationId: "ApplicationsController_context" })
+  @ApiOkResponse({ type: ApplicationContextDto })
+  @ZodSerializerDto(ApplicationContextDto)
+  async context(@Param("id") id: string): Promise<ApplicationContextDto> {
+    return this.applications.getApiApplicationContext(id);
   }
 
   @Get(":id")

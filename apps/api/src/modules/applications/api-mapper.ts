@@ -1,5 +1,6 @@
 import type {
   ApiApplication,
+  ApiDecision,
   ApiJob,
   ApiScoring,
   PublicApplicationStatus,
@@ -29,6 +30,20 @@ export function toApiApplication(application: ApplicationWorkflow): ApiApplicati
     scoring: application.scoring?.details ?? null,
     createdAt: application.createdAt,
     updatedAt: application.updatedAt,
+  };
+}
+
+export function toApiDecision(decision: {
+  recommendation: ApiDecision["recommendation"];
+  reasons: string[];
+  rules: ApiDecision["rules"];
+  autonomyMode: ApiDecision["autonomyMode"];
+}): ApiDecision {
+  return {
+    recommendation: decision.recommendation,
+    reasons: decision.reasons,
+    rules: decision.rules,
+    autonomyMode: decision.autonomyMode,
   };
 }
 

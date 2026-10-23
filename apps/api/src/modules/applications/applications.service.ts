@@ -8,16 +8,34 @@ import type {
   ScoringJob,
 } from "@repo/contracts/workflow";
 import type { ScoreResponse } from "@repo/contracts";
-import type { ApiApplication, ApiApplicationResponse, ApiJob } from "@repo/contracts/api";
+import type {
+  ApiApplication,
+  ApiApplicationContext,
+  ApiApplicationResponse,
+  ApiJob,
+} from "@repo/contracts/api";
+import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
 
 import { CompaniesService } from "../companies/companies.service.ts";
+import { CompanyProfileService } from "../companies/company-profile.service.ts";
+import { AutonomyStore } from "./autonomy.store.ts";
 import { WorkflowStore } from "./workflow-store.ts";
 import { decide } from "./decision-engine.ts";
-import { toApiApplication, toApiJob, toApiScoring } from "./api-mapper.ts";
+import {
+  toApiApplication,
+  toApiDecision,
+  toApiJob,
+  toApiScoring,
+} from "./api-mapper.ts";
 
 @Injectable()
 export class ApplicationsService {
-  constructor(private readonly companies: CompaniesService, private readonly store: WorkflowStore) {}
+  constructor(
+    private readonly companies: CompaniesService,
+    private readonly profiles: CompanyProfileService,
+    private readonly autonomy: AutonomyStore,
+    private readonly store: WorkflowStore,
+  ) {}
 
   async create(input: CreateApplicationRequest): Promise<CreateApplicationResponse> {
     const existingJobId = await this.store.findIdempotent("create", input.idempotencyKey);
@@ -40,6 +58,7 @@ export class ApplicationsService {
       purpose: input.purpose,
       status: "in_review",
       checkJobId: jobId,
+      decision: null,
       scoring: null,
       createdAt: now,
       updatedAt: now,
@@ -59,6 +78,23 @@ export class ApplicationsService {
 
   async getApiApplication(id: string): Promise<ApiApplication> {
     return toApiApplication(await this.getApplication(id));
+  }
+
+  async getApiApplicationContext(id: string): Promise<ApiApplicationContext> {
+    const application = await this.getApplication(id);
+    const companyProfile: CompanyProfileResponse = await this.profiles.getProfile(
+      application.inn,
+    );
+    return {
+      application: toApiApplication(application),
+      companyProfile,
+      checks: companyProfile.sources,
+      decision: application.decision,
+      autonomy: await this.autonomy.getSnapshot(
+        application.productId as ApiApplication["productId"],
+      ),
+      audit: await this.store.listEvents(application.id),
+    };
   }
 
   async createApiApplication(input: CreateApplicationRequest): Promise<ApiApplicationResponse> {
@@ -136,6 +172,7 @@ export class ApplicationsService {
       };
       job.status = "succeeded";
       application.scoring = job.result;
+      application.decision = toApiDecision(decision);
       application.updatedAt = new Date().toISOString();
       await this.store.saveApplication(application);
       await this.store.saveJob(job);

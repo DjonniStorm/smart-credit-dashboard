@@ -3,6 +3,7 @@ import { Pool } from "pg";
 import {
   demoAccounts,
   demoCatalog,
+  demoAutonomyPolicies,
   demoEmployees,
   demoSources,
 } from "../src/common/demo-data/demo-data.ts";
@@ -37,11 +38,15 @@ async function seed(): Promise<void> {
         inn text primary key,
         payload jsonb not null
       );
+      create table if not exists autonomy_policies (
+        product_id text primary key,
+        payload jsonb not null
+      );
       create table if not exists applications (
         id text primary key, number text not null unique, inn text not null,
         product_id text not null, amount numeric not null, term_months integer not null,
         purpose text not null, status text not null, check_job_id text,
-        scoring jsonb, created_at timestamptz not null, updated_at timestamptz not null
+        scoring jsonb, decision jsonb, created_at timestamptz not null, updated_at timestamptz not null
       );
       create table if not exists scoring_jobs (
         id text primary key, application_id text not null references applications(id),
@@ -54,6 +59,7 @@ async function seed(): Promise<void> {
         id bigserial primary key, application_id text not null references applications(id),
         kind text not null, payload jsonb not null, created_at timestamptz not null default now()
       );
+      alter table applications add column if not exists decision jsonb;
     `);
     for (const account of demoAccounts) {
       await client.query(
@@ -79,6 +85,13 @@ async function seed(): Promise<void> {
         `insert into demo_sources(inn,payload) values($1,$2)
          on conflict(inn) do update set payload=excluded.payload`,
         [inn, sources],
+      );
+    }
+    for (const [productId, policy] of Object.entries(demoAutonomyPolicies)) {
+      await client.query(
+        `insert into autonomy_policies(product_id,payload) values($1,$2)
+         on conflict(product_id) do update set payload=excluded.payload`,
+        [productId, policy],
       );
     }
     await seedApplications(client);
@@ -129,10 +142,11 @@ async function seedApplications(client: import("pg").PoolClient): Promise<void> 
   for (const application of applications) {
     const now = new Date().toISOString();
     await client.query(
-      `insert into applications(id,number,inn,product_id,amount,term_months,purpose,status,check_job_id,scoring,created_at,updated_at)
-       values($1,$2,$3,$4,$5,$6,$7,'in_review',$8,null,$9,$9)
+      `insert into applications(id,number,inn,product_id,amount,term_months,purpose,status,check_job_id,scoring,decision,created_at,updated_at)
+       values($1,$2,$3,$4,$5,$6,$7,'in_review',$8,null,null,$9,$9)
        on conflict(id) do update set product_id=excluded.product_id, amount=excluded.amount,
-       term_months=excluded.term_months, purpose=excluded.purpose, check_job_id=excluded.check_job_id`,
+       term_months=excluded.term_months, purpose=excluded.purpose, check_job_id=excluded.check_job_id,
+       scoring=null, decision=null`,
       [
         application.id,
         application.number,
