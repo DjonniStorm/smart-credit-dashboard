@@ -1,4 +1,9 @@
-import type { DemoAccountApi, ApiProductCatalog } from "@repo/contracts/api";
+import type {
+  ApiProductCatalog,
+  ApiProductId,
+  DemoAccountApi,
+} from "@repo/contracts/api";
+import type { AutonomyConfig, AutonomyMetrics } from "@repo/contracts";
 import type { Employee } from "@repo/contracts/application";
 import type { BkiReport, EgrulRecord, FnsProfile } from "@repo/contracts";
 
@@ -75,6 +80,82 @@ export const demoCatalog: ApiProductCatalog = {
   keyRate: 14,
   keyRateDate: "2026-09-11",
   products: demoProducts,
+};
+
+export interface DemoAutonomyPolicy {
+  config: AutonomyConfig;
+  metrics: AutonomyMetrics;
+}
+
+const sharedAutonomyMetrics: AutonomyMetrics = {
+  closedCases: 482,
+  manualOverrideRate: 0.064,
+  calibrationError: 0.031,
+  driftDetected: false,
+  manualHold: false,
+};
+
+export const demoAutonomyPolicies: Record<ApiProductId, DemoAutonomyPolicy> = {
+  working_capital: {
+    config: {
+      id: "credit-line-v3-working-capital",
+      modelVersion: "score-v3.2",
+      productId: "working_capital",
+      policyVersion: "policy-2026.10",
+      amountBand: { min: 100_000, max: 5_000_000 },
+      level: "stable",
+      controlWindowEndsAt: "2026-12-31T23:59:59.000Z",
+      minClosedCases: 100,
+      maxManualOverrideRate: 0.1,
+      maxCalibrationError: 0.05,
+    },
+    metrics: sharedAutonomyMetrics,
+  },
+  cash_gap: {
+    config: {
+      id: "credit-line-v3-cash-gap",
+      modelVersion: "score-v3.2",
+      productId: "cash_gap",
+      policyVersion: "policy-2026.10",
+      amountBand: { min: 100_000, max: 3_000_000 },
+      level: "stable",
+      controlWindowEndsAt: "2026-12-31T23:59:59.000Z",
+      minClosedCases: 100,
+      maxManualOverrideRate: 0.1,
+      maxCalibrationError: 0.05,
+    },
+    metrics: sharedAutonomyMetrics,
+  },
+  equipment: {
+    config: {
+      id: "credit-line-v3-equipment",
+      modelVersion: "score-v3.2",
+      productId: "equipment",
+      policyVersion: "policy-2026.10",
+      amountBand: { min: 500_000, max: 5_000_000 },
+      level: "stable",
+      controlWindowEndsAt: "2026-12-31T23:59:59.000Z",
+      minClosedCases: 100,
+      maxManualOverrideRate: 0.1,
+      maxCalibrationError: 0.05,
+    },
+    metrics: sharedAutonomyMetrics,
+  },
+  development: {
+    config: {
+      id: "credit-line-v3-development",
+      modelVersion: "score-v3.2",
+      productId: "development",
+      policyVersion: "policy-2026.10",
+      amountBand: { min: 1_000_000, max: 5_000_000 },
+      level: "stable",
+      controlWindowEndsAt: "2026-12-31T23:59:59.000Z",
+      minClosedCases: 100,
+      maxManualOverrideRate: 0.1,
+      maxCalibrationError: 0.05,
+    },
+    metrics: sharedAutonomyMetrics,
+  },
 };
 
 export const demoEmployees: Employee[] = [

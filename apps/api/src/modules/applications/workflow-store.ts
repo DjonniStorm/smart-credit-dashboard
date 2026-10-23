@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource } from "typeorm";
+import type { ApiAuditEvent } from "@repo/contracts/api";
 import type { ApplicationWorkflow, ScoringJob } from "@repo/contracts/workflow";
 
 /** Durable repository for the workflow. Schema creation is idempotent for the demo. */
@@ -14,7 +15,7 @@ export class WorkflowStore implements OnModuleInit {
         id text primary key, number text not null unique, inn text not null,
         product_id text not null, amount numeric not null, term_months integer not null,
         purpose text not null, status text not null, check_job_id text,
-        scoring jsonb, created_at timestamptz not null, updated_at timestamptz not null
+        scoring jsonb, decision jsonb, created_at timestamptz not null, updated_at timestamptz not null
       );
       create table if not exists scoring_jobs (
         id text primary key, application_id text not null references applications(id),
@@ -36,15 +37,17 @@ export class WorkflowStore implements OnModuleInit {
         scope text not null, key text not null, resource_id text not null,
         created_at timestamptz not null default now(), primary key(scope, key)
       );
+      alter table applications add column if not exists decision jsonb;
     `);
   }
 
   async saveApplication(application: ApplicationWorkflow): Promise<void> {
     await this.db.query(
-      `insert into applications(id,number,inn,product_id,amount,term_months,purpose,status,check_job_id,scoring,created_at,updated_at)
-       values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-       on conflict(id) do update set status=excluded.status, check_job_id=excluded.check_job_id, scoring=excluded.scoring, updated_at=excluded.updated_at`,
-      [application.id, application.number, application.inn, application.productId, application.amount, application.termMonths, application.purpose, application.status, application.checkJobId, application.scoring, application.createdAt, application.updatedAt],
+      `insert into applications(id,number,inn,product_id,amount,term_months,purpose,status,check_job_id,scoring,decision,created_at,updated_at)
+       values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+       on conflict(id) do update set status=excluded.status, check_job_id=excluded.check_job_id,
+       scoring=excluded.scoring, decision=excluded.decision, updated_at=excluded.updated_at`,
+      [application.id, application.number, application.inn, application.productId, application.amount, application.termMonths, application.purpose, application.status, application.checkJobId, application.scoring, application.decision, application.createdAt, application.updatedAt],
     );
   }
 
@@ -101,8 +104,24 @@ export class WorkflowStore implements OnModuleInit {
     await this.db.query("insert into application_events(application_id,kind,payload) values($1,$2,$3)", [applicationId, kind, payload]);
   }
 
+  async listEvents(applicationId: string): Promise<ApiAuditEvent[]> {
+    const rows = await this.db.query(
+      "select id, application_id, kind, payload, created_at from application_events where application_id=$1 order by created_at",
+      [applicationId],
+    );
+    return rows.map((row: Record<string, unknown>) => {
+      return {
+        id: String(row.id),
+        applicationId: String(row.application_id),
+        kind: String(row.kind),
+        at: new Date(String(row.created_at)).toISOString(),
+        metadata: (row.payload as Record<string, unknown>) ?? {},
+      };
+    });
+  }
+
   private application(row: Record<string, unknown>): ApplicationWorkflow {
-    return { id: String(row.id), number: String(row.number), inn: String(row.inn), productId: row.product_id as ApplicationWorkflow["productId"], amount: Number(row.amount), termMonths: Number(row.term_months), purpose: String(row.purpose), status: row.status as ApplicationWorkflow["status"], checkJobId: (row.check_job_id as string | null) ?? null, scoring: (row.scoring as ApplicationWorkflow["scoring"]) ?? null, createdAt: new Date(String(row.created_at)).toISOString(), updatedAt: new Date(String(row.updated_at)).toISOString() };
+    return { id: String(row.id), number: String(row.number), inn: String(row.inn), productId: row.product_id as ApplicationWorkflow["productId"], amount: Number(row.amount), termMonths: Number(row.term_months), purpose: String(row.purpose), status: row.status as ApplicationWorkflow["status"], checkJobId: (row.check_job_id as string | null) ?? null, scoring: (row.scoring as ApplicationWorkflow["scoring"]) ?? null, decision: (row.decision as ApplicationWorkflow["decision"]) ?? null, createdAt: new Date(String(row.created_at)).toISOString(), updatedAt: new Date(String(row.updated_at)).toISOString() };
   }
 
   private job(row: Record<string, unknown>): ScoringJob {

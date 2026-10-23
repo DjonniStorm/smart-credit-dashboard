@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+import {
+  autonomyConfigSchema,
+  autonomyMetricsSchema,
+} from "./autonomy.js";
+import {
+  companyProfileResponseSchema,
+  companySourceSnapshotSchema,
+} from "./company-profile.js";
+
 export const apiProductIdSchema = z.enum([
   "working_capital",
   "cash_gap",
@@ -85,6 +94,46 @@ export const apiScoringSchema = z.object({
 });
 export type ApiScoring = z.infer<typeof apiScoringSchema>;
 
+export const apiDecisionRuleSchema = z.object({
+  id: z.string(),
+  outcome: z.enum(["pass", "attention", "fail"]),
+  detail: z.string(),
+});
+export type ApiDecisionRule = z.infer<typeof apiDecisionRuleSchema>;
+
+export const apiDecisionSchema = z.object({
+  recommendation: apiScoringSchema.shape.recommendation,
+  reasons: z.array(z.string()),
+  rules: z.array(apiDecisionRuleSchema),
+  autonomyMode: z.enum(["shadow", "assist", "controlled"]),
+});
+export type ApiDecision = z.infer<typeof apiDecisionSchema>;
+
+export const apiCheckSnapshotSchema = companySourceSnapshotSchema;
+export type ApiCheckSnapshot = z.infer<typeof apiCheckSnapshotSchema>;
+
+export const apiAuditEventSchema = z.object({
+  id: z.string(),
+  applicationId: z.string(),
+  kind: z.string(),
+  at: z.string(),
+  metadata: z.record(z.string(), z.unknown()),
+});
+export type ApiAuditEvent = z.infer<typeof apiAuditEventSchema>;
+
+export const apiAutonomySnapshotSchema = z.object({
+  config: autonomyConfigSchema,
+  metrics: autonomyMetricsSchema,
+  eligibility: z.object({
+    eligible: z.boolean(),
+    reasons: z.array(z.string()),
+    controlWindow: z.enum(["open", "closed"]),
+  }),
+});
+export type ApiAutonomySnapshot = z.infer<
+  typeof apiAutonomySnapshotSchema
+>;
+
 export const apiJobStatusSchema = z.enum([
   "queued",
   "running",
@@ -109,6 +158,18 @@ export const apiApplicationSchema = z.object({
   updatedAt: z.string(),
 });
 export type ApiApplication = z.infer<typeof apiApplicationSchema>;
+
+export const apiApplicationContextSchema = z.object({
+  application: apiApplicationSchema,
+  companyProfile: companyProfileResponseSchema,
+  checks: z.array(apiCheckSnapshotSchema),
+  decision: apiDecisionSchema.nullable(),
+  autonomy: apiAutonomySnapshotSchema,
+  audit: z.array(apiAuditEventSchema),
+});
+export type ApiApplicationContext = z.infer<
+  typeof apiApplicationContextSchema
+>;
 
 export const apiCreateApplicationSchema = z.object({
   inn: z.string().regex(/^\d{10,12}$/),

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { apiApplicationContextSchema } from "@repo/contracts/api";
 import type { ApplicationWorkflow, ScoringJob } from "@repo/contracts/workflow";
 
 import { ApplicationsService } from "../src/modules/applications/applications.service.ts";
@@ -66,13 +67,71 @@ class MemoryStore {
   async setJobRetry(): Promise<void> {}
 
   async event(): Promise<void> {}
+
+  async listEvents(): Promise<never[]> {
+    return [];
+  }
 }
 
 function service(): { applications: ApplicationsService; store: MemoryStore } {
   const store = new MemoryStore();
   const companies = { check: async () => checkResult };
+  const profiles = {
+    getProfile: async () => {
+      return {
+        profile: {
+          inn: "7701234567",
+          ogrn: "1",
+          name: "ООО Тест",
+          legalForm: "ooo" as const,
+          registeredAt: "2020-01-01",
+          okved: "47.11",
+          region: "Тестовская область",
+          address: "ул. Тестовая, 1",
+          director: "Иван Тестов",
+        },
+        sources: [],
+        bkiConsent: { status: "required" as const, grantedAt: null },
+      };
+    },
+  };
+  const autonomy = {
+    getSnapshot: async () => {
+      return {
+        config: {
+          id: "demo-policy",
+          modelVersion: "score-v3.2",
+          productId: "working_capital",
+          policyVersion: "policy-2026.10",
+          amountBand: { min: 100_000, max: 5_000_000 },
+          level: "stable" as const,
+          controlWindowEndsAt: "2099-12-31T23:59:59.000Z",
+          minClosedCases: 100,
+          maxManualOverrideRate: 0.1,
+          maxCalibrationError: 0.05,
+        },
+        metrics: {
+          closedCases: 482,
+          manualOverrideRate: 0.064,
+          calibrationError: 0.031,
+          driftDetected: false,
+          manualHold: false,
+        },
+        eligibility: {
+          eligible: true,
+          reasons: [],
+          controlWindow: "open" as const,
+        },
+      };
+    },
+  };
   return {
-    applications: new ApplicationsService(companies as never, store as never),
+    applications: new ApplicationsService(
+      companies as never,
+      profiles as never,
+      autonomy as never,
+      store as never,
+    ),
     store,
   };
 }
@@ -97,6 +156,26 @@ test("create is idempotent and persists scoring result", async () => {
   await applications.processJob(await applications.getJob(first.checkJob.id));
   const application = await store.getApplication(first.application.id);
   assert.equal(application?.scoring?.score, 82);
+  assert.equal(application?.decision?.recommendation, "approve");
+});
+
+test("context contains canonical scoring and autonomy snapshots", async () => {
+  const { applications } = service();
+  const created = await applications.create({
+    inn: "7701234567",
+    productId: "working_capital",
+    amount: 100_000,
+    termMonths: 6,
+    purpose: "Пополнение оборота",
+    idempotencyKey: "create-context-1",
+  });
+  await applications.processJob(await applications.getJob(created.checkJob.id));
+
+  const context = await applications.getApiApplicationContext(created.application.id);
+  const parsed = apiApplicationContextSchema.parse(context);
+  assert.equal(parsed.application.scoring?.recommendation, "approve");
+  assert.equal(parsed.decision?.recommendation, "approve");
+  assert.equal(parsed.autonomy.config.productId, "working_capital");
 });
 
 test("repeated check key returns the same job", async () => {

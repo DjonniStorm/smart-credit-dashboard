@@ -20,6 +20,6 @@ import { GetCompanyProfileHandler } from "./queries/get-company-profile.handler.
     GetCompanyProfileHandler,
     GrantBkiConsentHandler,
   ],
-  exports: [CompaniesService],
+  exports: [CompaniesService, CompanyProfileService],
 })
 export class CompaniesModule {}

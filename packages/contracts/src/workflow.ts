@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { creditProductIdSchema } from "./application.js";
-import { apiScoringSchema } from "./api.js";
+import { apiDecisionSchema, apiScoringSchema } from "./api.js";
 
 /** Команда создания заявки из кабинета клиента. */
 export const createApplicationRequestSchema = z.object({
@@ -26,6 +26,7 @@ export const applicationWorkflowSchema = z.object({
   purpose: z.string(),
   status: z.enum(["draft", "in_review", "needs_client", "approved", "rejected"]),
   checkJobId: z.string().nullable(),
+  decision: apiDecisionSchema.nullable(),
   scoring: z
     .object({
       score: z.number().min(0).max(100),
