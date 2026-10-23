@@ -3,9 +3,11 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import type { ScoreResponse } from "@repo/contracts";
 import type {
   ApiApplication,
+  ApiApplicationContext,
   ApiApplicationResponse,
   ApiJob,
 } from "@repo/contracts/api";
+import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
 import type {
   ApplicationCheckRequest,
   ApplicationWorkflow,
@@ -14,10 +16,25 @@ import type {
   ScoringJob,
 } from "@repo/contracts/workflow";
 
-import { CompaniesService, SourceCheckError } from "../companies/companies.service.ts";
-import { toApiApplication, toApiDecision, toApiJob, toApiScoring } from "./api-mapper.ts";
+import {
+  CompaniesService,
+  SourceCheckError,
+} from "../companies/companies.service.ts";
+import { CompanyProfileService } from "../companies/company-profile.service.ts";
+import {
+  toApiApplication,
+  toApiDecision,
+  toApiJob,
+  toApiScoring,
+} from "./api-mapper.ts";
+import { AutonomyStore } from "./autonomy.store.ts";
 import { decide } from "./decision-engine.ts";
-import { MAX_JOB_ATTEMPTS, RETRY_BASE_DELAY_MS, RETRY_MAX_DELAY_MS, WorkflowStore } from "./workflow-store.ts";
+import {
+  MAX_JOB_ATTEMPTS,
+  RETRY_BASE_DELAY_MS,
+  RETRY_MAX_DELAY_MS,
+  WorkflowStore,
+} from "./workflow-store.ts";
 
 @Injectable()
 export class ApplicationsService {
@@ -46,13 +63,16 @@ export class ApplicationsService {
 
   async getApiApplicationContext(id: string): Promise<ApiApplicationContext> {
     const application = await this.getApplication(id);
-    const companyProfile: CompanyProfileResponse = await this.profiles.getProfile(application.inn);
+    const companyProfile: CompanyProfileResponse =
+      await this.profiles.getProfile(application.inn);
     return {
       application: toApiApplication(application),
       companyProfile,
       checks: companyProfile.sources,
       decision: application.decision,
-      autonomy: await this.autonomy.getSnapshot(application.productId as ApiApplication["productId"]),
+      autonomy: await this.autonomy.getSnapshot(
+        application.productId as ApiApplication["productId"],
+      ),
       audit: await this.store.listEvents(application.id),
     };
   }
@@ -119,7 +139,10 @@ export class ApplicationsService {
           details: toApiScoring(result.scoring),
         },
         decision: toApiDecision(decision),
-        checks: ["egrul", "bki", "fns", "scoring"].map((source) => ({ source, status: "ok" as const })),
+        checks: ["egrul", "bki", "fns", "scoring"].map((source) => ({
+          source,
+          status: "ok" as const,
+        })),
         eventPayload: {
           jobId: job.id,
           score: result.scoring.score,
@@ -135,9 +158,23 @@ export class ApplicationsService {
       const retryAt =
         job.attempts >= MAX_JOB_ATTEMPTS
           ? null
-          : new Date(Date.now() + Math.min(RETRY_MAX_DELAY_MS, 2 ** job.attempts * RETRY_BASE_DELAY_MS));
+          : new Date(
+              Date.now() +
+                Math.min(
+                  RETRY_MAX_DELAY_MS,
+                  2 ** job.attempts * RETRY_BASE_DELAY_MS,
+                ),
+            );
       const checks =
-        error instanceof SourceCheckError ? [{ source: error.source, status: "failed" as const, error: message }] : [];
+        error instanceof SourceCheckError
+          ? [
+              {
+                source: error.source,
+                status: "failed" as const,
+                error: message,
+              },
+            ]
+          : [];
       await this.store.failJob(job, message, retryAt, checks);
     }
   }
