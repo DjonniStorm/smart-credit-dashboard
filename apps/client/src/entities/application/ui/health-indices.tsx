@@ -74,8 +74,9 @@ function Index({
 export function HealthIndices({ app }: { app: Application }) {
   const health = app.scoring?.healthIndex ?? null;
   const ready = app.scoring?.readinessIndex ?? null;
-  const trust = app.scoring ? Math.round(app.scoring.confidence * 100) : null;
   const terminal = isTerminal(app);
+  const trust =
+    app.scoring && !terminal ? Math.round(app.scoring.confidence * 100) : null;
   const terminalHint =
     app.status === "rejected"
       ? "Заявка завершена: банк отказал"
@@ -93,14 +94,16 @@ export function HealthIndices({ app }: { app: Application }) {
               Сигналы для подготовки заявки и разговора с банком.
             </Text>
           </div>
-          <Badge
-            variant="light"
-            color={trust === null ? "gray" : tone(trust)}
-          >
-            Уверенность {trust === null ? "—" : `${trust}/100`}
-          </Badge>
+          {!terminal && (
+            <Badge
+              variant="light"
+              color={trust === null ? "gray" : tone(trust)}
+            >
+              Уверенность {trust === null ? "—" : `${trust}/100`}
+            </Badge>
+          )}
         </Group>
-        <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="lg">
+        <SimpleGrid cols={{ base: 1, sm: terminal ? 2 : 3 }} spacing="lg">
           <Index
             label="Финансовое здоровье"
             value={health}
@@ -110,19 +113,16 @@ export function HealthIndices({ app }: { app: Application }) {
           <Index
             label="Готовность заявки"
             value={ready}
-            hint={
-              terminal
-                ? terminalHint
-                : "Показывается после ответа scoring"
-            }
+            hint={terminal ? terminalHint : "Показывается после ответа scoring"}
             emptyLabel={terminal ? terminalHint : undefined}
           />
-          <Index
-            label="Уверенность"
-            value={trust}
-            hint="Проверки и факторы решения"
-            emptyLabel={terminal ? terminalHint : undefined}
-          />
+          {!terminal && (
+            <Index
+              label="Уверенность"
+              value={trust}
+              hint="Проверки и факторы решения"
+            />
+          )}
         </SimpleGrid>
         <Text size="sm" c="dimmed">
           {terminal
