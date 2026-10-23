@@ -20,13 +20,13 @@ pnpm dev
 
 `pnpm dev` поднимает PostgreSQL в Docker (`infra/dev/docker-compose.yml`) и запускает все приложения через Turborepo:
 
-| Приложение | Адрес |
-| --- | --- |
-| client: кабинет предпринимателя | http://localhost:3000 |
-| backoffice: АРМ сотрудника банка | http://localhost:3001 |
-| api, Swagger | http://localhost:4000/docs |
-| scoring | http://localhost:8000/docs |
-| PostgreSQL | localhost:5432 |
+| Приложение                       | Адрес                      |
+| -------------------------------- | -------------------------- |
+| client: кабинет предпринимателя  | http://localhost:3000      |
+| backoffice: АРМ сотрудника банка | http://localhost:3001      |
+| api, Swagger                     | http://localhost:4000/docs |
+| scoring                          | http://localhost:8000/docs |
+| PostgreSQL                       | localhost:5432             |
 
 Порты должны быть свободны.
 
@@ -41,6 +41,8 @@ pnpm --filter api db:seed
 ```
 
 Команда идемпотентна и не запускается автоматически.
+
+Каталог продуктов в базе не хранится: api отдаёт его из `packages/contracts` (`CREDIT_PRODUCTS`). Ключевая ставка для расчёта ставок задаётся переменной `KEY_RATE_PERCENT` (% годовых, по умолчанию 14). Шаблон переменных api: `apps/api/.env.example`.
 
 ### Только интерфейс
 

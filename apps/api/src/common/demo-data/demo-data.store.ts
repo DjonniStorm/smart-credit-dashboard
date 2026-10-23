@@ -2,19 +2,14 @@ import { Injectable, OnModuleInit } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import type { DataSource } from "typeorm";
 
-import type {
-  ApiProductCatalog,
-  DemoAccountApi,
-  DemoSession,
-} from "@repo/contracts/api";
+import type { DemoAccountApi, DemoSession } from "@repo/contracts/api";
 import type { Employee } from "@repo/contracts/application";
 
 import {
+  type DemoSourceRecord,
   demoAccounts,
-  demoCatalog,
   demoEmployees,
   demoSources,
-  type DemoSourceRecord,
 } from "./demo-data.ts";
 
 @Injectable()
@@ -26,27 +21,29 @@ export class DemoDataStore implements OnModuleInit {
   }
 
   async listAccounts(): Promise<DemoAccountApi[]> {
-    const rows = await this.db.query("select payload from demo_accounts order by id");
+    const rows = await this.db.query(
+      "select payload from demo_accounts order by id",
+    );
     return rows.length > 0
       ? rows.map((row: { payload: DemoAccountApi }) => row.payload)
       : [];
   }
 
   async getAccount(id: string): Promise<DemoAccountApi | null> {
-    const rows = await this.db.query("select payload from demo_accounts where id=$1", [id]);
+    const rows = await this.db.query(
+      "select payload from demo_accounts where id=$1",
+      [id],
+    );
     return rows[0]?.payload ?? null;
   }
 
-  async getCatalog(): Promise<ApiProductCatalog> {
-    const rows = await this.db.query(
-      "select payload from demo_catalog where id='default'",
-    );
-    return rows[0]?.payload ?? { ...demoCatalog, products: [] };
-  }
-
   async listEmployees(): Promise<Employee[]> {
-    const rows = await this.db.query("select payload from demo_employees order by id");
-    return rows.length > 0 ? rows.map((row: { payload: Employee }) => row.payload) : [];
+    const rows = await this.db.query(
+      "select payload from demo_employees order by id",
+    );
+    return rows.length > 0
+      ? rows.map((row: { payload: Employee }) => row.payload)
+      : [];
   }
 
   async getSources(inn: string): Promise<DemoSourceRecord | null> {
@@ -57,7 +54,11 @@ export class DemoDataStore implements OnModuleInit {
     return rows[0]?.payload ?? null;
   }
 
-  async createSession(accountId: string, role: DemoSession["role"], token: string): Promise<void> {
+  async createSession(
+    accountId: string,
+    role: DemoSession["role"],
+    token: string,
+  ): Promise<void> {
     await this.db.query(
       `insert into demo_sessions(token, account_id, role, created_at)
        values($1,$2,$3,now())`,
@@ -91,11 +92,6 @@ export class DemoDataStore implements OnModuleInit {
         [account.id, account],
       );
     }
-    await this.db.query(
-      `insert into demo_catalog(id,payload) values('default',$1)
-       on conflict(id) do update set payload=excluded.payload`,
-      [demoCatalog],
-    );
     for (const employee of demoEmployees) {
       await this.db.query(
         `insert into demo_employees(id,payload) values($1,$2)
@@ -115,10 +111,6 @@ export class DemoDataStore implements OnModuleInit {
   private async ensureSchema(): Promise<void> {
     await this.db.query(`
       create table if not exists demo_accounts (
-        id text primary key,
-        payload jsonb not null
-      );
-      create table if not exists demo_catalog (
         id text primary key,
         payload jsonb not null
       );
