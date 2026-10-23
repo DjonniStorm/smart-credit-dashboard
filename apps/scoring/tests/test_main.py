@@ -16,7 +16,7 @@ def request(**overrides: object) -> ScoreRequest:
 
 class ScoreTests(unittest.TestCase):
     def test_active_russian_status_is_positive(self) -> None:
-        self.assertEqual(calculate_score(request()), 95.0)
+        self.assertEqual(calculate_score(request(consentBki=True)), 95.0)
 
     def test_mock_egrul_status_variants_are_active(self) -> None:
         for status in ("Действующее", "действующая", "ACTIVE", " Действует "):
@@ -107,7 +107,7 @@ class IndexTests(unittest.TestCase):
 
     def test_indices_are_independent(self) -> None:
         base = score(complete())
-        unready = score(complete(documentsComplete=False, consentBki=False))
+        unready = score(complete(documentsComplete=False))
         self.assertEqual(base.health_index, unready.health_index)
         sick = score(complete(fns={"taxDebtRub": 500_000}))
         self.assertEqual(base.readiness_index, sick.readiness_index)
@@ -139,6 +139,45 @@ class IndexTests(unittest.TestCase):
 
     def test_deterministic(self) -> None:
         self.assertEqual(score(complete()), score(complete()))
+
+
+class SourceGapTests(unittest.TestCase):
+    def test_no_bki_data_never_approves(self) -> None:
+        result = score(complete(bki={}))
+        self.assertEqual(result.recommendation, "manual_review")
+        self.assertIn("БКИ", result.missing_sources)
+
+    def test_no_fns_data_never_approves(self) -> None:
+        result = score(complete(fns={}))
+        self.assertEqual(result.recommendation, "manual_review")
+        self.assertIn("ФНС", result.missing_sources)
+
+    def test_no_egrul_status_never_approves(self) -> None:
+        result = score(complete(egrul={}))
+        self.assertEqual(result.recommendation, "manual_review")
+
+    def test_all_sources_present_can_approve(self) -> None:
+        result = score(complete())
+        self.assertEqual(result.recommendation, "approve")
+        self.assertEqual(result.missing_sources, [])
+
+    def test_overdue_without_consent_is_not_a_reject(self) -> None:
+        result = score(complete(consentBki=False, bki={"overdueDays": 45, "activeLoans": 1}))
+        self.assertNotEqual(result.recommendation, "reject")
+        self.assertEqual(result.recommendation, "request_info")
+        self.assertIn("БКИ", result.missing_sources)
+        factor = next(f for f in result.factors if f.id == "bki_overdue")
+        self.assertEqual(factor.impact, 0)
+
+    def test_overdue_with_consent_rejects(self) -> None:
+        result = score(complete(consentBki=True, bki={"overdueDays": 45, "activeLoans": 1}))
+        self.assertEqual(result.recommendation, "reject")
+
+    def test_bki_without_consent_lowers_coverage_and_score(self) -> None:
+        with_consent = score(complete())
+        without = score(complete(consentBki=False))
+        self.assertLess(without.confidence, with_consent.confidence)
+        self.assertLess(without.score, with_consent.score)
 
 
 if __name__ == "__main__":

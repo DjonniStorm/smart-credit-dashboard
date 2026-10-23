@@ -103,6 +103,8 @@ export const scoreResponseSchema = z.object({
   health_index: z.number().min(0).max(100).optional(),
   readiness_index: z.number().min(0).max(100).optional(),
   confidence: z.number().min(0).max(1).optional(),
+  /** Источники со стоп-факторами без данных: approve при непустом списке запрещён. */
+  missing_sources: z.array(z.string()).optional(),
   recommendation: z
     .enum([
       "approve",
