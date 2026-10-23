@@ -36,7 +36,9 @@ import {
 import { ApplicationsService } from "./applications.service.ts";
 import { ApplyApplicationActionCommand } from "./commands/apply-application-action.command.ts";
 
-class CreateApplicationDto extends createZodDto(apiCreateApplicationSchema) {}
+export class CreateApplicationDto extends createZodDto(
+  apiCreateApplicationSchema,
+) {}
 class CreateApplicationResponseDto extends createZodDto(
   apiApplicationResponseSchema,
 ) {}

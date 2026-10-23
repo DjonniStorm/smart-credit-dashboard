@@ -38,6 +38,8 @@ import {
 } from "@/entities/application";
 import { RerunCheckButton } from "@/features/application-actions";
 import { rejectReasonLabel } from "@/shared/api/arm";
+
+import { purposeLabel } from "@/shared/lib/purpose";
 import { formatRub } from "@/shared/lib/money";
 
 import classes from "./application-panel.module.css";
@@ -479,7 +481,7 @@ export function DataList({
   const { applicant, request } = app;
   const tx = backofficeText(i18n.defaultLocale);
   const rows: [string, string][] = [
-    [tx.outcome.data.purpose, request.purpose],
+    [tx.outcome.data.purpose, purposeLabel(request.purpose)],
     [tx.outcome.data.director, applicant.director],
     [tx.outcome.data.region, applicant.region],
     [tx.outcome.data.registeredAt, formatDate(applicant.registeredAt)],

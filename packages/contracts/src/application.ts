@@ -16,7 +16,10 @@ import {
   rejectReasonSchema,
   waitingOnSchema,
 } from "./application-parts.ts";
-import { creditProductIdSchema } from "./product-catalog.ts";
+import {
+  creditProductIdSchema,
+  creditPurposeSchema,
+} from "./product-catalog.ts";
 
 export const legalFormSchema = z.enum(["ip", "ooo"]);
 export type LegalForm = z.infer<typeof legalFormSchema>;
@@ -78,7 +81,7 @@ export const loanRequestSchema = z.object({
   productId: creditProductIdSchema,
   amount: z.number(),
   termMonths: z.number().int(),
-  purpose: z.string(),
+  purpose: creditPurposeSchema,
 });
 export type LoanRequest = z.infer<typeof loanRequestSchema>;
 

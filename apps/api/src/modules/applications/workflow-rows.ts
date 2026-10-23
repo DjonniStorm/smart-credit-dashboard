@@ -12,7 +12,7 @@ export function applicationFromRow(row: Row): ApplicationWorkflow {
     productId: row.product_id as ApplicationWorkflow["productId"],
     amount: Number(row.amount),
     termMonths: Number(row.term_months),
-    purpose: String(row.purpose),
+    purpose: row.purpose as ApplicationWorkflow["purpose"],
     status: row.status as ApplicationWorkflow["status"],
     offer: (row.offer as ApplicationWorkflow["offer"]) ?? null,
     requestedInfo: (row.requested_info as string[] | null) ?? [],
