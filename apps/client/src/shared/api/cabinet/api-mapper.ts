@@ -9,6 +9,7 @@ import type {
   ProductCatalog,
 } from "@repo/contracts/cabinet";
 import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
+import { creditPurposeSchema } from "@repo/contracts/product-catalog";
 
 function statusOf(application: ApiApplication): Application["status"] {
   switch (application.status) {
@@ -133,6 +134,15 @@ export function toProductCatalog(catalog: ApiProductCatalog): ProductCatalog {
   };
 }
 
+/**
+ * Старые заявки и заявки из тестов могут хранить цель свободным текстом.
+ * Такую цель показываем как цель продукта, чтобы список не падал.
+ */
+function knownPurpose(application: ApiApplication): Application["purpose"] {
+  const parsed = creditPurposeSchema.safeParse(application.purpose);
+  return parsed.success ? parsed.data : application.productId;
+}
+
 export function toCabinetApplication(
   application: ApiApplication,
   session: DemoSession,
@@ -141,7 +151,7 @@ export function toCabinetApplication(
   return {
     id: application.id,
     number: application.number,
-    purpose: application.purpose as Application["purpose"],
+    purpose: knownPurpose(application),
     productId: application.productId,
     amount: application.amount,
     termMonths: application.termMonths,

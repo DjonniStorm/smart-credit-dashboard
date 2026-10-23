@@ -20,6 +20,9 @@ import {
   type CreditProductId,
   creditProductIdSchema,
   creditProductSchema,
+  creditPurposeSchema,
+  isPurposeAllowed,
+  purposeNotInProductMessage,
 } from "./product-catalog.ts";
 
 export const apiProductIdSchema = creditProductIdSchema;
@@ -193,14 +196,19 @@ export const apiApplicationContextSchema = z.object({
 });
 export type ApiApplicationContext = z.infer<typeof apiApplicationContextSchema>;
 
-export const apiCreateApplicationSchema = z.object({
-  inn: z.string().regex(/^\d{10,12}$/),
-  productId: apiProductIdSchema,
-  amount: z.number().positive(),
-  termMonths: z.number().int().positive(),
-  purpose: z.string().min(1).max(500),
-  idempotencyKey: z.string().min(8).max(128),
-});
+export const apiCreateApplicationSchema = z
+  .object({
+    inn: z.string().regex(/^\d{10,12}$/),
+    productId: apiProductIdSchema,
+    amount: z.number().positive(),
+    termMonths: z.number().int().positive(),
+    purpose: creditPurposeSchema,
+    idempotencyKey: z.string().min(8).max(128),
+  })
+  .refine((input) => isPurposeAllowed(input.productId, input.purpose), {
+    message: purposeNotInProductMessage,
+    path: ["purpose"],
+  });
 export type ApiCreateApplication = z.infer<typeof apiCreateApplicationSchema>;
 
 export const apiApplicationResponseSchema = z.object({
