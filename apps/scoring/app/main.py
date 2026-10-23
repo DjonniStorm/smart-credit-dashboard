@@ -90,7 +90,7 @@ def _text(payload: BaseModel, key: str) -> str:
     return value if isinstance(value, str) else ""
 
 
-def _positive(value: Optional[float]) -> bool:
+def _positive(value: float | None) -> bool:
     return value is not None and value > 0
 
 
