@@ -13,6 +13,8 @@ const statusMap: Record<ApplicationWorkflow["status"], PublicApplicationStatus> 
   needs_client: "NEEDS_INFO",
   approved: "OFFERED",
   rejected: "REJECTED",
+  cancelled: "CANCELLED",
+  blocked: "BLOCKED",
 };
 
 export function toApiApplication(application: ApplicationWorkflow): ApiApplication {
@@ -33,6 +35,8 @@ export function toApiApplication(application: ApplicationWorkflow): ApiApplicati
     urgent: application.urgent,
     urgentReason: application.urgentReason,
     comments: application.comments,
+    hold: application.hold,
+    handoff: application.handoff,
     checkJobId: application.checkJobId,
     scoring: application.scoring?.details ?? null,
     createdAt: application.createdAt,

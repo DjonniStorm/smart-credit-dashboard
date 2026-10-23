@@ -140,5 +140,6 @@ export const applicationStatusSchema = z.enum([
   "approved",
   "disbursed",
   "rejected",
+  "blocked",
 ]);
 export type ApplicationStatus = z.infer<typeof applicationStatusSchema>;

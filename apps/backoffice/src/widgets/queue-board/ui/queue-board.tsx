@@ -334,7 +334,12 @@ export function QueueBoard({
                       />
                     </Table.Td>
                     <Table.Td className={classes.number}>
-                      № {app.number}
+                      <Text size="sm">№ {app.number}</Text>
+                      {app.urgent && (
+                        <Text size="xs" c="orange" fw={600}>
+                          Срочно
+                        </Text>
+                      )}
                     </Table.Td>
                     <Table.Td>
                       <Text size="sm" fw={500} className={classes.company}>

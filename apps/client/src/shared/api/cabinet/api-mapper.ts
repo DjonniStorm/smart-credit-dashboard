@@ -23,6 +23,8 @@ function statusOf(application: ApiApplication): Application["status"] {
     case "REJECTED":
     case "CANCELLED":
       return "rejected";
+    case "BLOCKED":
+      return "blocked";
     default:
       return "in_review";
   }

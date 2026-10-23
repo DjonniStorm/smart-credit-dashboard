@@ -32,11 +32,14 @@ export function stageOf(app: Application): {
       return { current: 5, waitingForClient: false };
     case "disbursed":
       return { current: stages.length, waitingForClient: false };
+    case "blocked":
+      return { current: 3, waitingForClient: false };
   }
 }
 
 /** Что делать дальше, одной фразой для карточки и страницы заявки. */
 export function nextStepOf(app: Application): string {
+  if (app.status === "blocked") return "Заявка заблокирована для ручной проверки";
   if (isDeclinedByClient(app)) return tx.nextStep.declined;
   if (app.status === "approved") {
     if (!app.deal) return tx.nextStep.approved_offer;

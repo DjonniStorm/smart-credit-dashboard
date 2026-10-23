@@ -297,6 +297,7 @@ export type ApplicationHandoff = z.infer<typeof applicationHandoffSchema>;
 
 export const applicationHoldSchema = z.object({
   state: z.enum(["paused", "blocked"]),
+  previousStatus: z.string(),
   reason: z.string().min(1).max(500),
   at: z.string(),
   by: actorSchema,

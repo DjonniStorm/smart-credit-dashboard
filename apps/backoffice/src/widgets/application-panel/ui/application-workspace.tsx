@@ -286,7 +286,12 @@ function Workspace({
             <RiskBlock app={app} />
             <Outcome app={app} />
             <div className={classes.asideFoot}>
-              <ActionBar app={app} employee={employee} products={products} />
+              <ActionBar
+                app={app}
+                employee={employee}
+                employees={employees.data ?? []}
+                products={products}
+              />
             </div>
           </aside>
         </div>

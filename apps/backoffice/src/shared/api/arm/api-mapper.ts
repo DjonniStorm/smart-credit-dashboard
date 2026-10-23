@@ -23,6 +23,8 @@ function statusOf(status: ApiApplication["status"]): Application["status"] {
     case "REJECTED":
     case "CANCELLED":
       return "rejected";
+    case "BLOCKED":
+      return "blocked";
     case "FUNDED":
       return "disbursed";
     default:
@@ -54,12 +56,12 @@ function mapApplication(
     status: statusOf(application.status),
     stage: scoring ? "decision" : "scoring",
     waitingOn: scoring ? "employee" : "system",
-    hold: null,
+    hold: application.hold as Application["hold"],
     urgent: application.urgent,
     urgentReason: application.urgentReason,
     autonomy: context?.autonomy,
     comments: application.comments,
-    handoff: null,
+    handoff: application.handoff,
     blocker: scoring?.reasons[0] ?? "Проверка заявки выполняется",
     assigneeId: application.assigneeId,
     applicant: {

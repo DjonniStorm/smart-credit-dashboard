@@ -42,6 +42,7 @@ export const statusLabel: Record<ApplicationStatus, string> = {
   approved: "Одобрена",
   disbursed: "Выдан",
   rejected: "Отказ",
+  blocked: "Заблокирована",
 };
 
 export const statusTone: Record<ApplicationStatus, Tone> = {
@@ -52,6 +53,7 @@ export const statusTone: Record<ApplicationStatus, Tone> = {
   approved: "success",
   disbursed: "success",
   rejected: "danger",
+  blocked: "danger",
 };
 
 export const waitingLabel: Record<WaitingOn, string> = {

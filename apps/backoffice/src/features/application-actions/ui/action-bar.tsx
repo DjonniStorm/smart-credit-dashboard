@@ -9,21 +9,35 @@ import type { ArmProduct } from "@/shared/api/arm";
 import { useApplicationAction } from "@/entities/application";
 import {
   ApproveDialog,
+  CancelDialog,
   CommentDialog,
   CounterDialog,
+  HandoffDialog,
+  HoldDialog,
   RejectDialog,
   RequestDialog,
 } from "./dialogs";
 
-type DialogKind = "request" | "approve" | "counter" | "reject" | "comment";
+type DialogKind =
+  | "request"
+  | "approve"
+  | "counter"
+  | "reject"
+  | "comment"
+  | "pause"
+  | "block"
+  | "handoff"
+  | "cancel";
 
 export function ActionBar({
   app,
   employee,
+  employees,
   products,
 }: {
   app: Application;
   employee: Employee;
+  employees: Employee[];
   products: ArmProduct[];
 }) {
   const [dialog, setDialog] = useState<DialogKind | null>(null);
@@ -53,6 +67,46 @@ export function ActionBar({
         </Button>
         <Button size="xs" variant="default" onClick={() => setDialog("comment")}>
           Комментарий
+        </Button>
+        <Button size="xs" variant="default" onClick={() => setDialog("handoff")}>
+          Передать
+        </Button>
+        <Button size="xs" variant="default" onClick={() => setDialog("pause")}>
+          Пауза
+        </Button>
+        <Button size="xs" variant="default" onClick={() => setDialog("block")}>
+          Блокировка
+        </Button>
+        <Button
+          size="xs"
+          variant="default"
+          onClick={() => setDialog("cancel")}
+        >
+          Отменить
+        </Button>
+        {app.hold && (
+          <Button
+            size="xs"
+            color="teal"
+            onClick={() => submit({ type: "resume", comment: "" })}
+            loading={mutation.isPending && dialog === null}
+          >
+            Продолжить
+          </Button>
+        )}
+        <Button
+          size="xs"
+          variant="default"
+          onClick={() =>
+            submit({
+              type: "set_urgent",
+              enabled: !app.urgent,
+              reason: app.urgent ? "" : "Срочная потребность клиента",
+            })
+          }
+          loading={mutation.isPending && dialog === null}
+        >
+          {app.urgent ? "Снять срочность" : "Срочный режим"}
         </Button>
       </Group>
       <Text size="xs" c="dimmed">
@@ -101,6 +155,35 @@ export function ActionBar({
       )}
       {dialog === "comment" && (
         <CommentDialog
+          opened
+          pending={mutation.isPending}
+          error={mutation.error}
+          onClose={close}
+          onSubmit={submit}
+        />
+      )}
+      {(dialog === "pause" || dialog === "block") && (
+        <HoldDialog
+          opened
+          pending={mutation.isPending}
+          error={mutation.error}
+          onClose={close}
+          kind={dialog}
+          onSubmit={(reason) => submit({ type: dialog, reason })}
+        />
+      )}
+      {dialog === "handoff" && (
+        <HandoffDialog
+          opened
+          employees={employees}
+          pending={mutation.isPending}
+          error={mutation.error}
+          onClose={close}
+          onSubmit={submit}
+        />
+      )}
+      {dialog === "cancel" && (
+        <CancelDialog
           opened
           pending={mutation.isPending}
           error={mutation.error}
