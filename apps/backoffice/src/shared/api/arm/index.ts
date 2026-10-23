@@ -4,5 +4,5 @@ import type { ArmApi } from "./types";
 export const armApi: ArmApi = httpArmApi;
 
 export { rejectReasonLabel } from "./labels";
-export type { ArmApi } from "./types";
+export type { ArmApi, ArmProduct } from "./types";
 export { armKeys } from "./keys";

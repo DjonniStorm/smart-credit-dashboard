@@ -1,5 +1,9 @@
 import type { DemoAccountApi, ApiProductCatalog } from "@repo/contracts/api";
 import type { Employee } from "@repo/contracts/application";
+import {
+  CREDIT_PRODUCTS,
+  DEFAULT_KEY_RATE,
+} from "@repo/contracts/product-catalog";
 import type { BkiReport, EgrulRecord, FnsProfile } from "@repo/contracts";
 
 export interface DemoSourceRecord {
@@ -8,72 +12,13 @@ export interface DemoSourceRecord {
   fns: FnsProfile;
 }
 
-export const demoProducts: ApiProductCatalog["products"] = [
-  {
-    id: "working_capital",
-    name: "Оборотный кредит",
-    purpose: "Оборот и закупка",
-    purposes: ["working_capital"],
-    description: "Закупка товара, сырья и оплата подрядчиков.",
-    minAmount: 300_000,
-    maxAmount: 10_000_000,
-    minTermMonths: 3,
-    maxTermMonths: 24,
-    spreadPp: 5,
-    maxDebtLoad: 0.6,
-    minBusinessAgeMonths: 12,
-    collateral: null,
-  },
-  {
-    id: "cash_gap",
-    name: "Кассовый разрыв",
-    purpose: "Краткосрочный разрыв",
-    purposes: ["cash_gap", "working_capital"],
-    description: "Короткое финансирование до оплаты покупателями.",
-    minAmount: 100_000,
-    maxAmount: 3_000_000,
-    minTermMonths: 1,
-    maxTermMonths: 12,
-    spreadPp: 6,
-    maxDebtLoad: 0.5,
-    minBusinessAgeMonths: 6,
-    collateral: null,
-  },
-  {
-    id: "equipment",
-    name: "Оборудование",
-    purpose: "Оборудование и транспорт",
-    purposes: ["equipment"],
-    description: "Покупка техники и оборудования с залогом приобретаемого имущества.",
-    minAmount: 500_000,
-    maxAmount: 30_000_000,
-    minTermMonths: 12,
-    maxTermMonths: 60,
-    spreadPp: 3.5,
-    maxDebtLoad: 0.7,
-    minBusinessAgeMonths: 12,
-    collateral: "Приобретаемое оборудование или транспорт",
-  },
-  {
-    id: "development",
-    name: "Развитие",
-    purpose: "Новая точка или направление",
-    purposes: ["development"],
-    description: "Расширение бизнеса с поручительством собственника.",
-    minAmount: 1_000_000,
-    maxAmount: 20_000_000,
-    minTermMonths: 12,
-    maxTermMonths: 60,
-    spreadPp: 4.5,
-    maxDebtLoad: 0.65,
-    minBusinessAgeMonths: 24,
-    collateral: "Поручительство собственника",
-  },
-];
+export const demoProducts: ApiProductCatalog["products"] = CREDIT_PRODUCTS.map(
+  (product) => ({ ...product }),
+);
 
 export const demoCatalog: ApiProductCatalog = {
-  keyRate: 14,
-  keyRateDate: "2026-09-11",
+  keyRate: DEFAULT_KEY_RATE.value,
+  keyRateDate: DEFAULT_KEY_RATE.date,
   products: demoProducts,
 };
 

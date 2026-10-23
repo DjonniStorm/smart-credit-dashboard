@@ -11,7 +11,7 @@ test.describe("client cabinet application lifecycle", () => {
 
   async function createApplication(page, amount) {
     await page.goto(
-      `${baseURL}/applications/new?purpose=working_capital&product=working-capital&amount=${amount}&term=12`,
+      `${baseURL}/applications/new?purpose=working_capital&product=working_capital&amount=${amount}&term=12`,
     );
     for (let step = 0; step < 4; step += 1) {
       await page.getByRole("button", { name: "Продолжить" }).click();

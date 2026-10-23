@@ -65,18 +65,7 @@ export function toProductCatalog(catalog: ApiProductCatalog): ProductCatalog {
   return {
     keyRate: catalog.keyRate,
     keyRateDate: catalog.keyRateDate,
-    products: catalog.products.map((product) => ({
-      id: product.id,
-      name: product.name,
-      purposes: product.purposes as ProductCatalog["products"][number]["purposes"],
-      description: product.description,
-      minAmount: product.minAmount,
-      maxAmount: product.maxAmount,
-      minTermMonths: product.minTermMonths,
-      maxTermMonths: product.maxTermMonths,
-      spreadPp: product.spreadPp,
-      collateral: product.collateral,
-    })),
+    products: catalog.products,
   };
 }
 

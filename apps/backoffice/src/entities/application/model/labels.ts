@@ -10,6 +10,7 @@ import type {
   RuleOutcome,
   WaitingOn,
 } from "@repo/contracts/application";
+import { CREDIT_PRODUCTS } from "@repo/contracts/product-catalog";
 import type { Tone } from "@repo/ui/tone-badge";
 
 export const stageOrder: ApplicationStage[] = [
@@ -67,15 +68,9 @@ export const waitingOrder: Record<WaitingOn, number> = {
   nobody: 3,
 };
 
-export const productLabel: Record<CreditProductId, string> = {
-  express: "Экспресс-кредит",
-  working_capital: "Оборотный кредит",
-  credit_line: "Кредитная линия",
-  investment: "Инвестиционный кредит",
-  cash_gap: "Кассовый разрыв",
-  equipment: "Оборудование",
-  development: "Развитие",
-};
+export const productLabel: Record<CreditProductId, string> = Object.fromEntries(
+  CREDIT_PRODUCTS.map((product) => [product.id, product.name]),
+) as Record<CreditProductId, string>;
 
 export const sourceLabel: Record<CheckSource, string> = {
   egrul: "ЕГРЮЛ/ЕГРИП",
