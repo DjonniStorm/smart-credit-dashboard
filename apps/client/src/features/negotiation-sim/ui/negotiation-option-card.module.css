@@ -1,0 +1,31 @@
+.card {
+  list-style: none;
+  min-width: 0;
+}
+
+.facts {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.fact {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-sm);
+  font-size: var(--mantine-font-size-sm);
+  border-bottom: 1px solid var(--kk-line);
+  padding-bottom: 6px;
+}
+
+.factLabel {
+  color: var(--mantine-color-dimmed);
+  flex: none;
+}
+
+.factValue {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
