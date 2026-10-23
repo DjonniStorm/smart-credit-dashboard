@@ -54,9 +54,7 @@ export const alfiStateMeta: Readonly<
   },
 };
 
-export const alfiOperationState: Readonly<
-  Record<AlfiOperation, AlfiState>
-> = {
+export const alfiOperationState: Readonly<Record<AlfiOperation, AlfiState>> = {
   [AlfiOperation.ApplicationCreated]: AlfiState.Greeting,
   [AlfiOperation.CheckingStarted]: AlfiState.Checking,
   [AlfiOperation.CheckCompleted]: AlfiState.Explain,
@@ -70,11 +68,11 @@ export const alfiOperationState: Readonly<
 };
 
 export const alfiStateAssets: Readonly<Record<AlfiState, string>> = {
-  [AlfiState.Idle]: "/alfi/pixel-scout/states/idle.svg",
-  [AlfiState.Greeting]: "/alfi/pixel-scout/states/greeting.svg",
-  [AlfiState.Explain]: "/alfi/pixel-scout/states/explain.svg",
-  [AlfiState.Checking]: "/alfi/pixel-scout/states/checking.svg",
-  [AlfiState.NeedsAnswer]: "/alfi/pixel-scout/states/needs-answer.svg",
-  [AlfiState.Success]: "/alfi/pixel-scout/states/success.svg",
-  [AlfiState.Attention]: "/alfi/pixel-scout/states/attention.svg",
+  [AlfiState.Idle]: "/alfi/states/idle.svg",
+  [AlfiState.Greeting]: "/alfi/states/greeting.svg",
+  [AlfiState.Explain]: "/alfi/states/explain.svg",
+  [AlfiState.Checking]: "/alfi/states/checking.svg",
+  [AlfiState.NeedsAnswer]: "/alfi/states/needs-answer.svg",
+  [AlfiState.Success]: "/alfi/states/success.svg",
+  [AlfiState.Attention]: "/alfi/states/attention.svg",
 };
