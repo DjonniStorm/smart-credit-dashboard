@@ -17,7 +17,7 @@ export function BrandMark() {
         А
       </span>
       <span className={classes.brandName} aria-hidden>
-        Альфа-Банк
+        Альфи-Банк
       </span>
       <span className={classes.brandProduct} aria-hidden>
         Кредитный конвейер
