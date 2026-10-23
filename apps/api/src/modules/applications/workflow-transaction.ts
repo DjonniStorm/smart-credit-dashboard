@@ -2,9 +2,9 @@ import { randomUUID } from "node:crypto";
 
 import type { EntityManager } from "typeorm";
 
+import { autonomyMetricsSchema } from "@repo/contracts";
 import type { ApplicationComment } from "@repo/contracts/application";
 import type { ApplicationWorkflow } from "@repo/contracts/workflow";
-import { autonomyMetricsSchema } from "@repo/contracts";
 
 import { applicationFromRow } from "./workflow-rows.ts";
 
@@ -120,12 +120,13 @@ export class WorkflowTransaction {
     const shouldCountOverride =
       currentCase.eligible && isManualOverride && !currentCase.overrideCounted;
     const shouldClose =
-      ["reject", "cancel", "decline_offer", "sign"].includes(actionType) &&
+      ["accept_offer", "reject", "cancel", "decline_offer", "sign"].includes(actionType) &&
       !currentCase.closed;
     if (!shouldCountOverride && !shouldClose) {
       return;
     }
-    const manualOverrides = metrics.manualOverrides + (shouldCountOverride ? 1 : 0);
+    const manualOverrides =
+      metrics.manualOverrides + (shouldCountOverride ? 1 : 0);
     const closedCases = metrics.closedCases + (shouldClose ? 1 : 0);
     const eligibleCases = Math.max(metrics.eligibleCases, 0);
     const nextMetrics = {
@@ -193,9 +194,9 @@ export class WorkflowTransaction {
           ? "intercepted"
           : actionType === "decline_offer"
             ? "declined"
-          : shouldClose
-            ? "confirmed"
-            : currentCase.disposition,
+            : shouldClose
+              ? "confirmed"
+              : currentCase.disposition,
     };
   }
 

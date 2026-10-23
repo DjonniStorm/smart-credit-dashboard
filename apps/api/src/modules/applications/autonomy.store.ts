@@ -6,21 +6,21 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
+import type { DataSource, EntityManager } from "typeorm";
 
-import type {
-  ApiAutonomyAudit,
-  ApiAutonomySnapshot,
-  ApiProductId,
-  AutonomyPolicyActionRequest,
-} from "@repo/contracts/api";
 import {
   autonomyConfigSchema,
   autonomyMetricsSchema,
   checkAutonomyEligibility,
 } from "@repo/contracts";
 import type { AutonomyLevel } from "@repo/contracts";
+import type {
+  ApiAutonomyAudit,
+  ApiAutonomySnapshot,
+  ApiProductId,
+  AutonomyPolicyActionRequest,
+} from "@repo/contracts/api";
 import type { Employee } from "@repo/contracts/application";
-import type { DataSource, EntityManager } from "typeorm";
 
 type Row = Record<string, unknown>;
 
@@ -129,7 +129,11 @@ export class AutonomyStore {
         `update autonomy_policies
             set payload=$2, revision=$3, updated_at=now()
           where product_id=$1`,
-        [productId, { config: nextConfig, metrics: nextMetrics }, nextConfig.revision],
+        [
+          productId,
+          { config: nextConfig, metrics: nextMetrics },
+          nextConfig.revision,
+        ],
       );
       await manager.query(
         `insert into autonomy_policy_audits

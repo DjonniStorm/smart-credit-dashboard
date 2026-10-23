@@ -75,7 +75,10 @@ export function runCommand(
         : "Заявка на паузе: сначала верните её в работу",
     );
   }
-  if (current.autonomyCase?.disposition === "auto_offer_sent" && action.type !== "intercept_autonomy") {
+  if (
+    current.autonomyCase?.disposition === "auto_offer_sent" &&
+    action.type !== "intercept_autonomy"
+  ) {
     throw new ConflictException(
       "Автоодобрение ожидает контроля: сначала перехватите его или дождитесь ответа клиента",
     );
@@ -324,11 +327,16 @@ export function runCommand(
         disposition: "intercepted",
         overrideCounted: true,
       };
-      return plain("autonomy_intercepted", "Автоодобрение перехвачено", action.reason, {
-        autonomyDisposition: "intercepted",
-        policyId: autonomyCase.policyId,
-        policyRevision: String(autonomyCase.policyRevision),
-      });
+      return plain(
+        "autonomy_intercepted",
+        "Автоодобрение перехвачено",
+        action.reason,
+        {
+          autonomyDisposition: "intercepted",
+          policyId: autonomyCase.policyId,
+          policyRevision: String(autonomyCase.policyRevision),
+        },
+      );
     }
   }
 }

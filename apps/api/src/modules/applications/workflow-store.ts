@@ -4,12 +4,12 @@ import { Injectable } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource, EntityManager } from "typeorm";
 
-import type { ApiAuditEvent } from "@repo/contracts/api";
 import {
   autonomyConfigSchema,
   autonomyMetricsSchema,
   checkAutonomyEligibility,
 } from "@repo/contracts";
+import type { ApiAuditEvent } from "@repo/contracts/api";
 import type { ApplicationComment } from "@repo/contracts/application";
 import type {
   ApplicationWorkflow,
@@ -282,8 +282,7 @@ export class WorkflowStore {
           ),
         );
         const policyPayload = policyRows[0]?.payload as
-          | Record<string, unknown>
-          | undefined;
+          Record<string, unknown> | undefined;
         const config = policyPayload
           ? autonomyConfigSchema.parse(policyPayload.config)
           : null;
@@ -293,7 +292,10 @@ export class WorkflowStore {
         const currentEligibility =
           config && metrics
             ? checkAutonomyEligibility(config, metrics)
-            : { eligible: false, reasons: ["Политика автономности недоступна"] };
+            : {
+                eligible: false,
+                reasons: ["Политика автономности недоступна"],
+              };
         const policyChanged =
           !config ||
           config.revision !== autonomyCase.policyRevision ||
@@ -319,7 +321,7 @@ export class WorkflowStore {
           if (decision) {
             decision = { ...decision, autonomyMode: "assist" };
           }
-          status = undefined;
+          status = "in_review";
           offer = null;
           eventPayload = {
             ...(typeof eventPayload === "object" && eventPayload
@@ -332,14 +334,18 @@ export class WorkflowStore {
       }
       await manager.query(
         `update applications
-            set scoring=$2, decision=$3, status=coalesce($4, status),
-                offer=coalesce($5, offer), autonomy_case=$6, updated_at=now()
+            set scoring=$2, decision=$3,
+                status=case when $4 then $5 else status end,
+                offer=case when $6 then $7 else offer end,
+                autonomy_case=$8, updated_at=now()
           where id=$1`,
         [
           job.applicationId,
           outcome.result,
           decision,
+          status !== undefined,
           status ?? null,
+          offer !== undefined,
           offer ?? null,
           autonomyCase ?? null,
         ],
@@ -364,19 +370,14 @@ export class WorkflowStore {
         eventPayload,
       );
       if (autonomyCase) {
-        await this.eventIn(
-          manager,
-          job.applicationId,
-          "autonomy_candidate",
-          {
-            policyId: autonomyCase.policyId,
-            policyVersion: autonomyCase.policyVersion,
-            policyRevision: autonomyCase.policyRevision,
-            mode: autonomyCase.mode,
-            recommendation: autonomyCase.recommendation,
-            eligible: autonomyCase.eligible,
-          },
-        );
+        await this.eventIn(manager, job.applicationId, "autonomy_candidate", {
+          policyId: autonomyCase.policyId,
+          policyVersion: autonomyCase.policyVersion,
+          policyRevision: autonomyCase.policyRevision,
+          mode: autonomyCase.mode,
+          recommendation: autonomyCase.recommendation,
+          eligible: autonomyCase.eligible,
+        });
         if (autonomyCase.disposition === "auto_offer_sent") {
           await this.eventIn(
             manager,
@@ -384,8 +385,7 @@ export class WorkflowStore {
             "autonomy_auto_offer",
             {
               policyId: autonomyCase.policyId,
-              controlWindowEndsAt:
-                autonomyCase.controlWindowEndsAt ?? "",
+              controlWindowEndsAt: autonomyCase.controlWindowEndsAt ?? "",
             },
           );
         }

@@ -1,7 +1,12 @@
 import { z } from "zod";
 
 /** Operational state of an autonomous decision policy. */
-export const autonomyLevelSchema = z.enum(["new", "verified", "stable", "paused"]);
+export const autonomyLevelSchema = z.enum([
+  "new",
+  "verified",
+  "stable",
+  "paused",
+]);
 export type AutonomyLevel = z.infer<typeof autonomyLevelSchema>;
 
 export const autonomyConfigSchema = z.object({
@@ -9,7 +14,10 @@ export const autonomyConfigSchema = z.object({
   modelVersion: z.string(),
   productId: z.string(),
   policyVersion: z.string(),
-  amountBand: z.object({ min: z.number().nonnegative(), max: z.number().positive() }),
+  amountBand: z.object({
+    min: z.number().nonnegative(),
+    max: z.number().positive(),
+  }),
   level: autonomyLevelSchema,
   controlWindowEndsAt: z.string().nullable(),
   minClosedCases: z.number().int().nonnegative().default(100),
@@ -92,19 +100,37 @@ export function checkAutonomyEligibility(
   now = new Date(),
 ): AutonomyEligibility {
   const reasons: string[] = [];
-  const windowClosed = config.controlWindowEndsAt !== null && now >= new Date(config.controlWindowEndsAt);
-  if (config.level === "paused") reasons.push("Автономность приостановлена оператором или контролем качества");
-  if (config.level === "new") reasons.push("Недостаточно подтверждений для автономного решения");
-  if (config.level === "verified") reasons.push("Уровень допускает только assist-контроль");
-  if (metrics.closedCases < config.minClosedCases) reasons.push(`Нужно закрытых кейсов: ${config.minClosedCases}`);
-  if (metrics.manualOverrideRate > config.maxManualOverrideRate) reasons.push("Доля ручных переопределений выше порога");
-  if (metrics.calibrationError > config.maxCalibrationError) reasons.push("Ошибка калибровки выше порога");
-  if (metrics.driftDetected) reasons.push("Обнаружен drift входных данных или PD");
-  if (metrics.calibrationStatus === "unavailable") reasons.push("Калибровка ещё недоступна");
-  if (metrics.driftStatus === "detected") reasons.push("Последняя проверка обнаружила drift");
-  if (metrics.manualHold) reasons.push("Включена ручная блокировка автономности");
+  const windowClosed =
+    config.controlWindowEndsAt !== null &&
+    now >= new Date(config.controlWindowEndsAt);
+  if (config.level === "paused")
+    reasons.push(
+      "Автономность приостановлена оператором или контролем качества",
+    );
+  if (config.level === "new")
+    reasons.push("Недостаточно подтверждений для автономного решения");
+  if (config.level === "verified")
+    reasons.push("Уровень допускает только assist-контроль");
+  if (metrics.closedCases < config.minClosedCases)
+    reasons.push(`Нужно закрытых кейсов: ${config.minClosedCases}`);
+  if (metrics.manualOverrideRate > config.maxManualOverrideRate)
+    reasons.push("Доля ручных переопределений выше порога");
+  if (metrics.calibrationError > config.maxCalibrationError)
+    reasons.push("Ошибка калибровки выше порога");
+  if (metrics.driftDetected)
+    reasons.push("Обнаружен drift входных данных или PD");
+  if (metrics.calibrationStatus === "unavailable")
+    reasons.push("Калибровка ещё недоступна");
+  if (metrics.driftStatus === "detected")
+    reasons.push("Последняя проверка обнаружила drift");
+  if (metrics.manualHold)
+    reasons.push("Включена ручная блокировка автономности");
   if (windowClosed) reasons.push("Контрольное окно завершено");
-  return { eligible: reasons.length === 0, reasons, controlWindow: windowClosed ? "closed" : "open" };
+  return {
+    eligible: reasons.length === 0,
+    reasons,
+    controlWindow: windowClosed ? "closed" : "open",
+  };
 }
 
 export function applyManualAutonomyOverride(

@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException, Optional } from "@nestjs/common";
 
 import type { ScoreResponse } from "@repo/contracts";
-import { productRate } from "@repo/contracts/product-catalog";
 import type {
   ApiApplication,
   ApiApplicationContext,
@@ -11,6 +10,7 @@ import type {
   ApiQueueItem,
 } from "@repo/contracts/api";
 import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
+import { productRate } from "@repo/contracts/product-catalog";
 import type {
   ApplicationCheckRequest,
   ApplicationWorkflow,
@@ -19,11 +19,11 @@ import type {
   ScoringJob,
 } from "@repo/contracts/workflow";
 
+import { CatalogService } from "../catalog/catalog.service.ts";
 import {
   CompaniesService,
   SourceCheckError,
 } from "../companies/companies.service.ts";
-import { CatalogService } from "../catalog/catalog.service.ts";
 import { CompanyProfileService } from "../companies/company-profile.service.ts";
 import {
   toApiApplication,

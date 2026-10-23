@@ -6,8 +6,8 @@ import type { DemoAccountApi, DemoSession } from "@repo/contracts/api";
 import type { Employee } from "@repo/contracts/application";
 
 import {
-  type DemoSourceRecord,
   type DemoCompanyProfileScenario,
+  type DemoSourceRecord,
   demoAccounts,
   demoAutonomyPolicies,
   demoCompanyProfileScenarios,
@@ -93,10 +93,12 @@ export class DemoDataStore implements OnModuleInit {
   }
 
   getCompanyProfileScenario(inn: string): DemoCompanyProfileScenario {
-    return demoCompanyProfileScenarios[inn] ?? {
-      unavailableSources: [],
-      discrepancies: [],
-    };
+    return (
+      demoCompanyProfileScenarios[inn] ?? {
+        unavailableSources: [],
+        discrepancies: [],
+      }
+    );
   }
 
   async createSession(

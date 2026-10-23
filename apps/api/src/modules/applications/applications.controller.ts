@@ -209,9 +209,7 @@ export class AutonomyController {
   @UseGuards(EmployeeSessionGuard)
   @ApiOkResponse({ type: AutonomySnapshotDto })
   @ZodSerializerDto(AutonomySnapshotDto)
-  policy(
-    @Param("productId") productId: string,
-  ): Promise<AutonomySnapshotDto> {
+  policy(@Param("productId") productId: string): Promise<AutonomySnapshotDto> {
     return this.autonomy.getSnapshot(productId as never);
   }
 

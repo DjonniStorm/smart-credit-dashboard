@@ -19,8 +19,8 @@ import {
   employeeActionSchema,
   rejectReasonSchema,
 } from "./application.ts";
-import { creditPurposeSchema } from "./product-catalog.ts";
 import { autonomyCaseSchema } from "./autonomy.ts";
+import { creditPurposeSchema } from "./product-catalog.ts";
 
 export {
   workflowStatusSchema,

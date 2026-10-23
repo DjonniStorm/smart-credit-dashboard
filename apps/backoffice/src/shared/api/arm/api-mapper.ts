@@ -180,14 +180,15 @@ function toArmEvent(event: ApiAuditEvent): Application["events"][number] {
   const byEmployee = metadata.actorKind === "employee";
   const eventTitle =
     metadata.title ??
-    ({
+    {
       autonomy_candidate: "Кейс допущен к автономности",
       autonomy_auto_offer: "Автоодобрение отправлено на контроль",
       autonomy_intercepted: "Автоодобрение перехвачено",
       autonomy_expired: "Контрольное окно автоодобрения закрыто",
       autonomy_override: "Автономная рекомендация переопределена",
       autonomy_policy_changed: "Политика автономности изменена",
-    }[event.kind] ?? event.kind);
+    }[event.kind] ??
+    event.kind;
   return {
     id: event.id,
     applicationId: event.applicationId,

@@ -8,6 +8,12 @@ import {
 import { ZodSerializerDto, createZodDto } from "nestjs-zod";
 
 import {
+  apiAutonomyAuditSchema,
+  apiAutonomySnapshotSchema,
+  autonomyPolicyActionRequestSchema,
+} from "@repo/contracts/api";
+
+import {
   CompanyCheckDto,
   InnParamDto,
 } from "../../modules/companies/dto/company-check.dto.ts";
@@ -16,17 +22,14 @@ import {
   CompanyProfileDto,
 } from "../../modules/companies/dto/company-profile.dto.ts";
 import { HealthDto } from "../../modules/health/dto/health.dto.ts";
-import {
-  apiAutonomyAuditSchema,
-  apiAutonomySnapshotSchema,
-  autonomyPolicyActionRequestSchema,
-} from "@repo/contracts/api";
 
 class AutonomySnapshotDto extends createZodDto(apiAutonomySnapshotSchema) {}
 class AutonomySnapshotListDto extends createZodDto(
   apiAutonomySnapshotSchema.array(),
 ) {}
-class AutonomyAuditListDto extends createZodDto(apiAutonomyAuditSchema.array()) {}
+class AutonomyAuditListDto extends createZodDto(
+  apiAutonomyAuditSchema.array(),
+) {}
 class AutonomyPolicyActionDto extends createZodDto(
   autonomyPolicyActionRequestSchema,
 ) {}

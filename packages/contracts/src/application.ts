@@ -5,7 +5,6 @@ import { z } from "zod";
 import { applicationStatusSchema, innSchema } from "@repo/contracts";
 
 import { apiAutonomySnapshotSchema } from "./api.ts";
-import { autonomyCaseSchema } from "./autonomy.ts";
 import {
   actorSchema,
   applicationCommentSchema,
@@ -17,6 +16,7 @@ import {
   rejectReasonSchema,
   waitingOnSchema,
 } from "./application-parts.ts";
+import { autonomyCaseSchema } from "./autonomy.ts";
 import {
   creditProductIdSchema,
   creditPurposeSchema,

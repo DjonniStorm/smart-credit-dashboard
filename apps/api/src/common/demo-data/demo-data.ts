@@ -1,8 +1,11 @@
 import type { AutonomyConfig, AutonomyMetrics } from "@repo/contracts";
 import type { BkiReport, EgrulRecord, FnsProfile } from "@repo/contracts";
 import type { ApiProductId, DemoAccountApi } from "@repo/contracts/api";
-import type { CompanyDiscrepancy, CompanySource } from "@repo/contracts/company-profile";
 import type { Employee } from "@repo/contracts/application";
+import type {
+  CompanyDiscrepancy,
+  CompanySource,
+} from "@repo/contracts/company-profile";
 
 export interface DemoSourceRecord {
   egrul: EgrulRecord;
@@ -203,7 +206,10 @@ export const demoSources: Record<string, DemoSourceRecord> = {
   },
 };
 
-export const demoCompanyProfileScenarios: Record<string, DemoCompanyProfileScenario> = {
+export const demoCompanyProfileScenarios: Record<
+  string,
+  DemoCompanyProfileScenario
+> = {
   "9903000033": {
     unavailableSources: ["bank_turnover"],
     discrepancies: [

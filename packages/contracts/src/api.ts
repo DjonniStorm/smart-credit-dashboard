@@ -150,7 +150,9 @@ export const autonomyPolicyActionRequestSchema = z.object({
   idempotencyKey: z.string().min(8).max(128),
   expectedRevision: z.number().int().nonnegative(),
 });
-export type AutonomyPolicyActionRequest = z.infer<typeof autonomyPolicyActionRequestSchema>;
+export type AutonomyPolicyActionRequest = z.infer<
+  typeof autonomyPolicyActionRequestSchema
+>;
 
 export const apiAutonomyAuditSchema = z.object({
   productId: z.string(),

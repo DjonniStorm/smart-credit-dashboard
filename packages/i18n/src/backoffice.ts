@@ -33,6 +33,22 @@ const autonomyAuditActionLabels: Record<string, string> = {
   autonomy_candidate: "Кандидат автономности",
   auto_offer: "Автоодобрение",
   autonomy_expired: "Истечение окна контроля",
+  approve: "Одобрение",
+  counter_offer: "Встречное предложение",
+  reject: "Отказ",
+  request_info: "Запрос уточнений",
+  cancel: "Отмена заявки",
+  decline_offer: "Отказ от предложения",
+  accept_offer: "Принятие предложения",
+  sign: "Подписание",
+  assign: "Назначение ответственного",
+  rerun_check: "Повторная проверка",
+  block: "Блокировка заявки",
+  resume: "Возобновление заявки",
+  handoff: "Передача заявки",
+  set_urgent: "Срочный режим",
+  comment: "Комментарий",
+  prepare_contract: "Подготовка договора",
 };
 
 function labelFor(labels: Record<string, string>, value: string): string {
@@ -106,13 +122,16 @@ const ru = {
     mode: (mode: string) => `Режим: ${labelFor(autonomyModeLabels, mode)}`,
     levelLabel: (level: string) => labelFor(autonomyLevelLabels, level),
     driftLabel: (status: string) => labelFor(autonomyDriftLabels, status),
-    policyMeta: (model: string, policy: string, level: string) => `${model} · ${policy} · уровень ${labelFor(autonomyLevelLabels, level)}`,
+    policyMeta: (model: string, policy: string, level: string) =>
+      `${model} · ${policy} · уровень ${labelFor(autonomyLevelLabels, level)}`,
     controlWindow: (state: string) => `Контрольное окно: ${state}.`,
     windowOpen: "открыто",
     windowClosed: "закрыто",
     amountOutOfBand: "Сумма вне диапазона автономного решения.",
-    metrics: (closed: number, eligible: number) => `Закрытые кейсы: ${closed} · кандидаты: ${eligible}`,
-    overrides: (count: number, rate: string) => `Переопределения: ${count} (${rate})`,
+    metrics: (closed: number, eligible: number) =>
+      `Закрытые кейсы: ${closed} · кандидаты: ${eligible}`,
+    overrides: (count: number, rate: string) =>
+      `Переопределения: ${count} (${rate})`,
     calibration: (error: string) => `Калибровка: ${error}`,
     drift: (status: string) => `Drift: ${status}`,
     caseStatus: {
@@ -124,7 +143,7 @@ const ru = {
       confirmed: "Автоодобрение подтверждено",
     },
     inn: "ИНН",
-    ogrn: (legalForm: string) => legalForm === "ip" ? "ОГРНИП" : "ОГРН",
+    ogrn: (legalForm: string) => (legalForm === "ip" ? "ОГРНИП" : "ОГРН"),
   },
   workflow: {
     title: "Путь заявки",
@@ -173,7 +192,10 @@ const ru = {
         detail: "Проверяем финальные условия и отправляем деньги клиенту.",
         owner: "Банк",
       },
-    } satisfies Record<ApplicationStage, { label: string; short: string; detail: string; owner: string }>,
+    } satisfies Record<
+      ApplicationStage,
+      { label: string; short: string; detail: string; owner: string }
+    >,
   },
   checks: {
     emptyTitle: "Проверки ещё не запускались",
@@ -200,17 +222,25 @@ const ru = {
     recommendation: "Рекомендация",
     blocker: "Что мешает решению:",
     alfi: "Альфи",
-    systemChecking: "Источники ещё проверяются. Решение появится после ответа системы.",
+    systemChecking:
+      "Источники ещё проверяются. Решение появится после ответа системы.",
     rejected: "Решение отклонено. Проверьте причину и историю факторов.",
-    rejectedWithReason: (reason: string) => `Отказ зафиксирован: ${reason.toLowerCase()}. Причина и факторы доступны в истории.`,
-    disbursed: "Выдача завершена: деньги перечислены клиенту. Проверьте историю операции.",
-    needsClient: (items: string) => items
-      ? `Ждём от клиента: ${items}. После ответа проверки запустятся повторно.`
-      : "Клиент должен ответить на запрос. После этого заявка вернётся в очередь.",
-    counterOffer: (amount: string, term: string, rate: number) => `Клиенту предложены другие условия: ${amount} на ${term} под ${rate} %.`,
-    counterOfferWaiting: "Клиенту отправлено встречное предложение. Дождитесь его ответа.",
-    approved: "Заявка одобрена. Клиенту осталось подписать договор, после чего банк выполнит выдачу.",
-    recommendationHint: (recommendation: string) => `Рекомендация «${recommendation.toLowerCase()}». Сверьте факторы и подтвердите или измените решение.`,
+    rejectedWithReason: (reason: string) =>
+      `Отказ зафиксирован: ${reason.toLowerCase()}. Причина и факторы доступны в истории.`,
+    disbursed:
+      "Выдача завершена: деньги перечислены клиенту. Проверьте историю операции.",
+    needsClient: (items: string) =>
+      items
+        ? `Ждём от клиента: ${items}. После ответа проверки запустятся повторно.`
+        : "Клиент должен ответить на запрос. После этого заявка вернётся в очередь.",
+    counterOffer: (amount: string, term: string, rate: number) =>
+      `Клиенту предложены другие условия: ${amount} на ${term} под ${rate} %.`,
+    counterOfferWaiting:
+      "Клиенту отправлено встречное предложение. Дождитесь его ответа.",
+    approved:
+      "Заявка одобрена. Клиенту осталось подписать договор, после чего банк выполнит выдачу.",
+    recommendationHint: (recommendation: string) =>
+      `Рекомендация «${recommendation.toLowerCase()}». Сверьте факторы и подтвердите или измените решение.`,
   },
   outcome: {
     requested: "Запрошено у клиента",
@@ -238,7 +268,8 @@ const ru = {
     drift: "Drift",
     driftLabel: (status: string) => labelFor(autonomyDriftLabels, status),
     noData: "нет данных",
-    auditEntry: (action: string, reason: string) => `Журнал: ${labelFor(autonomyAuditActionLabels, action)} · ${reason}`,
+    auditEntry: (action: string, reason: string) =>
+      `Журнал: ${labelFor(autonomyAuditActionLabels, action)} · ${reason}`,
     pause: "Отключить сценарий",
     strict: "Вернуть строгий уровень",
     stable: "Вернуть стабильный уровень",
@@ -248,8 +279,10 @@ const ru = {
     confirm: "Сохранить",
     paused: "сценарий отключён",
     controlWindow: (minutes: number) => `окно контроля: ${minutes} мин.`,
-    cases: (closed: number, eligible: number) => `кейсы ${closed}, кандидаты ${eligible}`,
-    overrides: (count: number, rate: string) => `переопределения ${count} (${rate})`,
+    cases: (closed: number, eligible: number) =>
+      `кейсы ${closed}, кандидаты ${eligible}`,
+    overrides: (count: number, rate: string) =>
+      `переопределения ${count} (${rate})`,
   },
 } as const;
 

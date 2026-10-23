@@ -1,4 +1,9 @@
 import type {
+  ApiAutonomyAudit,
+  ApiAutonomySnapshot,
+  AutonomyPolicyActionRequest,
+} from "@repo/contracts/api";
+import type {
   Application,
   ClientResponse,
   Employee,
@@ -6,11 +11,6 @@ import type {
 } from "@repo/contracts/application";
 import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
 import type { CreditProduct } from "@repo/contracts/product-catalog";
-import type {
-  ApiAutonomyAudit,
-  ApiAutonomySnapshot,
-  AutonomyPolicyActionRequest,
-} from "@repo/contracts/api";
 
 /** Продукт каталога и его ставка при текущей ключевой: ключевая + спред. */
 export type ArmProduct = CreditProduct & { ratePct: number };
