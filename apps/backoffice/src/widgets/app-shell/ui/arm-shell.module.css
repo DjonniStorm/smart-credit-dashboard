@@ -34,12 +34,9 @@
 }
 
 .brandSign {
-  display: inline-block;
-  font-size: 24px;
-  line-height: 22px;
-  font-weight: 700;
-  color: var(--kk-brand-bright);
-  border-bottom: 3px solid var(--kk-brand-bright);
+  display: inline-flex;
+  /* Наушники знака берут цвет текста темы, буква остаётся фирменной. */
+  color: var(--mantine-color-text);
 }
 
 .brandName {

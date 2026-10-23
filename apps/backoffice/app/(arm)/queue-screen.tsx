@@ -94,7 +94,11 @@ export function QueueScreen() {
         />
       </div>
       {openId && (
-        <aside className={classes.aside} aria-label="Панель заявки">
+        <aside
+          className={classes.aside}
+          aria-label="Панель заявки"
+          data-alfi-avoid="right"
+        >
           <ApplicationPanel
             key={openId}
             id={openId}

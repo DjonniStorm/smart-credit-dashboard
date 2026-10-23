@@ -58,6 +58,37 @@
   content: "";
 }
 
+/*
+ * Страница помечает элементы, которые Альфи не должен закрывать:
+ * липкий подвал мастера заявки (bottom) и панель заявки в очереди АРМ (right).
+ * Отступы повторяют их размеры: подвал до 80px, панель 360px, уже 1200px 380px,
+ * на телефоне панель во всю ширину, и Альфи поднимается над её действиями.
+ */
+:global(body:has([data-alfi-avoid~="bottom"])) .dock,
+:global(body:has([data-alfi-avoid~="bottom"])) .collapsed {
+  bottom: 96px;
+}
+
+:global(body:has([data-alfi-avoid~="right"])) .dock,
+:global(body:has([data-alfi-avoid~="right"])) .collapsed {
+  right: 376px;
+}
+
+@media (max-width: 74.99em) {
+  :global(body:has([data-alfi-avoid~="right"])) .dock,
+  :global(body:has([data-alfi-avoid~="right"])) .collapsed {
+    right: 396px;
+  }
+}
+
+@media (max-width: 48em) {
+  :global(body:has([data-alfi-avoid~="right"])) .dock,
+  :global(body:has([data-alfi-avoid~="right"])) .collapsed {
+    right: 8px;
+    bottom: 96px;
+  }
+}
+
 /* Подсветка места, куда ведёт подсказка «Показать». */
 :global([data-alfi-highlight]) {
   outline: 3px solid var(--kk-brand);
@@ -66,10 +97,12 @@
   transition: outline-color 300ms ease;
 }
 
+/* На телефоне от края до края; 100vw здесь не подходит: он включает полосу прокрутки. */
 @media (max-width: 36em) {
   .dock {
     right: 8px;
     bottom: 8px;
-    width: calc(100vw - 16px);
+    left: 8px;
+    width: auto;
   }
 }

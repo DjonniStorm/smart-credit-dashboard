@@ -1,12 +1,17 @@
-export enum AlfiState {
-  Idle = "idle",
-  Greeting = "greeting",
-  Explain = "explain",
-  Checking = "checking",
-  NeedsAnswer = "needs_answer",
-  Success = "success",
-  Attention = "attention",
-}
+/**
+ * Эмоции Альфи. Объект вместо enum: тип остаётся объединением строк,
+ * поэтому чистая логика подсказок обходится импортом типа без UI-пакета.
+ */
+export const AlfiState = {
+  Idle: "idle",
+  Greeting: "greeting",
+  Explain: "explain",
+  Checking: "checking",
+  NeedsAnswer: "needs_answer",
+  Success: "success",
+  Attention: "attention",
+} as const;
+export type AlfiState = (typeof AlfiState)[keyof typeof AlfiState];
 
 export enum AlfiOperation {
   ApplicationCreated = "application_created",

@@ -522,7 +522,7 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
         </AnimatePresence>
       </Card>
 
-      <div className={classes.footer}>
+      <div className={classes.footer} data-alfi-avoid="bottom">
         {draft.step > 0 ? (
           <Button variant="default" onClick={() => go(draft.step - 1)}>
             {tx.common.back}

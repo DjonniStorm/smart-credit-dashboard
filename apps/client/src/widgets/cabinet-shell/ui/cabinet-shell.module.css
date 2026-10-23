@@ -40,14 +40,9 @@
 }
 
 .logoMark {
-  display: inline-block;
-  color: var(--kk-brand-bright);
-  font-size: 26px;
-  line-height: 1;
-  font-weight: 700;
-  /* Черта под буквой, как в знаке банка. */
-  box-shadow: 0 3px 0 var(--kk-brand-bright);
-  padding-bottom: 1px;
+  display: inline-flex;
+  /* Наушники знака берут цвет текста темы, буква остаётся фирменной. */
+  color: var(--mantine-color-text);
 }
 
 .logoBank {
