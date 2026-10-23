@@ -75,6 +75,11 @@ class ScoreResponse(BaseModel):
     autonomy_mode: Literal["shadow", "assist", "controlled"] = "shadow"
 
 
+ACTIVE_EGRUL_STATUSES = frozenset(
+    {"active", "действует", "действующее", "действующая", "действующий"}
+)
+
+
 def _number(payload: BaseModel, key: str) -> Optional[float]:
     value = getattr(payload, key, None)
     return float(value) if isinstance(value, (int, float)) else None
@@ -85,13 +90,28 @@ def _text(payload: BaseModel, key: str) -> str:
     return value if isinstance(value, str) else ""
 
 
+def _positive(value: Optional[float]) -> bool:
+    return value is not None and value > 0
+
+
+def _source_coverage(req: ScoreRequest) -> float:
+    """Доля из четырёх фактов скоринга, по которым источник вернул данные."""
+    known = [
+        bool(_text(req.egrul, "status").strip()),
+        _number(req.bki, "overdueDays") is not None,
+        _number(req.fns, "taxDebtRub") is not None,
+        _number(req.bki, "activeLoans") is not None,
+    ]
+    return sum(known) / len(known)
+
+
 def calculate_score_details(req: ScoreRequest) -> tuple[float, list[ScoreFactor]]:
     """Детерминированный baseline и объяснение вклада каждого источника."""
     score = 50.0
     factors: list[ScoreFactor] = []
 
     status = _text(req.egrul, "status").strip().lower()
-    if status in {"active", "действует", "действующая"}:
+    if status in ACTIVE_EGRUL_STATUSES:
         impact = 15.0
         value = "Действующее"
     elif status:
@@ -176,22 +196,22 @@ def _derived_result(req: ScoreRequest, score: float) -> dict[str, object]:
         health -= 8
     health_index = max(0.0, min(100.0, health))
 
-    readiness_parts = [req.consentBki, req.documentsComplete]
-    if req.requestedAmount is not None and req.termMonths is not None:
-        readiness_parts.append(True)
-    if req.annualRevenue is not None:
-        readiness_parts.append(True)
+    has_terms = _positive(req.requestedAmount) and _positive(req.termMonths)
+    has_revenue = _positive(req.annualRevenue)
+    readiness_parts = [req.consentBki, req.documentsComplete, has_terms, has_revenue]
     readiness_index = round(100 * sum(readiness_parts) / len(readiness_parts))
     missing = []
     if not req.consentBki:
         missing.append("согласие на запрос БКИ")
     if not req.documentsComplete:
         missing.append("подтверждающие документы")
-    if req.requestedAmount is None or req.termMonths is None:
+    if not has_terms:
         missing.append("сумма и срок заявки")
-    if req.annualRevenue is None:
+    if not has_revenue:
         missing.append("годовая выручка")
-    confidence = max(0.1, min(1.0, readiness_index / 100))
+    # Компас уверенности: полнота заявки и доля источников, по которым есть данные.
+    source_coverage = _source_coverage(req)
+    confidence = max(0.1, min(1.0, 0.6 * readiness_index / 100 + 0.4 * source_coverage))
     reasons: list[str] = []
     next_actions: list[str] = []
     if overdue is not None and overdue > 30:
@@ -210,11 +230,9 @@ def _derived_result(req: ScoreRequest, score: float) -> dict[str, object]:
         recommendation = "reject"
         reasons.append("Балл ниже минимального порога")
         next_actions.append("Изменить сумму или срок и повторно пройти проверку")
-    elif req.annualRevenue and req.requestedAmount:
-        projected_load = (req.currentPayments or 0) + req.requestedAmount / max(
-            1, (req.termMonths or 12)
-        )
-        projected_load = projected_load * 12 / req.annualRevenue
+    elif req.annualRevenue and req.requestedAmount and req.termMonths:
+        monthly_load = (req.currentPayments or 0) + req.requestedAmount / req.termMonths
+        projected_load = monthly_load * 12 / req.annualRevenue
         if projected_load > 0.7:
             recommendation = "counter_offer"
             reasons.append("Запрошенная сумма создаёт высокую долговую нагрузку")
@@ -260,12 +278,14 @@ def health() -> Health:
 def score(req: ScoreRequest) -> ScoreResponse:
     score_value, factors = calculate_score_details(req)
     derived = _derived_result(req, score_value)
-    return ScoreResponse(
-        inn=req.inn,
-        score=score_value,
-        model="rules-baseline-v2",
-        factors=factors,
-        **derived,
+    return ScoreResponse.model_validate(
+        {
+            "inn": req.inn,
+            "score": score_value,
+            "model": "rules-baseline-v2",
+            "factors": factors,
+            **derived,
+        }
     )
 
 
