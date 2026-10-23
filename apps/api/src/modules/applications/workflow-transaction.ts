@@ -32,6 +32,15 @@ export class WorkflowTransaction {
     return rows[0] ? applicationFromRow(rows[0]) : null;
   }
 
+  /** Принятые предложения без паузы; занятые другим воркером строки пропускаются. */
+  async lockAcceptedApplications(): Promise<ApplicationWorkflow[]> {
+    const rows = await this.manager.query(
+      `select * from applications where status='accepted' and hold is null
+       order by updated_at limit 20 for update skip locked`,
+    );
+    return rows.map(applicationFromRow);
+  }
+
   async findIdempotent(scope: string, key: string): Promise<string | null> {
     const rows = await this.manager.query(
       "select resource_id from idempotency_keys where scope=$1 and key=$2",

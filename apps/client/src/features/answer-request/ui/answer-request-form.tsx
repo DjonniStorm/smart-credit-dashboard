@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 import { useState } from "react";
 
-import type { ClientRequest } from "@repo/contracts/cabinet";
+import type { Application, ClientRequest } from "@repo/contracts/cabinet";
 
 import { useAnswerRequest } from "@/entities/application";
 import { tx } from "@/shared/i18n";
@@ -21,13 +21,13 @@ const t = tx.application.request;
 
 /** Ответ на запрос банка: текст и необязательный документ. */
 export function AnswerRequestForm({
-  applicationId,
+  app,
   request,
 }: {
-  applicationId: string;
+  app: Pick<Application, "id" | "updatedAt">;
   request: ClientRequest;
 }) {
-  const answer = useAnswerRequest(applicationId);
+  const answer = useAnswerRequest(app);
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [touched, setTouched] = useState(false);

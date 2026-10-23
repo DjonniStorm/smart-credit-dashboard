@@ -23,6 +23,7 @@ function statusOf(
     case "counter_offer":
       return "counter_offer";
     case "approved":
+    case "accepted":
     case "signing":
       return "approved";
     case "funded":

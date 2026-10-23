@@ -8,6 +8,7 @@ import { ConfigService } from "@nestjs/config";
 
 import type { Env } from "../../common/config/env.schema.ts";
 import { ApplicationsService } from "./applications.service.ts";
+import { ClientActionsService } from "./client-actions.service.ts";
 import { WorkflowStore } from "./workflow-store.ts";
 
 /** Small Postgres-backed worker. It is safe to run one instance per API replica. */
@@ -22,6 +23,7 @@ export class QueueWorkerService
   constructor(
     private readonly store: WorkflowStore,
     private readonly applications: ApplicationsService,
+    private readonly clientActions: ClientActionsService,
     private readonly config: ConfigService<Env, true>,
   ) {}
 
@@ -47,6 +49,7 @@ export class QueueWorkerService
       if (recovered > 0) {
         this.logger.warn(`Возвращено зависших задач: ${recovered}`);
       }
+      await this.clientActions.prepareContracts();
       let job = await this.store.claimNextQueuedJob();
       while (job) {
         try {

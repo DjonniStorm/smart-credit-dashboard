@@ -98,7 +98,9 @@ export const workflowStatusSchema = z.enum([
   "needs_client",
   "approved",
   "counter_offer",
-  /** Клиент принял условия, договор ждёт подписи кодом. */
+  /** Клиент принял условия, система готовит договор. */
+  "accepted",
+  /** Договор подготовлен и ждёт подписи кодом. */
   "signing",
   /** Договор подписан, кредит выдан. */
   "funded",
@@ -132,6 +134,8 @@ export type ClientReply = z.infer<typeof clientReplySchema>;
 export const applicationDealSchema = z.object({
   offerKind: z.enum(["initial", "counter"]),
   acceptedAt: z.string(),
+  /** Когда клиент последний раз запросил код подписи; без запроса подписать нельзя. */
+  codeRequestedAt: z.string().nullable().default(null),
   signedAt: z.string().nullable(),
   disbursedAt: z.string().nullable(),
   account: z.string(),

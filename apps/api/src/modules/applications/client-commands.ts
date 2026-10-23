@@ -41,7 +41,8 @@ function requireStatus(
 
 /**
  * Таблица переходов команд клиента по plan.md: NEEDS_INFO → UNDER_REVIEW,
- * OFFERED → SIGNING или CANCELLED, SIGNING → FUNDED. Остальное даёт 409.
+ * OFFERED → ACCEPTED или CANCELLED, SIGNING → FUNDED. Переход
+ * ACCEPTED → SIGNING делает система (`prepareContract`). Остальное даёт 409.
  */
 export function runClientCommand(
   current: ApplicationWorkflow,
@@ -92,11 +93,12 @@ export function runClientCommand(
       next.deal = {
         offerKind: current.status === "counter_offer" ? "counter" : "initial",
         acceptedAt: now,
+        codeRequestedAt: null,
         signedAt: null,
         disbursedAt: null,
         account: demoAccount(current.id),
       };
-      return changeStatus("signing", "Клиент принял условия");
+      return changeStatus("accepted", "Клиент принял условия");
     }
     case "decline_offer": {
       requireStatus(
@@ -109,6 +111,9 @@ export function runClientCommand(
     }
     case "request_sign_code": {
       requireStatus(current, ["signing"], "Договор сейчас не ждёт подписи");
+      if (current.deal) {
+        next.deal = { ...current.deal, codeRequestedAt: now };
+      }
       return {
         application: next,
         event: {
@@ -121,14 +126,34 @@ export function runClientCommand(
     }
     case "sign": {
       requireStatus(current, ["signing"], "Договор сейчас не ждёт подписи");
+      if (!current.deal?.codeRequestedAt) {
+        throw new ConflictException("Сначала запросите код подтверждения");
+      }
       if (action.code !== demoSignCode(current.id)) {
         throw new UnprocessableEntityException("Неверный код подтверждения");
-      }
-      if (!current.deal) {
-        throw new ConflictException("Сделка не найдена");
       }
       next.deal = { ...current.deal, signedAt: now, disbursedAt: now };
       return changeStatus("funded", "Договор подписан, кредит выдан");
     }
   }
+}
+
+/** Системный шаг ACCEPTED → SIGNING: договор подготовлен, клиент может запросить код. */
+export function prepareContract(
+  current: ApplicationWorkflow,
+  now: string,
+): ClientCommandOutcome {
+  return {
+    application: { ...current, status: "signing", updatedAt: now },
+    event: {
+      kind: "status_changed",
+      title: "Договор подготовлен",
+      comment: null,
+      metadata: {
+        actionType: "prepare_contract",
+        fromStatus: current.status,
+        toStatus: "signing",
+      },
+    },
+  };
 }

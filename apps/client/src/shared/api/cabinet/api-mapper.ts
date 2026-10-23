@@ -155,13 +155,23 @@ function requestsOf(application: ApiApplication): Application["requests"] {
   ];
 }
 
+/** Этап сделки в кабинете по публичному статусу; ACCEPTED значит, что договор ещё готовится. */
+const dealStages: Partial<
+  Record<ApiApplication["status"], NonNullable<Application["deal"]>["stage"]>
+> = {
+  ACCEPTED: "offer",
+  SIGNING: "signing",
+  FUNDED: "done",
+};
+
 function dealOf(application: ApiApplication): Application["deal"] {
   const { deal, offer } = application;
-  if (!deal || !offer) {
+  const stage = dealStages[application.status];
+  if (!deal || !offer || !stage) {
     return null;
   }
   return {
-    stage: deal.disbursedAt ? "done" : deal.signedAt ? "disbursing" : "signing",
+    stage,
     terms: {
       amount: offer.amount,
       termMonths: offer.termMonths,

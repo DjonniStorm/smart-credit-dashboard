@@ -18,6 +18,13 @@ const stranger = {
   role: "client",
 } as DemoSession;
 
+function service() {
+  return new ClientActionsService(store, {
+    getApiApplication: async (applicationId: string) =>
+      toApiApplication(await reload(applicationId)),
+  } as never);
+}
+
 let counter = 0;
 function clientAct(
   id: string,
@@ -25,11 +32,7 @@ function clientAct(
   session = owner,
   idempotencyKey = `client-key-${Date.now()}-${(counter += 1)}`,
 ) {
-  const service = new ClientActionsService(store, {
-    getApiApplication: async (applicationId: string) =>
-      toApiApplication(await reload(applicationId)),
-  } as never);
-  return service.execute(id, { action, idempotencyKey }, session);
+  return service().execute(id, { action, idempotencyKey }, session);
 }
 
 async function eventCount(id: string): Promise<number> {
@@ -38,6 +41,13 @@ async function eventCount(id: string): Promise<number> {
     [id],
   );
   return rows[0].n;
+}
+
+/** Одобрение, принятие клиентом и системная подготовка договора. */
+async function toSigning(id: string) {
+  await act(id, approve);
+  await clientAct(id, { type: "accept_offer" });
+  await service().prepareContracts();
 }
 
 test("ответ на запрос возвращает заявку на рассмотрение и сохраняет ответ", async () => {
@@ -57,23 +67,28 @@ test("ответ на запрос возвращает заявку на рас
   assert.equal((await reload(application.id)).status, "in_review");
 });
 
-test("принятие, код и подпись доводят заявку до выдачи", async () => {
+test("принятие ведёт в ACCEPTED, система готовит договор, подпись доводит до выдачи", async () => {
   const application = await seedApplication(db);
   await act(application.id, approve);
 
   const accepted = await clientAct(application.id, { type: "accept_offer" });
-  assert.equal(accepted.application.status, "SIGNING");
+  assert.equal(accepted.application.status, "ACCEPTED");
   assert.equal(accepted.application.deal?.offerKind, "initial");
+  await assert.rejects(
+    clientAct(application.id, { type: "request_sign_code" }),
+    { status: 409 },
+  );
+
+  assert.ok((await service().prepareContracts()) >= 1);
+  assert.equal((await reload(application.id)).status, "signing");
 
   const { demoCode } = await clientAct(application.id, {
     type: "request_sign_code",
   });
   assert.equal(demoCode, demoSignCode(application.id));
+  const wrong = demoCode === "000000" ? "111111" : "000000";
   await assert.rejects(
-    clientAct(application.id, {
-      type: "sign",
-      code: "000000" === demoCode ? "111111" : "000000",
-    }),
+    clientAct(application.id, { type: "sign", code: wrong }),
     { status: 422 },
   );
 
@@ -84,6 +99,19 @@ test("принятие, код и подпись доводят заявку д�
   assert.equal(signed.application.status, "FUNDED");
   assert.ok(signed.application.deal?.signedAt);
   assert.ok(signed.application.deal?.disbursedAt);
+});
+
+test("подпись без запроса кода даёт 409", async () => {
+  const application = await seedApplication(db);
+  await toSigning(application.id);
+  await assert.rejects(
+    clientAct(application.id, {
+      type: "sign",
+      code: demoSignCode(application.id),
+    }),
+    { status: 409 },
+  );
+  assert.equal((await reload(application.id)).status, "signing");
 });
 
 test("отказ закрывает заявку с пометкой, что отказался клиент", async () => {
@@ -97,6 +125,36 @@ test("отказ закрывает заявку с пометкой, что о�
   assert.equal(response.application.status, "CANCELLED");
   assert.equal(response.application.cancelledBy, "client");
   assert.ok(response.application.offer);
+  assert.equal(response.application.deal, null);
+});
+
+test("отмена сотрудником после принятия закрывает сделку", async () => {
+  const application = await seedApplication(db);
+  await toSigning(application.id);
+  await act(application.id, { type: "cancel", reason: "Клиент передумал" });
+
+  const cancelled = toApiApplication(await reload(application.id));
+  assert.equal(cancelled.status, "CANCELLED");
+  assert.equal(cancelled.cancelledBy, "employee");
+  assert.equal(cancelled.deal, null);
+  await assert.rejects(
+    clientAct(application.id, { type: "request_sign_code" }),
+    { status: 409 },
+  );
+});
+
+test("на паузе действия клиента и подготовка договора стоят", async () => {
+  const application = await seedApplication(db);
+  await act(application.id, approve);
+  await clientAct(application.id, { type: "accept_offer" });
+  await act(application.id, { type: "pause", reason: "Проверяем залог" });
+
+  await service().prepareContracts();
+  assert.equal((await reload(application.id)).status, "accepted");
+  await assert.rejects(
+    clientAct(application.id, { type: "request_sign_code" }),
+    { status: 409 },
+  );
 });
 
 test("запрещённые переходы дают 409", async () => {
@@ -148,6 +206,21 @@ test("повтор с тем же ключом не дублирует собы�
     owner,
     "same-key-1",
   );
-  assert.equal(repeated.application.status, "SIGNING");
+  assert.equal(repeated.application.status, "ACCEPTED");
   assert.equal(await eventCount(application.id), before + 1);
+});
+
+test("тот же ключ для другого действия не считается повтором", async () => {
+  const application = await seedApplication(db);
+  await act(application.id, approve);
+  await clientAct(
+    application.id,
+    { type: "accept_offer" },
+    owner,
+    "shared-key",
+  );
+  await assert.rejects(
+    clientAct(application.id, { type: "decline_offer" }, owner, "shared-key"),
+    { status: 409 },
+  );
 });

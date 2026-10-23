@@ -61,7 +61,7 @@ class QueueDto extends createZodDto(apiQueueItemSchema.array()) {}
 class ApplicationActionDto extends createZodDto(
   applicationActionRequestSchema,
 ) {}
-class ClientActionDto extends createZodDto(clientActionRequestSchema) {}
+export class ClientActionDto extends createZodDto(clientActionRequestSchema) {}
 class ClientActionResponseDto extends createZodDto(
   clientActionResponseSchema,
 ) {}

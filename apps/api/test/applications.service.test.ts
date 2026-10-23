@@ -108,9 +108,12 @@ describe(
       service: ApplicationsService,
       leaseMs = 60_000,
     ) =>
-      new QueueWorkerService(store, service, {
-        getOrThrow: () => leaseMs,
-      } as never);
+      new QueueWorkerService(
+        store,
+        service,
+        { prepareContracts: async () => 0 } as never,
+        { getOrThrow: () => leaseMs } as never,
+      );
 
     before(async () => {
       const admin = new DataSource({ type: "postgres", url: databaseUrl });

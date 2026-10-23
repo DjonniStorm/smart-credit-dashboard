@@ -20,11 +20,19 @@ const statusMap: Record<
   needs_client: "NEEDS_INFO",
   approved: "OFFERED",
   counter_offer: "OFFERED",
+  accepted: "ACCEPTED",
   signing: "SIGNING",
   funded: "FUNDED",
   rejected: "REJECTED",
   cancelled: "CANCELLED",
 };
+
+/** Сделка видна клиенту, только пока она жива: отмена после принятия её закрывает. */
+const dealStatuses = new Set<ApplicationWorkflow["status"]>([
+  "accepted",
+  "signing",
+  "funded",
+]);
 
 function publicStatus(
   application: ApplicationWorkflow,
@@ -80,7 +88,7 @@ export function toApiApplication(
     requestedInfo: application.requestedInfo,
     rejectReason: application.rejectReason,
     clientReply: application.clientReply,
-    deal: application.deal,
+    deal: dealStatuses.has(application.status) ? application.deal : null,
     cancelledBy: application.cancelledBy,
     clientComments,
     createdAt: application.createdAt,

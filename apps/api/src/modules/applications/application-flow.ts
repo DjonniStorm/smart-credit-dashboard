@@ -32,6 +32,12 @@ export function deriveFlow(application: ApplicationWorkflow): ApplicationFlow {
         waitingOn: "client",
         blocker: "Ждём ответ клиента на предложение",
       };
+    case "accepted":
+      return {
+        stage: "signing",
+        waitingOn: "system",
+        blocker: "Готовим договор",
+      };
     case "signing":
       return {
         stage: "signing",

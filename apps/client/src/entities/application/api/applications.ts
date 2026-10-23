@@ -17,7 +17,11 @@ export const applicationKeys = {
 
 /** Пока банк работает с заявкой, опрашиваем её: статус меняется сам. */
 function isMoving(app: Application | undefined) {
-  return app?.status === "in_review" || app?.deal?.stage === "disbursing";
+  return (
+    app?.status === "in_review" ||
+    app?.deal?.stage === "offer" ||
+    app?.deal?.stage === "disbursing"
+  );
 }
 
 export function useApplications() {
@@ -61,39 +65,60 @@ export function useCreateApplication() {
   });
 }
 
-export function useAnswerRequest(id: string) {
+type ActionTarget = Pick<Application, "id" | "updatedAt">;
+
+/**
+ * Ключ идемпотентности привязан к версии заявки: повторное нажатие по той же версии
+ * сервер узнаёт и не выполняет второй раз, а после изменения заявки ключ новый.
+ */
+function actionKey(app: ActionTarget, action: string) {
+  return `${app.id}:${action}:${app.updatedAt}`;
+}
+
+export function useAnswerRequest(app: ActionTarget) {
   const update = useUpdate();
   return useMutation({
     mutationFn: (v: { requestId: string; answer: ClientAnswer }) =>
-      cabinetApi.answerRequest(id, v.requestId, v.answer),
+      cabinetApi.answerRequest(
+        app.id,
+        v.requestId,
+        v.answer,
+        actionKey(app, "answer_request"),
+      ),
     onSuccess: update,
   });
 }
 
-export function useAcceptOffer(id: string) {
+export function useAcceptOffer(app: ActionTarget) {
   const update = useUpdate();
   return useMutation({
-    mutationFn: () => cabinetApi.acceptOffer(id),
+    mutationFn: () =>
+      cabinetApi.acceptOffer(app.id, actionKey(app, "accept_offer")),
     onSuccess: update,
   });
 }
 
-export function useDeclineOffer(id: string) {
+export function useDeclineOffer(app: ActionTarget) {
   const update = useUpdate();
   return useMutation({
-    mutationFn: () => cabinetApi.declineOffer(id),
+    mutationFn: () =>
+      cabinetApi.declineOffer(app.id, actionKey(app, "decline_offer")),
     onSuccess: update,
   });
 }
 
-export function useRequestSignCode(id: string) {
-  return useMutation({ mutationFn: () => cabinetApi.requestSignCode(id) });
+export function useRequestSignCode(app: ActionTarget) {
+  return useMutation({
+    mutationFn: () =>
+      cabinetApi.requestSignCode(app.id, actionKey(app, "request_sign_code")),
+  });
 }
 
-export function useSign(id: string) {
+export function useSign(app: ActionTarget) {
   const update = useUpdate();
   return useMutation({
-    mutationFn: (code: string) => cabinetApi.sign(id, code),
+    mutationFn: (code: string) =>
+      cabinetApi.sign(app.id, code, actionKey(app, "sign")),
     onSuccess: update,
   });
 }
