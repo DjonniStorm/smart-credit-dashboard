@@ -74,6 +74,20 @@ export function decide(
       autonomyMode: "shadow",
     };
   }
+  const missingSources = scoring.missing_sources ?? [];
+  if (missingSources.length > 0) {
+    rules.push({
+      id: "source-gap",
+      outcome: "attention",
+      detail: `Нет данных источников: ${missingSources.join(", ")}`,
+    });
+    return {
+      recommendation: "manual_review",
+      reasons,
+      rules,
+      autonomyMode: "shadow",
+    };
+  }
   if (
     scoring.recommendation === "approve" &&
     confidence >= 0.8 &&
