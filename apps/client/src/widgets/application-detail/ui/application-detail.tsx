@@ -330,9 +330,7 @@ function StagePanel({ app }: { app: Application }) {
 
   if (app.status === "needs_client") {
     const request = app.requests.find((r) => !r.answer);
-    return request ? (
-      <AnswerRequestForm applicationId={app.id} request={request} />
-    ) : null;
+    return request ? <AnswerRequestForm app={app} request={request} /> : null;
   }
 
   if (
@@ -361,6 +359,22 @@ function StagePanel({ app }: { app: Application }) {
             {t.signing.go}
           </Button>
         </Stack>
+      </Card>
+    );
+  }
+
+  if (app.deal?.stage === "offer") {
+    return (
+      <Card>
+        <Group gap="md" wrap="nowrap" align="flex-start">
+          <Loader size={20} color="var(--mantine-color-text)" mt={4} />
+          <Stack gap={4}>
+            <Title order={2} size="h3">
+              {t.preparing.title}
+            </Title>
+            <Text>{t.preparing.text}</Text>
+          </Stack>
+        </Group>
       </Card>
     );
   }

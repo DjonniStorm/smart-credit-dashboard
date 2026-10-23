@@ -116,32 +116,41 @@ export const httpApi: CabinetApi = {
     );
     return toCabinetApplication(response.application, session);
   },
-  answerRequest: (id, _requestId, answer) =>
-    clientAction(id, { type: "answer_request", answer }),
-  acceptOffer: (id) => clientAction(id, { type: "accept_offer" }),
-  declineOffer: (id) => clientAction(id, { type: "decline_offer" }),
-  requestSignCode: async (id) => {
-    const response = await sendClientAction(id, { type: "request_sign_code" });
+  answerRequest: (id, _requestId, answer, key) =>
+    clientAction(id, { type: "answer_request", answer }, key),
+  acceptOffer: (id, key) => clientAction(id, { type: "accept_offer" }, key),
+  declineOffer: (id, key) => clientAction(id, { type: "decline_offer" }, key),
+  requestSignCode: async (id, key) => {
+    const response = await sendClientAction(
+      id,
+      { type: "request_sign_code" },
+      key,
+    );
     return { demoCode: response.demoCode ?? "" };
   },
-  sign: (id, code) => clientAction(id, { type: "sign", code }),
+  sign: (id, code, key) => clientAction(id, { type: "sign", code }, key),
 };
 
-function sendClientAction(id: string, action: ClientAction) {
+function sendClientAction(
+  id: string,
+  action: ClientAction,
+  idempotencyKey: string,
+) {
   return call(
     clientActionResponseSchema,
     `/v1/applications/${id}/client-actions`,
-    {
-      ...post,
-      json: { action, idempotencyKey: makeIdempotencyKey() },
-    },
+    { ...post, json: { action, idempotencyKey } },
   );
 }
 
 /** Команда клиента; ответ уже содержит обновлённую заявку. */
-async function clientAction(id: string, action: ClientAction) {
+async function clientAction(
+  id: string,
+  action: ClientAction,
+  idempotencyKey: string,
+) {
   const [response, session] = await Promise.all([
-    sendClientAction(id, action),
+    sendClientAction(id, action, idempotencyKey),
     currentSession(),
   ]);
   return toCabinetApplication(response.application, session);

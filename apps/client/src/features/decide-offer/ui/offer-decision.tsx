@@ -25,8 +25,8 @@ export function OfferDecision({
   offer: OfferTerms;
   summary: string;
 }) {
-  const accept = useAcceptOffer(app.id);
-  const decline = useDeclineOffer(app.id);
+  const accept = useAcceptOffer(app);
+  const decline = useDeclineOffer(app);
   const counter = app.status === "counter_offer";
 
   const rows: { label: string; was: string | null; now: string }[] = [

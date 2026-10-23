@@ -27,6 +27,8 @@ export function stageOf(app: Application): {
       return { current: 3, waitingForClient: false };
     case "approved":
       if (!app.deal) return { current: 3, waitingForClient: true };
+      if (app.deal.stage === "offer")
+        return { current: 4, waitingForClient: false };
       if (app.deal.stage === "signing")
         return { current: 4, waitingForClient: true };
       return { current: 5, waitingForClient: false };
@@ -39,10 +41,12 @@ export function stageOf(app: Application): {
 
 /** Что делать дальше, одной фразой для карточки и страницы заявки. */
 export function nextStepOf(app: Application): string {
-  if (app.status === "blocked") return "Заявка заблокирована для ручной проверки";
+  if (app.status === "blocked")
+    return "Заявка заблокирована для ручной проверки";
   if (isDeclinedByClient(app)) return tx.nextStep.declined;
   if (app.status === "approved") {
     if (!app.deal) return tx.nextStep.approved_offer;
+    if (app.deal.stage === "offer") return tx.nextStep.approved_preparing;
     return app.deal.stage === "signing"
       ? tx.nextStep.approved_signing
       : tx.nextStep.approved_disbursing;

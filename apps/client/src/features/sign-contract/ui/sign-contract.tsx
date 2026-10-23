@@ -29,8 +29,8 @@ const t = tx.sign;
 /** Подписание договора кодом подтверждения. Код показывается на экране. */
 export function SignContract({ app }: { app: Application }) {
   const router = useRouter();
-  const requestCode = useRequestSignCode(app.id);
-  const sign = useSign(app.id);
+  const requestCode = useRequestSignCode(app);
+  const sign = useSign(app);
   const [code, setCode] = useState("");
 
   if (app.deal?.stage !== "signing") {

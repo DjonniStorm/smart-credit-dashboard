@@ -27,16 +27,21 @@ export interface CabinetApi {
   listApplications(): Promise<Application[]>;
   getApplication(id: string): Promise<Application>;
   createApplication(input: ApplicationInput): Promise<Application>;
+  // Команды по заявке принимают ключ идемпотентности: повтор с ним не выполняется дважды.
   answerRequest(
     id: string,
     requestId: string,
     answer: ClientAnswer,
+    idempotencyKey: string,
   ): Promise<Application>;
-  acceptOffer(id: string): Promise<Application>;
-  declineOffer(id: string): Promise<Application>;
+  acceptOffer(id: string, idempotencyKey: string): Promise<Application>;
+  declineOffer(id: string, idempotencyKey: string): Promise<Application>;
   /** Отправить код подтверждения. В прототипе код возвращается в ответе. */
-  requestSignCode(id: string): Promise<{ demoCode: string }>;
-  sign(id: string, code: string): Promise<Application>;
+  requestSignCode(
+    id: string,
+    idempotencyKey: string,
+  ): Promise<{ demoCode: string }>;
+  sign(id: string, code: string, idempotencyKey: string): Promise<Application>;
 }
 
 export class ApiError extends Error {

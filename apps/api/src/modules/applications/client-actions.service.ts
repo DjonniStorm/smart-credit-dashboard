@@ -7,7 +7,11 @@ import type {
 } from "@repo/contracts/client-actions";
 
 import { ApplicationsService } from "./applications.service.ts";
-import { demoSignCode, runClientCommand } from "./client-commands.ts";
+import {
+  demoSignCode,
+  prepareContract,
+  runClientCommand,
+} from "./client-commands.ts";
 import { WorkflowStore } from "./workflow-store.ts";
 
 /** Команды клиента над своей заявкой: переход, запись и аудит в одной транзакции. */
@@ -29,7 +33,8 @@ export class ClientActionsService {
       if (!current || current.inn !== session.account.company.inn) {
         throw new NotFoundException("Заявка не найдена");
       }
-      const scope = `client-action:${applicationId}`;
+      // Тип действия входит в scope: один ключ не может случайно подтвердить другое действие.
+      const scope = `client-action:${applicationId}:${request.action.type}`;
       if (await tx.findIdempotent(scope, request.idempotencyKey)) {
         return;
       }
@@ -57,5 +62,27 @@ export class ClientActionsService {
           ? demoSignCode(applicationId)
           : null,
     };
+  }
+
+  /**
+   * Системный шаг plan.md ACCEPTED → SIGNING: воркер готовит договоры по принятым
+   * предложениям на каждом проходе очереди.
+   */
+  async prepareContracts(): Promise<number> {
+    return this.store.inTransaction(async (tx) => {
+      const accepted = await tx.lockAcceptedApplications();
+      for (const current of accepted) {
+        const outcome = prepareContract(current, new Date().toISOString());
+        await tx.saveManagement(outcome.application);
+        await tx.appendEvent(current.id, outcome.event.kind, {
+          ...outcome.event.metadata,
+          title: outcome.event.title,
+          comment: outcome.event.comment,
+          actorKind: "system",
+          actorName: "Кредитный конвейер",
+        });
+      }
+      return accepted.length;
+    });
   }
 }
