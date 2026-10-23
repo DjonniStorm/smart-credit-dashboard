@@ -1,13 +1,22 @@
 import { z } from "zod";
 
+import { apiDecisionSchema, apiScoringSchema } from "./api.ts";
 import {
-  applicationCommentSchema,
   applicationHandoffSchema,
   applicationHoldSchema,
-  creditProductIdSchema,
   offerTermsSchema,
-} from "./application.js";
-import { apiDecisionSchema, apiScoringSchema } from "./api.js";
+  workflowStatusSchema,
+} from "./application-parts.ts";
+import {
+  creditProductIdSchema,
+  employeeActionSchema,
+  rejectReasonSchema,
+} from "./application.ts";
+
+export {
+  workflowStatusSchema,
+  type WorkflowStatus,
+} from "./application-parts.ts";
 
 /** Команда создания заявки из кабинета клиента. */
 export const createApplicationRequestSchema = z.object({
@@ -30,15 +39,15 @@ export const applicationWorkflowSchema = z.object({
   amount: z.number(),
   termMonths: z.number().int(),
   purpose: z.string(),
-  status: z.enum([
-    "draft",
-    "in_review",
-    "needs_client",
-    "approved",
-    "rejected",
-    "cancelled",
-    "blocked",
-  ]),
+  status: workflowStatusSchema,
+  offer: offerTermsSchema.nullable().default(null),
+  requestedInfo: z.array(z.string()).default([]),
+  rejectReason: rejectReasonSchema.nullable().default(null),
+  hold: applicationHoldSchema.nullable().default(null),
+  urgent: z.boolean().default(false),
+  urgentReason: z.string().nullable().default(null),
+  assigneeId: z.string().nullable().default(null),
+  handoff: applicationHandoffSchema.nullable().default(null),
   checkJobId: z.string().nullable(),
   decision: apiDecisionSchema.nullable(),
   offer: offerTermsSchema.nullable().default(null),
@@ -66,7 +75,10 @@ export type ApplicationWorkflow = z.infer<typeof applicationWorkflowSchema>;
 
 export const createApplicationResponseSchema = z.object({
   application: applicationWorkflowSchema,
-  checkJob: z.object({ id: z.string(), status: z.enum(["queued", "running", "succeeded", "failed"]) }),
+  checkJob: z.object({
+    id: z.string(),
+    status: z.enum(["queued", "running", "succeeded", "failed"]),
+  }),
 });
 export type CreateApplicationResponse = z.infer<
   typeof createApplicationResponseSchema
@@ -79,7 +91,12 @@ export type ApplicationCheckRequest = z.infer<
   typeof applicationCheckRequestSchema
 >;
 
-export const jobStatusSchema = z.enum(["queued", "running", "succeeded", "failed"]);
+export const jobStatusSchema = z.enum([
+  "queued",
+  "running",
+  "succeeded",
+  "failed",
+]);
 export type JobStatus = z.infer<typeof jobStatusSchema>;
 
 export const scoringJobSchema = z.object({
@@ -102,3 +119,12 @@ export const scoringJobSchema = z.object({
     .nullable(),
 });
 export type ScoringJob = z.infer<typeof scoringJobSchema>;
+
+/** Команда сотрудника по заявке. Повтор с тем же ключом не выполняется второй раз. */
+export const applicationActionRequestSchema = z.object({
+  action: employeeActionSchema,
+  idempotencyKey: z.string().min(8).max(128),
+});
+export type ApplicationActionRequest = z.infer<
+  typeof applicationActionRequestSchema
+>;

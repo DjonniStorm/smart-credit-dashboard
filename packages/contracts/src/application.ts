@@ -3,43 +3,53 @@
 import { z } from "zod";
 
 import { applicationStatusSchema, innSchema } from "@repo/contracts";
-import { apiAutonomySnapshotSchema } from "./api.js";
 
-import { creditProductIdSchema } from "./product-catalog.js";
+import { apiAutonomySnapshotSchema } from "./api.ts";
+import {
+  actorSchema,
+  applicationCommentSchema,
+  applicationHandoffSchema,
+  applicationHoldSchema,
+  applicationStageSchema,
+  employeeRoleSchema,
+  offerTermsSchema,
+  rejectReasonSchema,
+  waitingOnSchema,
+} from "./application-parts.ts";
+import { creditProductIdSchema } from "./product-catalog.ts";
 
 export const legalFormSchema = z.enum(["ip", "ooo"]);
 export type LegalForm = z.infer<typeof legalFormSchema>;
+
+export {
+  actorSchema,
+  applicationCommentSchema,
+  applicationHandoffSchema,
+  applicationHoldSchema,
+  applicationStageSchema,
+  commentVisibilitySchema,
+  employeeRoleSchema,
+  offerTermsSchema,
+  rejectReasonSchema,
+  waitingOnSchema,
+  type Actor,
+  type ApplicationComment,
+  type ApplicationHandoff,
+  type ApplicationHold,
+  type ApplicationStage,
+  type CommentVisibility,
+  type EmployeeRole,
+  type OfferTerms,
+  type RejectReason,
+  type WaitingOn,
+} from "./application-parts.ts";
 
 export {
   creditProductIdSchema,
   creditProductSchema,
   type CreditProduct,
   type CreditProductId,
-} from "./product-catalog.js";
-
-/** Внутренний этап конвейера. */
-export const applicationStageSchema = z.enum([
-  "intake",
-  "completeness",
-  "enrichment",
-  "scoring",
-  "decision",
-  "signing",
-  "disbursement",
-]);
-export type ApplicationStage = z.infer<typeof applicationStageSchema>;
-
-/** За кем ход по заявке, с точки зрения сотрудника. */
-export const waitingOnSchema = z.enum([
-  "employee",
-  "client",
-  "system",
-  "nobody",
-]);
-export type WaitingOn = z.infer<typeof waitingOnSchema>;
-
-export const employeeRoleSchema = z.enum(["analyst", "lead"]);
-export type EmployeeRole = z.infer<typeof employeeRoleSchema>;
+} from "./product-catalog.ts";
 
 export const employeeSchema = z.object({
   id: z.string(),
@@ -123,7 +133,13 @@ export const scoringResultSchema = z.object({
   readinessIndex: z.number().min(0).max(100).optional(),
   confidence: z.number().min(0).max(1).optional(),
   recommendation: z
-    .enum(["approve", "counter_offer", "request_info", "manual_review", "reject"])
+    .enum([
+      "approve",
+      "counter_offer",
+      "request_info",
+      "manual_review",
+      "reject",
+    ])
     .optional(),
   reasons: z.array(z.string()).optional(),
   nextActions: z.array(z.string()).optional(),
@@ -143,14 +159,6 @@ export const decisionRuleSchema = z.object({
 });
 export type DecisionRule = z.infer<typeof decisionRuleSchema>;
 
-export const offerTermsSchema = z.object({
-  productId: creditProductIdSchema,
-  amount: z.number(),
-  termMonths: z.number().int(),
-  ratePct: z.number(),
-});
-export type OfferTerms = z.infer<typeof offerTermsSchema>;
-
 export const recommendationSchema = z.enum([
   "approve",
   "counter_offer",
@@ -169,16 +177,6 @@ export const creditDecisionSchema = z.object({
   computedAt: z.string(),
 });
 export type CreditDecision = z.infer<typeof creditDecisionSchema>;
-
-export const rejectReasonSchema = z.enum([
-  "company_inactive",
-  "bki_overdue",
-  "tax_debt",
-  "debt_load",
-  "low_score",
-  "other",
-]);
-export type RejectReason = z.infer<typeof rejectReasonSchema>;
 
 /** Действие сотрудника по заявке. */
 export const employeeActionSchema = z.discriminatedUnion("type", [
@@ -257,54 +255,6 @@ export const clientResponseSchema = z.enum([
   "contract_signed",
 ]);
 export type ClientResponse = z.infer<typeof clientResponseSchema>;
-
-export const actorSchema = z.object({
-  kind: z.enum(["system", "employee", "client"]),
-  name: z.string(),
-});
-export type Actor = z.infer<typeof actorSchema>;
-
-export const commentVisibilitySchema = z.enum([
-  "client",
-  "internal",
-  "handoff",
-]);
-export type CommentVisibility = z.infer<typeof commentVisibilitySchema>;
-
-export const applicationCommentSchema = z.object({
-  id: z.string(),
-  applicationId: z.string(),
-  at: z.string(),
-  author: actorSchema,
-  visibility: commentVisibilitySchema,
-  body: z.string().min(1).max(2_000),
-});
-export type ApplicationComment = z.infer<typeof applicationCommentSchema>;
-
-export const applicationHandoffSchema = z.object({
-  id: z.string(),
-  applicationId: z.string(),
-  at: z.string(),
-  from: actorSchema,
-  toEmployeeId: z.string(),
-  summary: z.string().min(1).max(1_000),
-  verifiedFacts: z.array(z.string()).max(20),
-  openQuestions: z.array(z.string()).max(20),
-  requestedItems: z.array(z.string()).max(20),
-  nextStep: z.string().min(1).max(500),
-});
-export type ApplicationHandoff = z.infer<typeof applicationHandoffSchema>;
-
-export const applicationHoldSchema = z.object({
-  state: z.enum(["paused", "blocked"]),
-  previousStatus: z.string(),
-  reason: z.string().min(1).max(500),
-  at: z.string(),
-  by: actorSchema,
-  previousWaitingOn: waitingOnSchema,
-  previousBlocker: z.string(),
-});
-export type ApplicationHold = z.infer<typeof applicationHoldSchema>;
 
 export const applicationEventSchema = z.object({
   id: z.string(),

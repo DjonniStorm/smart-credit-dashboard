@@ -40,6 +40,22 @@ export type CompanyCheckDto = {
         inn: string;
         score: number;
         model: string;
+        factors?: Array<{
+            id: string;
+            label: string;
+            value: string;
+            impact: number;
+        }>;
+        model_version?: string;
+        grade?: 'A' | 'B' | 'C' | 'D';
+        pd?: number;
+        risk_band?: 'low' | 'moderate' | 'high';
+        health_index?: number;
+        readiness_index?: number;
+        confidence?: number;
+        recommendation?: 'approve' | 'counter_offer' | 'request_info' | 'manual_review' | 'reject';
+        reasons?: Array<string>;
+        next_actions?: Array<string>;
     };
 };
 

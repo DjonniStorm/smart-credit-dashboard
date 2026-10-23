@@ -3,6 +3,7 @@
   "compilerOptions": {
     // JIT-пакет: потребители берут src/*.tsx напрямую, сборки нет.
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "strictNullChecks": true
   },
   "include": ["src"],

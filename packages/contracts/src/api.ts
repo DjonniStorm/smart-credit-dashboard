@@ -1,20 +1,26 @@
 import { z } from "zod";
 
 import {
-  autonomyConfigSchema,
-  autonomyMetricsSchema,
-} from "./autonomy.js";
+  applicationCommentSchema,
+  applicationHandoffSchema,
+  applicationHoldSchema,
+  applicationStageSchema,
+  offerTermsSchema,
+  rejectReasonSchema,
+  waitingOnSchema,
+  workflowStatusSchema,
+} from "./application-parts.ts";
+import { autonomyConfigSchema, autonomyMetricsSchema } from "./autonomy.ts";
 import {
   companyProfileResponseSchema,
   companySourceSnapshotSchema,
-} from "./company-profile.js";
-
+} from "./company-profile.ts";
 import {
   type CreditProduct,
   type CreditProductId,
   creditProductIdSchema,
   creditProductSchema,
-} from "./product-catalog.js";
+} from "./product-catalog.ts";
 
 const apiOfferTermsSchema = z.object({
   productId: creditProductIdSchema,
@@ -146,9 +152,7 @@ export const apiAutonomySnapshotSchema = z.object({
     controlWindow: z.enum(["open", "closed"]),
   }),
 });
-export type ApiAutonomySnapshot = z.infer<
-  typeof apiAutonomySnapshotSchema
->;
+export type ApiAutonomySnapshot = z.infer<typeof apiAutonomySnapshotSchema>;
 
 export const apiJobStatusSchema = z.enum([
   "queued",
@@ -186,22 +190,52 @@ export const apiApplicationSchema = z.object({
   handoff: apiHandoffSchema.nullable().default(null),
   checkJobId: z.string().nullable(),
   scoring: apiScoringSchema.nullable(),
+  /** Условия, которые сотрудник предложил клиенту. */
+  offer: offerTermsSchema.nullable().default(null),
+  requestedInfo: z.array(z.string()).default([]),
+  rejectReason: rejectReasonSchema.nullable().default(null),
+  /** Комментарии сотрудника с видимостью client; внутренние сюда не попадают. */
+  clientComments: z.array(applicationCommentSchema).default([]),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
 export type ApiApplication = z.infer<typeof apiApplicationSchema>;
 
+/** Управленческое состояние заявки: видно только сотрудникам. */
+export const apiApplicationManagementSchema = z.object({
+  /** Бизнес-статус без учёта блокировки: публичный BLOCKED его скрывает. */
+  businessStatus: workflowStatusSchema,
+  stage: applicationStageSchema,
+  waitingOn: waitingOnSchema,
+  blocker: z.string(),
+  hold: applicationHoldSchema.nullable(),
+  urgent: z.boolean(),
+  urgentReason: z.string().nullable(),
+  assigneeId: z.string().nullable(),
+  handoff: applicationHandoffSchema.nullable(),
+  comments: z.array(applicationCommentSchema),
+});
+export type ApiApplicationManagement = z.infer<
+  typeof apiApplicationManagementSchema
+>;
+
+/** Строка очереди АРМ: заявка и её управленческое состояние. */
+export const apiQueueItemSchema = z.object({
+  application: apiApplicationSchema,
+  management: apiApplicationManagementSchema,
+});
+export type ApiQueueItem = z.infer<typeof apiQueueItemSchema>;
+
 export const apiApplicationContextSchema = z.object({
   application: apiApplicationSchema,
+  management: apiApplicationManagementSchema,
   companyProfile: companyProfileResponseSchema,
   checks: z.array(apiCheckSnapshotSchema),
   decision: apiDecisionSchema.nullable(),
   autonomy: apiAutonomySnapshotSchema,
   audit: z.array(apiAuditEventSchema),
 });
-export type ApiApplicationContext = z.infer<
-  typeof apiApplicationContextSchema
->;
+export type ApiApplicationContext = z.infer<typeof apiApplicationContextSchema>;
 
 export const apiCreateApplicationSchema = z.object({
   inn: z.string().regex(/^\d{10,12}$/),
@@ -211,9 +245,7 @@ export const apiCreateApplicationSchema = z.object({
   purpose: z.string().min(1).max(500),
   idempotencyKey: z.string().min(8).max(128),
 });
-export type ApiCreateApplication = z.infer<
-  typeof apiCreateApplicationSchema
->;
+export type ApiCreateApplication = z.infer<typeof apiCreateApplicationSchema>;
 
 export const apiApplicationResponseSchema = z.object({
   application: apiApplicationSchema,
@@ -268,6 +300,13 @@ export const demoAccountApiSchema = z.object({
   }),
 });
 export type DemoAccountApi = z.infer<typeof demoAccountApiSchema>;
+
+export const employeeSessionRequestSchema = z.object({
+  employeeId: z.string().min(1),
+});
+export type EmployeeSessionRequest = z.infer<
+  typeof employeeSessionRequestSchema
+>;
 
 export const demoSessionSchema = z.object({
   account: demoAccountApiSchema,
