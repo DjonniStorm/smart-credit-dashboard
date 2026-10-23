@@ -1,5 +1,11 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { randomUUID } from "node:crypto";
+
+import type { ScoreResponse } from "@repo/contracts";
+import type {
+  ApiApplication,
+  ApiApplicationResponse,
+  ApiJob,
+} from "@repo/contracts/api";
 import type {
   ApplicationCheckRequest,
   ApplicationWorkflow,
@@ -7,26 +13,11 @@ import type {
   CreateApplicationResponse,
   ScoringJob,
 } from "@repo/contracts/workflow";
-import type { ScoreResponse } from "@repo/contracts";
-import type {
-  ApiApplication,
-  ApiApplicationContext,
-  ApiApplicationResponse,
-  ApiJob,
-} from "@repo/contracts/api";
-import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
 
-import { CompaniesService } from "../companies/companies.service.ts";
-import { CompanyProfileService } from "../companies/company-profile.service.ts";
-import { AutonomyStore } from "./autonomy.store.ts";
-import { WorkflowStore } from "./workflow-store.ts";
+import { CompaniesService, SourceCheckError } from "../companies/companies.service.ts";
+import { toApiApplication, toApiDecision, toApiJob, toApiScoring } from "./api-mapper.ts";
 import { decide } from "./decision-engine.ts";
-import {
-  toApiApplication,
-  toApiDecision,
-  toApiJob,
-  toApiScoring,
-} from "./api-mapper.ts";
+import { MAX_JOB_ATTEMPTS, RETRY_BASE_DELAY_MS, RETRY_MAX_DELAY_MS, WorkflowStore } from "./workflow-store.ts";
 
 @Injectable()
 export class ApplicationsService {
@@ -37,37 +28,10 @@ export class ApplicationsService {
     private readonly store: WorkflowStore,
   ) {}
 
-  async create(input: CreateApplicationRequest): Promise<CreateApplicationResponse> {
-    const existingJobId = await this.store.findIdempotent("create", input.idempotencyKey);
-    if (existingJobId) {
-      const job = await this.store.getJob(existingJobId);
-      const application = job && await this.store.getApplication(job.applicationId);
-      if (job && application) return { application, checkJob: { id: job.id, status: job.status } };
-    }
-
-    const now = new Date().toISOString();
-    const applicationId = `app-${randomUUID()}`;
-    const jobId = `job-${randomUUID()}`;
-    const application: ApplicationWorkflow = {
-      id: applicationId,
-      number: `SC-${Date.now()}-${randomUUID().slice(0, 6)}`,
-      inn: input.inn,
-      productId: input.productId,
-      amount: input.amount,
-      termMonths: input.termMonths,
-      purpose: input.purpose,
-      status: "in_review",
-      checkJobId: jobId,
-      decision: null,
-      scoring: null,
-      createdAt: now,
-      updatedAt: now,
-    };
-    await this.store.saveApplication(application);
-    const job = this.createJob(applicationId, jobId, input.idempotencyKey);
-    await this.store.saveJob(job);
-    await this.store.remember("create", input.idempotencyKey, jobId);
-    await this.store.event(applicationId, "application_created", { jobId });
+  async create(
+    input: CreateApplicationRequest,
+  ): Promise<CreateApplicationResponse> {
+    const { application, job } = await this.store.createApplication(input);
     return { application, checkJob: { id: job.id, status: job.status } };
   }
 
@@ -82,22 +46,20 @@ export class ApplicationsService {
 
   async getApiApplicationContext(id: string): Promise<ApiApplicationContext> {
     const application = await this.getApplication(id);
-    const companyProfile: CompanyProfileResponse = await this.profiles.getProfile(
-      application.inn,
-    );
+    const companyProfile: CompanyProfileResponse = await this.profiles.getProfile(application.inn);
     return {
       application: toApiApplication(application),
       companyProfile,
       checks: companyProfile.sources,
       decision: application.decision,
-      autonomy: await this.autonomy.getSnapshot(
-        application.productId as ApiApplication["productId"],
-      ),
+      autonomy: await this.autonomy.getSnapshot(application.productId as ApiApplication["productId"]),
       audit: await this.store.listEvents(application.id),
     };
   }
 
-  async createApiApplication(input: CreateApplicationRequest): Promise<ApiApplicationResponse> {
+  async createApiApplication(
+    input: CreateApplicationRequest,
+  ): Promise<ApiApplicationResponse> {
     const response = await this.create(input);
     return {
       application: toApiApplication(response.application),
@@ -111,14 +73,12 @@ export class ApplicationsService {
     return application;
   }
 
-  async startCheck(id: string, input: ApplicationCheckRequest): Promise<ScoringJob> {
+  async startCheck(
+    id: string,
+    input: ApplicationCheckRequest,
+  ): Promise<ScoringJob> {
     await this.getApplication(id);
-    const existing = await this.store.findIdempotent(`check:${id}`, input.idempotencyKey);
-    if (existing) return this.getJob(existing);
-    const job = this.createJob(id, `job-${randomUUID()}`, input.idempotencyKey);
-    await this.store.saveJob(job);
-    await this.store.remember(`check:${id}`, input.idempotencyKey, job.id);
-    return job;
+    return this.store.createCheckJob(id, input.idempotencyKey);
   }
 
   async getJob(id: string): Promise<ScoringJob> {
@@ -127,7 +87,10 @@ export class ApplicationsService {
     return job;
   }
 
-  async startApiCheck(id: string, input: ApplicationCheckRequest): Promise<ApiJob> {
+  async startApiCheck(
+    id: string,
+    input: ApplicationCheckRequest,
+  ): Promise<ApiJob> {
     return toApiJob(await this.startCheck(id, input));
   }
 
@@ -135,69 +98,47 @@ export class ApplicationsService {
     return toApiJob(await this.getJob(id));
   }
 
-  private createJob(applicationId: string, id: string, idempotencyKey: string): ScoringJob {
-    const job: ScoringJob = {
-      id,
-      applicationId,
-      status: "queued",
-      idempotencyKey,
-      createdAt: new Date().toISOString(),
-      startedAt: null,
-      finishedAt: null,
-      error: null,
-      attempts: 0,
-      result: null,
-    };
-    return job;
-  }
-
-  /** Called by the durable worker after atomically claiming a queued job. */
+  /**
+   * Вызывается воркером после атомарного захвата задачи (статус `running`, `attempts` уже увеличен).
+   * Ошибка скоринга уходит в retry; ошибка записи самого результата тоже, а если не записался и retry,
+   * задачу подберёт recovery по истечении аренды.
+   */
   async processJob(job: ScoringJob): Promise<void> {
-    const application = await this.store.getApplication(job.applicationId);
-    if (!application) return;
-    await this.executeJob(job, application);
-  }
-
-  private async executeJob(job: ScoringJob, application: ApplicationWorkflow): Promise<void> {
-    // The worker claims the job and persists running/attempts atomically.
     try {
+      const application = await this.store.getApplication(job.applicationId);
+      if (!application) {
+        throw new Error(`Заявка ${job.applicationId} не найдена`);
+      }
       const result = await this.companies.check(application.inn, application);
       const decision = decide(application, result.scoring as ScoreResponse);
-      const scoring = toApiScoring(result.scoring);
-      job.result = {
-        score: result.scoring.score,
-        model: result.scoring.model,
-        recommendation: decision.recommendation,
-        details: scoring,
-      };
-      job.status = "succeeded";
-      application.scoring = job.result;
-      application.decision = toApiDecision(decision);
-      application.updatedAt = new Date().toISOString();
-      await this.store.saveApplication(application);
-      await this.store.saveJob(job);
-      await this.store.event(application.id, "scoring_succeeded", {
-        jobId: job.id,
-        score: job.result.score,
-        model: job.result.model,
-        recommendation: decision.recommendation,
-        rules: decision.rules,
-        reasons: decision.reasons,
-        autonomyMode: decision.autonomyMode,
+      await this.store.completeJob(job, {
+        result: {
+          score: result.scoring.score,
+          model: result.scoring.model,
+          recommendation: decision.recommendation,
+          details: toApiScoring(result.scoring),
+        },
+        decision: toApiDecision(decision),
+        checks: ["egrul", "bki", "fns", "scoring"].map((source) => ({ source, status: "ok" as const })),
+        eventPayload: {
+          jobId: job.id,
+          score: result.scoring.score,
+          model: result.scoring.model,
+          recommendation: decision.recommendation,
+          rules: decision.rules,
+          reasons: decision.reasons,
+          autonomyMode: decision.autonomyMode,
+        },
       });
     } catch (error) {
-      job.status = job.attempts >= 3 ? "failed" : "queued";
-      job.error = error instanceof Error ? error.message : String(error);
-      if (job.status === "queued") {
-        const delay = Math.min(60_000, 2 ** job.attempts * 1_000);
-        await this.store.setJobRetry(job.id, job.error, new Date(Date.now() + delay));
-      } else await this.store.saveJob(job, job.attempts);
-      await this.store.event(application.id, "scoring_failed", { jobId: job.id, error: job.error });
-    } finally {
-      if (job.status !== "queued") {
-        job.finishedAt = new Date().toISOString();
-        await this.store.saveJob(job, job.attempts);
-      }
+      const message = error instanceof Error ? error.message : String(error);
+      const retryAt =
+        job.attempts >= MAX_JOB_ATTEMPTS
+          ? null
+          : new Date(Date.now() + Math.min(RETRY_MAX_DELAY_MS, 2 ** job.attempts * RETRY_BASE_DELAY_MS));
+      const checks =
+        error instanceof SourceCheckError ? [{ source: error.source, status: "failed" as const, error: message }] : [];
+      await this.store.failJob(job, message, retryAt, checks);
     }
   }
 }

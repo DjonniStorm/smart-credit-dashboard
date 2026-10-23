@@ -1,130 +1,393 @@
-import { Injectable, OnModuleInit } from "@nestjs/common";
-import { InjectDataSource } from "@nestjs/typeorm";
-import { DataSource } from "typeorm";
-import type { ApiAuditEvent } from "@repo/contracts/api";
-import type { ApplicationWorkflow, ScoringJob } from "@repo/contracts/workflow";
+import { randomUUID } from "node:crypto";
 
-/** Durable repository for the workflow. Schema creation is idempotent for the demo. */
+import { Injectable } from "@nestjs/common";
+import { InjectDataSource } from "@nestjs/typeorm";
+import { DataSource, EntityManager } from "typeorm";
+
+import type { ApiAuditEvent } from "@repo/contracts/api";
+import type {
+  ApplicationWorkflow,
+  CreateApplicationRequest,
+  ScoringJob,
+} from "@repo/contracts/workflow";
+
+type Row = Record<string, unknown>;
+type JobResult = NonNullable<ScoringJob["result"]>;
+
+export const MAX_JOB_ATTEMPTS = 3;
+/** База экспоненциальной задержки retry (1 с, 2 с, 4 с, ...) и её потолок. */
+export const RETRY_BASE_DELAY_MS = 1_000;
+export const RETRY_MAX_DELAY_MS = 60_000;
+const STALE_JOB_ERROR = "Воркер не завершил задачу в отведённое время";
+
+export type SourceCheck = {
+  source: string;
+  status: "ok" | "failed";
+  error?: string;
+};
+
+/** TypeORM отдаёт `[rows, count]` для UPDATE/DELETE ... RETURNING и просто rows для остальных запросов. */
+function rowsOf(result: unknown): Row[] {
+  if (Array.isArray(result) && Array.isArray(result[0])) {
+    return result[0] as Row[];
+  }
+  return result as Row[];
+}
+
+function firstRow(rows: Row[]): Row {
+  const row = rows[0];
+  if (!row) {
+    throw new Error("Запрос не вернул строку");
+  }
+  return row;
+}
+
+/** Хранилище заявок и очереди скоринга в Postgres. Схему создают миграции, не само хранилище. */
 @Injectable()
-export class WorkflowStore implements OnModuleInit {
+export class WorkflowStore {
   constructor(@InjectDataSource() private readonly db: DataSource) {}
 
-  async onModuleInit(): Promise<void> {
-    await this.db.query(`
-      create table if not exists applications (
-        id text primary key, number text not null unique, inn text not null,
-        product_id text not null, amount numeric not null, term_months integer not null,
-        purpose text not null, status text not null, check_job_id text,
-        scoring jsonb, decision jsonb, created_at timestamptz not null, updated_at timestamptz not null
+  /**
+   * Создаёт заявку, задачу скоринга и ключ идемпотентности в одной транзакции.
+   * Ключ вставляется первым: параллельный запрос с тем же ключом ждёт коммита и получает уже созданную заявку.
+   */
+  async createApplication(
+    input: CreateApplicationRequest,
+  ): Promise<{ application: ApplicationWorkflow; job: ScoringJob }> {
+    const applicationId = `app-${randomUUID()}`;
+    const jobId = `job-${randomUUID()}`;
+    return this.db.transaction(async (manager) => {
+      const existingJobId = await this.claimKey(
+        manager,
+        "create",
+        input.idempotencyKey,
+        jobId,
       );
-      create table if not exists scoring_jobs (
-        id text primary key, application_id text not null references applications(id),
-        status text not null, idempotency_key text not null, created_at timestamptz not null,
-        started_at timestamptz, finished_at timestamptz, error text, result jsonb,
-        attempts integer not null default 0, next_attempt_at timestamptz,
-        unique(application_id, idempotency_key)
+      if (existingJobId) {
+        const job = await this.jobIn(manager, existingJobId);
+        const application =
+          job && (await this.applicationIn(manager, job.applicationId));
+        if (!job || !application) {
+          throw new Error(
+            `Ключ ${input.idempotencyKey} указывает на несуществующую заявку`,
+          );
+        }
+        return { application, job };
+      }
+      const applicationRows = rowsOf(
+        await manager.query(
+          `insert into applications(id,number,inn,product_id,amount,term_months,purpose,status,check_job_id,scoring,created_at,updated_at)
+           values($1,'SC-' || nextval('application_number_seq'),$2,$3,$4,$5,$6,'in_review',$7,null,now(),now())
+           returning *`,
+          [
+            applicationId,
+            input.inn,
+            input.productId,
+            input.amount,
+            input.termMonths,
+            input.purpose,
+            jobId,
+          ],
+        ),
       );
-      create table if not exists source_checks (
-        id bigserial primary key, job_id text not null references scoring_jobs(id),
-        source text not null, status text not null, response jsonb, error text,
-        created_at timestamptz not null default now()
+      const jobRows = rowsOf(
+        await manager.query(
+          `insert into scoring_jobs(id,application_id,status,idempotency_key,created_at)
+           values($1,$2,'queued',$3,now()) returning *`,
+          [jobId, applicationId, input.idempotencyKey],
+        ),
       );
-      create table if not exists application_events (
-        id bigserial primary key, application_id text not null references applications(id),
-        kind text not null, payload jsonb not null, created_at timestamptz not null default now()
-      );
-      create table if not exists idempotency_keys (
-        scope text not null, key text not null, resource_id text not null,
-        created_at timestamptz not null default now(), primary key(scope, key)
-      );
-      alter table applications add column if not exists decision jsonb;
-    `);
-  }
-
-  async saveApplication(application: ApplicationWorkflow): Promise<void> {
-    await this.db.query(
-      `insert into applications(id,number,inn,product_id,amount,term_months,purpose,status,check_job_id,scoring,decision,created_at,updated_at)
-       values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-       on conflict(id) do update set status=excluded.status, check_job_id=excluded.check_job_id,
-       scoring=excluded.scoring, decision=excluded.decision, updated_at=excluded.updated_at`,
-      [application.id, application.number, application.inn, application.productId, application.amount, application.termMonths, application.purpose, application.status, application.checkJobId, application.scoring, application.decision, application.createdAt, application.updatedAt],
-    );
-  }
-
-  async getApplication(id: string): Promise<ApplicationWorkflow | null> {
-    const rows = await this.db.query("select * from applications where id=$1", [id]);
-    return rows[0] ? this.application(rows[0]) : null;
-  }
-
-  async listApplications(): Promise<ApplicationWorkflow[]> {
-    const rows = await this.db.query(
-      "select * from applications order by created_at desc",
-    );
-    return rows.map((row: Record<string, unknown>) => this.application(row));
-  }
-
-  async saveJob(job: ScoringJob, attempts = job.attempts): Promise<void> {
-    await this.db.query(
-      `insert into scoring_jobs(id,application_id,status,idempotency_key,created_at,started_at,finished_at,error,result,attempts,next_attempt_at)
-       values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-       on conflict(id) do update set status=excluded.status,started_at=excluded.started_at,finished_at=excluded.finished_at,error=excluded.error,result=excluded.result,attempts=excluded.attempts,next_attempt_at=excluded.next_attempt_at`,
-      [job.id, job.applicationId, job.status, job.idempotencyKey, job.createdAt, job.startedAt, job.finishedAt, job.error, job.result, attempts, null],
-    );
-  }
-
-  async getJob(id: string): Promise<ScoringJob | null> {
-    const rows = await this.db.query("select * from scoring_jobs where id=$1", [id]);
-    return rows[0] ? this.job(rows[0]) : null;
-  }
-
-  /** Atomically claims one queued job so multiple API replicas cannot process it twice. */
-  async claimNextQueuedJob(): Promise<ScoringJob | null> {
-    const rows = await this.db.query(
-      `update scoring_jobs set status='running', started_at=now(), attempts=attempts+1
-       where id = (select id from scoring_jobs where status='queued' and (next_attempt_at is null or next_attempt_at <= now()) order by created_at for update skip locked limit 1)
-       returning *`,
-    );
-    return rows[0] ? this.job(rows[0]) : null;
-  }
-
-  async setJobRetry(id: string, error: string, nextAttemptAt: Date): Promise<void> {
-    await this.db.query(`update scoring_jobs set status='queued', error=$2, next_attempt_at=$3, finished_at=null where id=$1`, [id, error, nextAttemptAt]);
-  }
-
-  async findIdempotent(scope: string, key: string): Promise<string | null> {
-    const rows = await this.db.query("select resource_id from idempotency_keys where scope=$1 and key=$2", [scope, key]);
-    return rows[0]?.resource_id ?? null;
-  }
-
-  async remember(scope: string, key: string, resourceId: string): Promise<void> {
-    await this.db.query("insert into idempotency_keys(scope,key,resource_id) values($1,$2,$3) on conflict do nothing", [scope, key, resourceId]);
-  }
-
-  async event(applicationId: string, kind: string, payload: unknown): Promise<void> {
-    await this.db.query("insert into application_events(application_id,kind,payload) values($1,$2,$3)", [applicationId, kind, payload]);
-  }
-
-  async listEvents(applicationId: string): Promise<ApiAuditEvent[]> {
-    const rows = await this.db.query(
-      "select id, application_id, kind, payload, created_at from application_events where application_id=$1 order by created_at",
-      [applicationId],
-    );
-    return rows.map((row: Record<string, unknown>) => {
+      await this.eventIn(manager, applicationId, "application_created", {
+        jobId,
+      });
       return {
-        id: String(row.id),
-        applicationId: String(row.application_id),
-        kind: String(row.kind),
-        at: new Date(String(row.created_at)).toISOString(),
-        metadata: (row.payload as Record<string, unknown>) ?? {},
+        application: this.application(firstRow(applicationRows)),
+        job: this.job(firstRow(jobRows)),
       };
     });
   }
 
-  private application(row: Record<string, unknown>): ApplicationWorkflow {
-    return { id: String(row.id), number: String(row.number), inn: String(row.inn), productId: row.product_id as ApplicationWorkflow["productId"], amount: Number(row.amount), termMonths: Number(row.term_months), purpose: String(row.purpose), status: row.status as ApplicationWorkflow["status"], checkJobId: (row.check_job_id as string | null) ?? null, scoring: (row.scoring as ApplicationWorkflow["scoring"]) ?? null, decision: (row.decision as ApplicationWorkflow["decision"]) ?? null, createdAt: new Date(String(row.created_at)).toISOString(), updatedAt: new Date(String(row.updated_at)).toISOString() };
+  /** Создаёт повторную проверку заявки; тот же ключ возвращает ту же задачу. */
+  async createCheckJob(
+    applicationId: string,
+    idempotencyKey: string,
+  ): Promise<ScoringJob> {
+    const jobId = `job-${randomUUID()}`;
+    return this.db.transaction(async (manager) => {
+      const existingJobId = await this.claimKey(
+        manager,
+        `check:${applicationId}`,
+        idempotencyKey,
+        jobId,
+      );
+      if (existingJobId) {
+        const existing = await this.jobIn(manager, existingJobId);
+        if (!existing) {
+          throw new Error(
+            `Ключ ${idempotencyKey} указывает на несуществующую задачу`,
+          );
+        }
+        return existing;
+      }
+      const rows = rowsOf(
+        await manager.query(
+          `insert into scoring_jobs(id,application_id,status,idempotency_key,created_at)
+           values($1,$2,'queued',$3,now()) returning *`,
+          [jobId, applicationId, idempotencyKey],
+        ),
+      );
+      await this.eventIn(manager, applicationId, "check_requested", { jobId });
+      return this.job(firstRow(rows));
+    });
   }
 
-  private job(row: Record<string, unknown>): ScoringJob {
-    return { id: String(row.id), applicationId: String(row.application_id), status: row.status as ScoringJob["status"], idempotencyKey: String(row.idempotency_key), createdAt: new Date(String(row.created_at)).toISOString(), startedAt: row.started_at ? new Date(String(row.started_at)).toISOString() : null, finishedAt: row.finished_at ? new Date(String(row.finished_at)).toISOString() : null, error: (row.error as string | null) ?? null, attempts: Number(row.attempts ?? 0), result: (row.result as ScoringJob["result"]) ?? null };
+  async getApplication(id: string): Promise<ApplicationWorkflow | null> {
+    return this.applicationIn(this.db.manager, id);
+  }
+
+  async listApplications(): Promise<ApplicationWorkflow[]> {
+    const rows = rowsOf(
+      await this.db.query(
+        "select * from applications order by created_at desc",
+      ),
+    );
+    return rows.map((row) => this.application(row));
+  }
+
+  async getJob(id: string): Promise<ScoringJob | null> {
+    return this.jobIn(this.db.manager, id);
+  }
+
+  /** Атомарно берёт одну готовую задачу, поэтому несколько реплик не обработают её дважды. */
+  async claimNextQueuedJob(): Promise<ScoringJob | null> {
+    const rows = rowsOf(
+      await this.db.query(
+        `update scoring_jobs set status='running', started_at=now(), finished_at=null, attempts=attempts+1
+         where id = (
+           select id from scoring_jobs
+           where status='queued' and (next_attempt_at is null or next_attempt_at <= now())
+           order by created_at for update skip locked limit 1
+         )
+         returning *`,
+      ),
+    );
+    return rows[0] ? this.job(rows[0]) : null;
+  }
+
+  /**
+   * Результат скоринга, решение, статусы источников и событие фиксируются одной транзакцией.
+   * Запись применяется, только если задачу всё ещё держит эта попытка; иначе возвращает `false`.
+   */
+  async completeJob(
+    job: ScoringJob,
+    outcome: {
+      result: JobResult;
+      decision: ApplicationWorkflow["decision"];
+      checks: SourceCheck[];
+      eventPayload: unknown;
+    },
+  ): Promise<boolean> {
+    return this.db.transaction(async (manager) => {
+      const owned = rowsOf(
+        await manager.query(
+          `update scoring_jobs set status='succeeded', result=$2, error=null, finished_at=now(), next_attempt_at=null
+           where id=$1 and status='running' and attempts=$3 returning id`,
+          [job.id, outcome.result, job.attempts],
+        ),
+      );
+      if (owned.length === 0) {
+        return false;
+      }
+      await manager.query(
+        `update applications set scoring=$2, decision=$3, updated_at=now() where id=$1`,
+        [job.applicationId, outcome.result, outcome.decision],
+      );
+      await this.sourceChecksIn(manager, job.id, outcome.checks);
+      await this.eventIn(manager, job.applicationId, "scoring_succeeded", outcome.eventPayload);
+      return true;
+    });
+  }
+
+  /**
+   * Возвращает задачу в очередь с задержкой или переводит в `failed`, если попытки закончились.
+   * Как и `completeJob`, ничего не делает, если задачу уже забрала другая попытка (`null`).
+   */
+  async failJob(
+    job: ScoringJob,
+    error: string,
+    retryAt: Date | null,
+    checks: SourceCheck[] = [],
+  ): Promise<"queued" | "failed" | null> {
+    const status = retryAt ? "queued" : "failed";
+    return this.db.transaction(async (manager) => {
+      const owned = rowsOf(
+        await manager.query(
+          `update scoring_jobs set status=$2, error=$3, next_attempt_at=$4, finished_at=$5
+           where id=$1 and status='running' and attempts=$6 returning id`,
+          [job.id, status, error, retryAt, retryAt ? null : new Date(), job.attempts],
+        ),
+      );
+      if (owned.length === 0) {
+        return null;
+      }
+      await this.sourceChecksIn(manager, job.id, checks);
+      await this.eventIn(manager, job.applicationId, "scoring_failed", {
+        jobId: job.id,
+        error,
+        attempt: job.attempts,
+        willRetry: retryAt !== null,
+      });
+      return status;
+    });
+  }
+
+  /** Подбирает задачи, застрявшие в `running` после падения воркера: в очередь или в `failed` (с событием). */
+  async recoverStaleJobs(leaseMs: number): Promise<number> {
+    return this.db.transaction(async (manager) => {
+      const rows = rowsOf(
+        await manager.query(
+          `update scoring_jobs set
+             status = case when attempts >= $2 then 'failed' else 'queued' end,
+             error = $3,
+             finished_at = case when attempts >= $2 then now() else null end,
+             next_attempt_at = null
+           where status='running' and started_at < now() - make_interval(secs => $1::double precision / 1000)
+           returning id, application_id, status, attempts`,
+          [leaseMs, MAX_JOB_ATTEMPTS, STALE_JOB_ERROR],
+        ),
+      );
+      for (const row of rows) {
+        await this.eventIn(manager, String(row.application_id), "scoring_failed", {
+          jobId: String(row.id),
+          error: STALE_JOB_ERROR,
+          attempt: Number(row.attempts),
+          willRetry: row.status === "queued",
+        });
+      }
+      return rows.length;
+    });
+  }
+
+  async listEvents(applicationId: string): Promise<ApiAuditEvent[]> {
+    const rows = rowsOf(
+      await this.db.query(
+        "select id, application_id, kind, payload, created_at from application_events where application_id=$1 order by created_at, id",
+        [applicationId],
+      ),
+    );
+    return rows.map((row) => ({
+      id: String(row.id),
+      applicationId: String(row.application_id),
+      kind: String(row.kind),
+      at: new Date(String(row.created_at)).toISOString(),
+      metadata: (row.payload as Record<string, unknown>) ?? {},
+    }));
+  }
+
+  /** Только статус и безопасное сообщение по источнику, сырые ответы не сохраняются. */
+  private async sourceChecksIn(
+    manager: EntityManager,
+    jobId: string,
+    checks: SourceCheck[],
+  ): Promise<void> {
+    for (const check of checks) {
+      await manager.query(
+        "insert into source_checks(job_id,source,status,error) values($1,$2,$3,$4)",
+        [jobId, check.source, check.status, check.error ?? null],
+      );
+    }
+  }
+
+  private async claimKey(
+    manager: EntityManager,
+    scope: string,
+    key: string,
+    resourceId: string,
+  ): Promise<string | null> {
+    const inserted = rowsOf(
+      await manager.query(
+        "insert into idempotency_keys(scope,key,resource_id) values($1,$2,$3) on conflict do nothing returning resource_id",
+        [scope, key, resourceId],
+      ),
+    );
+    if (inserted.length > 0) {
+      return null;
+    }
+    const rows = rowsOf(
+      await manager.query(
+        "select resource_id from idempotency_keys where scope=$1 and key=$2",
+        [scope, key],
+      ),
+    );
+    return String(firstRow(rows).resource_id);
+  }
+
+  private async eventIn(
+    manager: EntityManager,
+    applicationId: string,
+    kind: string,
+    payload: unknown,
+  ): Promise<void> {
+    await manager.query(
+      "insert into application_events(application_id,kind,payload) values($1,$2,$3)",
+      [applicationId, kind, payload],
+    );
+  }
+
+  private async applicationIn(
+    manager: EntityManager,
+    id: string,
+  ): Promise<ApplicationWorkflow | null> {
+    const rows = rowsOf(
+      await manager.query("select * from applications where id=$1", [id]),
+    );
+    return rows[0] ? this.application(rows[0]) : null;
+  }
+
+  private async jobIn(
+    manager: EntityManager,
+    id: string,
+  ): Promise<ScoringJob | null> {
+    const rows = rowsOf(
+      await manager.query("select * from scoring_jobs where id=$1", [id]),
+    );
+    return rows[0] ? this.job(rows[0]) : null;
+  }
+
+  private application(row: Row): ApplicationWorkflow {
+    return {
+      id: String(row.id),
+      number: String(row.number),
+      inn: String(row.inn),
+      productId: row.product_id as ApplicationWorkflow["productId"],
+      amount: Number(row.amount),
+      termMonths: Number(row.term_months),
+      purpose: String(row.purpose),
+      status: row.status as ApplicationWorkflow["status"],
+      checkJobId: (row.check_job_id as string | null) ?? null,
+      scoring: (row.scoring as ApplicationWorkflow["scoring"]) ?? null,
+      decision: (row.decision as ApplicationWorkflow["decision"]) ?? null,
+      createdAt: new Date(String(row.created_at)).toISOString(),
+      updatedAt: new Date(String(row.updated_at)).toISOString(),
+    };
+  }
+
+  private job(row: Row): ScoringJob {
+    return {
+      id: String(row.id),
+      applicationId: String(row.application_id),
+      status: row.status as ScoringJob["status"],
+      idempotencyKey: String(row.idempotency_key),
+      createdAt: new Date(String(row.created_at)).toISOString(),
+      startedAt: row.started_at
+        ? new Date(String(row.started_at)).toISOString()
+        : null,
+      finishedAt: row.finished_at
+        ? new Date(String(row.finished_at)).toISOString()
+        : null,
+      error: (row.error as string | null) ?? null,
+      attempts: Number(row.attempts ?? 0),
+      result: (row.result as ScoringJob["result"]) ?? null,
+    };
   }
 }
