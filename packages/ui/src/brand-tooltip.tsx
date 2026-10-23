@@ -4,8 +4,7 @@ import { Tooltip } from "@mantine/core";
 import type { ReactElement } from "react";
 
 /** История названия банка. Показывается при наведении и фокусе на логотип. */
-export const brandStory =
-  "Альфи-Банк назван в честь Альфи. Идея Ильи: взять Альфа-Банк и поменять одну букву.";
+export const brandStory = "Альфи-Банк назван в честь Альфи.";
 
 export function BrandTooltip({ children }: { children: ReactElement }) {
   return (
