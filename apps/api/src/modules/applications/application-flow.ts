@@ -32,6 +32,18 @@ export function deriveFlow(application: ApplicationWorkflow): ApplicationFlow {
         waitingOn: "client",
         blocker: "Ждём ответ клиента на предложение",
       };
+    case "signing":
+      return {
+        stage: "signing",
+        waitingOn: "client",
+        blocker: "Ждём подпись договора клиентом",
+      };
+    case "funded":
+      return {
+        stage: "disbursement",
+        waitingOn: "nobody",
+        blocker: "Кредит выдан",
+      };
     case "rejected":
     case "cancelled":
       return {
@@ -58,6 +70,8 @@ export function deriveFlow(application: ApplicationWorkflow): ApplicationFlow {
 
 export function isClosed(application: ApplicationWorkflow): boolean {
   return (
-    application.status === "rejected" || application.status === "cancelled"
+    application.status === "rejected" ||
+    application.status === "cancelled" ||
+    application.status === "funded"
   );
 }

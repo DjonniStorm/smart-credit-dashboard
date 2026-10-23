@@ -20,7 +20,7 @@ export function commentFromRow(
   };
 }
 
-/** Запись команды сотрудника: всё, что она меняет, фиксируется одной транзакцией. */
+/** Запись команды сотрудника или клиента: всё, что она меняет, фиксируется одной транзакцией. */
 export class WorkflowTransaction {
   constructor(private readonly manager: EntityManager) {}
 
@@ -55,7 +55,8 @@ export class WorkflowTransaction {
     await this.manager.query(
       `update applications set status=$2, offer=$3, requested_info=$4, reject_reason=$5,
        hold=$6, urgent=$7, urgent_reason=$8, assignee_id=$9, handoff=$10,
-       check_job_id=$11, scoring=$12, decision=$13, updated_at=$14 where id=$1`,
+       check_job_id=$11, scoring=$12, decision=$13, updated_at=$14,
+       client_reply=$15, deal=$16, cancelled_by=$17 where id=$1`,
       [
         application.id,
         application.status,
@@ -71,6 +72,9 @@ export class WorkflowTransaction {
         application.scoring,
         application.decision,
         application.updatedAt,
+        application.clientReply,
+        application.deal,
+        application.cancelledBy,
       ],
     );
   }

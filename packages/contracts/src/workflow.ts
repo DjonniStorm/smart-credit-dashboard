@@ -6,8 +6,11 @@ import {
   apiScoringSchema,
 } from "./api.ts";
 import {
+  actorSchema,
+  applicationDealSchema,
   applicationHandoffSchema,
   applicationHoldSchema,
+  clientReplySchema,
   offerTermsSchema,
   workflowStatusSchema,
 } from "./application-parts.ts";
@@ -46,6 +49,9 @@ export const applicationWorkflowSchema = z.object({
   urgentReason: z.string().nullable().default(null),
   assigneeId: z.string().nullable().default(null),
   handoff: applicationHandoffSchema.nullable().default(null),
+  clientReply: clientReplySchema.nullable().default(null),
+  deal: applicationDealSchema.nullable().default(null),
+  cancelledBy: actorSchema.shape.kind.nullable().default(null),
   checkJobId: z.string().nullable(),
   decision: apiDecisionSchema.nullable(),
   scoring: z

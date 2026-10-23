@@ -10,6 +10,8 @@ import type {
 } from "@repo/contracts/cabinet";
 import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
 
+import { tx } from "@/shared/i18n";
+
 function statusOf(application: ApiApplication): Application["status"] {
   switch (application.status) {
     case "DRAFT":
@@ -18,6 +20,9 @@ function statusOf(application: ApiApplication): Application["status"] {
       return "needs_client";
     case "OFFERED":
       return application.offerKind === "counter" ? "counter_offer" : "approved";
+    case "ACCEPTED":
+    case "SIGNING":
+      return "approved";
     case "FUNDED":
       return "disbursed";
     case "REJECTED":
@@ -59,8 +64,17 @@ function decisionOf(application: ApiApplication): Application["decision"] {
   });
   const advice = scoring.nextActions[0] ?? null;
 
-  // Решение сотрудника важнее рекомендации скоринга.
-  if (application.status === "OFFERED" && application.offer) {
+  // Решение сотрудника важнее рекомендации скоринга. После принятия и отказа клиента
+  // решение банка остаётся прежним: по нему кабинет отличает отказ клиента от отказа банка.
+  const declinedByClient =
+    application.status === "CANCELLED" && application.cancelledBy === "client";
+  if (
+    application.offer &&
+    (["OFFERED", "ACCEPTED", "SIGNING", "FUNDED"].includes(
+      application.status,
+    ) ||
+      declinedByClient)
+  ) {
     const { amount, termMonths, ratePct } = application.offer;
     const counter = application.offerKind === "counter";
     return {
@@ -125,6 +139,46 @@ function decisionOf(application: ApiApplication): Application["decision"] {
   };
 }
 
+function requestsOf(application: ApiApplication): Application["requests"] {
+  if (application.requestedInfo.length === 0) {
+    return [];
+  }
+  return [
+    {
+      id: `request-${application.id}`,
+      createdAt: application.updatedAt,
+      question: application.requestedInfo.join("; "),
+      why: tx.bankRequest.why,
+      documentKind: null,
+      answer: application.clientReply,
+    },
+  ];
+}
+
+function dealOf(application: ApiApplication): Application["deal"] {
+  const { deal, offer } = application;
+  if (!deal || !offer) {
+    return null;
+  }
+  return {
+    stage: deal.disbursedAt ? "done" : deal.signedAt ? "disbursing" : "signing",
+    terms: {
+      amount: offer.amount,
+      termMonths: offer.termMonths,
+      ratePercent: offer.ratePct,
+      monthlyPayment: annuityPayment(
+        offer.amount,
+        offer.termMonths,
+        offer.ratePct,
+      ),
+    },
+    acceptedAt: deal.acceptedAt,
+    signedAt: deal.signedAt,
+    disbursedAt: deal.disbursedAt,
+    account: deal.account,
+  };
+}
+
 export function toProductCatalog(catalog: ApiProductCatalog): ProductCatalog {
   return {
     keyRate: catalog.keyRate,
@@ -155,9 +209,9 @@ export function toCabinetApplication(
     company,
     checksPassed: application.scoring ? 3 : 0,
     scoring: application.scoring,
-    requests: [],
+    requests: requestsOf(application),
     decision: decisionOf(application),
-    deal: null,
+    deal: dealOf(application),
     events: [],
   };
 }

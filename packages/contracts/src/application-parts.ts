@@ -98,7 +98,42 @@ export const workflowStatusSchema = z.enum([
   "needs_client",
   "approved",
   "counter_offer",
+  /** Клиент принял условия, договор ждёт подписи кодом. */
+  "signing",
+  /** Договор подписан, кредит выдан. */
+  "funded",
   "rejected",
   "cancelled",
 ]);
 export type WorkflowStatus = z.infer<typeof workflowStatusSchema>;
+
+export const attachedDocumentSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  kind: z.enum(["statement", "reporting", "tax_certificate", "other"]),
+  sizeBytes: z.number().int().nonnegative(),
+  addedAt: z.string(),
+});
+export type AttachedDocument = z.infer<typeof attachedDocumentSchema>;
+
+export const clientAnswerSchema = z.object({
+  text: z.string().min(1).max(1000),
+  documents: z.array(attachedDocumentSchema),
+});
+export type ClientAnswer = z.infer<typeof clientAnswerSchema>;
+
+/** Ответ клиента на последний запрос документов. */
+export const clientReplySchema = clientAnswerSchema.extend({
+  answeredAt: z.string(),
+});
+export type ClientReply = z.infer<typeof clientReplySchema>;
+
+/** Сделка после принятия предложения: подписание и выдача. */
+export const applicationDealSchema = z.object({
+  offerKind: z.enum(["initial", "counter"]),
+  acceptedAt: z.string(),
+  signedAt: z.string().nullable(),
+  disbursedAt: z.string().nullable(),
+  account: z.string(),
+});
+export type ApplicationDeal = z.infer<typeof applicationDealSchema>;

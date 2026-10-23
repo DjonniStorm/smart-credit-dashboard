@@ -6,6 +6,10 @@ import { applicationStatusSchema, innSchema } from "@repo/contracts";
 
 import { apiScoringSchema } from "./api.ts";
 import {
+  attachedDocumentSchema,
+  clientReplySchema,
+} from "./application-parts.ts";
+import {
   creditProductIdSchema,
   creditProductSchema,
   creditPurposeSchema,
@@ -17,6 +21,13 @@ export {
   type CreditProduct,
   type CreditPurpose,
 } from "./product-catalog.ts";
+
+export {
+  attachedDocumentSchema,
+  clientAnswerSchema,
+  type AttachedDocument,
+  type ClientAnswer,
+} from "./application-parts.ts";
 
 export const legalFormSchema = z.enum(["ip", "ooo"]);
 export type LegalForm = z.infer<typeof legalFormSchema>;
@@ -64,15 +75,6 @@ export const demoAccountSchema = z.object({
   knownFinancials: financialsSchema,
 });
 export type DemoAccount = z.infer<typeof demoAccountSchema>;
-
-export const attachedDocumentSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  kind: z.enum(["statement", "reporting", "tax_certificate", "other"]),
-  sizeBytes: z.number().int().nonnegative(),
-  addedAt: z.string(),
-});
-export type AttachedDocument = z.infer<typeof attachedDocumentSchema>;
 
 export const consentsSchema = z.object({
   bki: z.literal(true),
@@ -129,13 +131,7 @@ export const clientRequestSchema = z.object({
   question: z.string(),
   why: z.string(),
   documentKind: attachedDocumentSchema.shape.kind.nullable(),
-  answer: z
-    .object({
-      text: z.string(),
-      documents: z.array(attachedDocumentSchema),
-      answeredAt: z.string(),
-    })
-    .nullable(),
+  answer: clientReplySchema.nullable(),
 });
 export type ClientRequest = z.infer<typeof clientRequestSchema>;
 
@@ -189,9 +185,3 @@ export const signRequestSchema = z.object({
   code: z.string().regex(/^\d{6}$/),
 });
 export type SignRequest = z.infer<typeof signRequestSchema>;
-
-export const clientAnswerSchema = z.object({
-  text: z.string().min(1).max(1000),
-  documents: z.array(attachedDocumentSchema),
-});
-export type ClientAnswer = z.infer<typeof clientAnswerSchema>;

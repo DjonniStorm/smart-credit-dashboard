@@ -8,6 +8,9 @@ const num = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 });
 
 const ru = {
   brand: "Кабинет предпринимателя",
+  bankRequest: {
+    why: "Документы нужны сотруднику банка для решения по заявке",
+  },
   nav: {
     applications: "Заявки",
     products: "Подобрать кредит",

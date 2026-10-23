@@ -7,6 +7,10 @@ import {
   demoAccountApiSchema,
   demoSessionSchema,
 } from "@repo/contracts/api";
+import {
+  type ClientAction,
+  clientActionResponseSchema,
+} from "@repo/contracts/client-actions";
 import { companyProfileResponseSchema } from "@repo/contracts/company-profile";
 
 import {
@@ -95,35 +99,53 @@ export const httpApi: CabinetApi = {
   },
   createApplication: async (input) => {
     const session = await currentSession();
-    const response = await call(apiApplicationResponseSchema, "/v1/applications", {
-      ...post,
-      json: {
-        inn: session.account.company.inn,
-        productId: input.productId,
-        amount: input.amount,
-        termMonths: input.termMonths,
-        purpose: input.purpose,
-        idempotencyKey: makeIdempotencyKey(),
+    const response = await call(
+      apiApplicationResponseSchema,
+      "/v1/applications",
+      {
+        ...post,
+        json: {
+          inn: session.account.company.inn,
+          productId: input.productId,
+          amount: input.amount,
+          termMonths: input.termMonths,
+          purpose: input.purpose,
+          idempotencyKey: makeIdempotencyKey(),
+        },
       },
-    });
+    );
     return toCabinetApplication(response.application, session);
   },
-  answerRequest: async () => {
-    throw new ApiError("Ответы на запросы появятся после подключения команд API", 501);
+  answerRequest: (id, _requestId, answer) =>
+    clientAction(id, { type: "answer_request", answer }),
+  acceptOffer: (id) => clientAction(id, { type: "accept_offer" }),
+  declineOffer: (id) => clientAction(id, { type: "decline_offer" }),
+  requestSignCode: async (id) => {
+    const response = await sendClientAction(id, { type: "request_sign_code" });
+    return { demoCode: response.demoCode ?? "" };
   },
-  acceptOffer: async () => {
-    throw new ApiError("Принятие оффера появится после подключения команд API", 501);
-  },
-  declineOffer: async () => {
-    throw new ApiError("Отказ от оффера появится после подключения команд API", 501);
-  },
-  requestSignCode: async () => {
-    throw new ApiError("Подписание появится после подключения команд API", 501);
-  },
-  sign: async () => {
-    throw new ApiError("Подписание появится после подключения команд API", 501);
-  },
+  sign: (id, code) => clientAction(id, { type: "sign", code }),
 };
+
+function sendClientAction(id: string, action: ClientAction) {
+  return call(
+    clientActionResponseSchema,
+    `/v1/applications/${id}/client-actions`,
+    {
+      ...post,
+      json: { action, idempotencyKey: makeIdempotencyKey() },
+    },
+  );
+}
+
+/** Команда клиента; ответ уже содержит обновлённую заявку. */
+async function clientAction(id: string, action: ClientAction) {
+  const [response, session] = await Promise.all([
+    sendClientAction(id, action),
+    currentSession(),
+  ]);
+  return toCabinetApplication(response.application, session);
+}
 
 async function currentSession() {
   return call(demoSessionSchema, "/v1/auth/me");

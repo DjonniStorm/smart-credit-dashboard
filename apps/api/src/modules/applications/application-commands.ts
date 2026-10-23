@@ -168,6 +168,7 @@ export function runCommand(
         );
       }
       next.requestedInfo = action.items;
+      next.clientReply = null;
       return changeStatus(
         "needs_client",
         "Запрошены документы",
@@ -182,6 +183,7 @@ export function runCommand(
       });
     }
     case "cancel":
+      next.cancelledBy = "employee";
       return changeStatus("cancelled", "Заявка отменена", action.reason);
     case "assign": {
       requireEmployee(ctx, action.assigneeId);

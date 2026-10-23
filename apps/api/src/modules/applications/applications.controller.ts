@@ -11,6 +11,7 @@ import { CommandBus } from "@nestjs/cqrs";
 import {
   ApiConflictResponse,
   ApiForbiddenResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiUnauthorizedResponse,
@@ -26,15 +27,25 @@ import {
   apiJobSchema,
   apiQueueItemSchema,
 } from "@repo/contracts/api";
+import type { DemoSession } from "@repo/contracts/api";
 import type { Employee } from "@repo/contracts/application";
+import {
+  clientActionRequestSchema,
+  clientActionResponseSchema,
+} from "@repo/contracts/client-actions";
 import { applicationActionRequestSchema } from "@repo/contracts/workflow";
 
+import {
+  ClientSessionGuard,
+  CurrentClient,
+} from "../auth/client-session.guard.ts";
 import {
   CurrentEmployee,
   EmployeeSessionGuard,
 } from "../auth/employee-session.guard.ts";
 import { ApplicationsService } from "./applications.service.ts";
 import { ApplyApplicationActionCommand } from "./commands/apply-application-action.command.ts";
+import { ApplyClientActionCommand } from "./commands/apply-client-action.command.ts";
 
 export class CreateApplicationDto extends createZodDto(
   apiCreateApplicationSchema,
@@ -49,6 +60,10 @@ class ApplicationListDto extends createZodDto(apiApplicationSchema.array()) {}
 class QueueDto extends createZodDto(apiQueueItemSchema.array()) {}
 class ApplicationActionDto extends createZodDto(
   applicationActionRequestSchema,
+) {}
+class ClientActionDto extends createZodDto(clientActionRequestSchema) {}
+class ClientActionResponseDto extends createZodDto(
+  clientActionResponseSchema,
 ) {}
 class JobDto extends createZodDto(apiJobSchema) {}
 
@@ -87,6 +102,25 @@ export class ApplicationsController {
   ): Promise<ApplicationContextDto> {
     return this.commands.execute(
       new ApplyApplicationActionCommand(id, body, employee),
+    );
+  }
+
+  @Post(":id/client-actions")
+  @HttpCode(200)
+  @UseGuards(ClientSessionGuard)
+  @ApiOperation({ operationId: "ApplicationsController_clientAct" })
+  @ApiOkResponse({ type: ClientActionResponseDto })
+  @ApiUnauthorizedResponse({ description: "Нет сессии клиента" })
+  @ApiNotFoundResponse({ description: "Заявки нет или она чужая" })
+  @ApiConflictResponse({ description: "Переход запрещён статусом заявки" })
+  @ZodSerializerDto(ClientActionResponseDto)
+  async clientAct(
+    @Param("id") id: string,
+    @Body() body: ClientActionDto,
+    @CurrentClient() session: DemoSession,
+  ): Promise<ClientActionResponseDto> {
+    return this.commands.execute(
+      new ApplyClientActionCommand(id, body, session),
     );
   }
 
