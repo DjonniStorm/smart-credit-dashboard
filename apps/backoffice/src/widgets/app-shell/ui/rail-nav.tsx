@@ -15,7 +15,6 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 import { countByGroup, useApplications } from "@/entities/application";
-import { armApiMode } from "@/shared/api/arm";
 
 import classes from "./arm-shell.module.css";
 
@@ -121,11 +120,6 @@ export function RailNav() {
       <Suspense fallback={<Nav tab={null} />}>
         <NavWithParams />
       </Suspense>
-      {armApiMode === "mock" && (
-        <Text size="xs" c="dimmed" className={classes.railNote}>
-          Синтетические данные: заявки выдуманы и хранятся в этом браузере.
-        </Text>
-      )}
     </div>
   );
 }

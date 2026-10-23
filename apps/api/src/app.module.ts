@@ -10,6 +10,9 @@ import { ApplicationsModule } from "./modules/applications/applications.module.t
 import { ExampleModule } from "./modules/example/example.module.ts";
 import { HealthModule } from "./modules/health/health.module.ts";
 import { StorageModule } from "./common/storage/storage.module.ts";
+import { DemoDataModule } from "./common/demo-data/demo-data.module.ts";
+import { AuthModule } from "./modules/auth/auth.module.ts";
+import { CatalogModule } from "./modules/catalog/catalog.module.ts";
 
 @Module({
   imports: [
@@ -17,6 +20,9 @@ import { StorageModule } from "./common/storage/storage.module.ts";
     CqrsModule.forRoot(),
     DatabaseModule,
     StorageModule,
+    DemoDataModule,
+    AuthModule,
+    CatalogModule,
     HealthModule,
     CompaniesModule,
     ApplicationsModule,

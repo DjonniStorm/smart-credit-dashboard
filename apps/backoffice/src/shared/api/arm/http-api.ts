@@ -1,11 +1,13 @@
 "use client";
 
 import {
-  type Application,
-  type CreditProduct,
+  apiApplicationSchema,
+  apiProductCatalogSchema,
+  type ApiApplication,
+  type ApiProductCatalog,
+} from "@repo/contracts/api";
+import {
   type Employee,
-  applicationSchema,
-  creditProductSchema,
   employeeSchema,
 } from "@repo/contracts/application";
 import {
@@ -14,9 +16,10 @@ import {
 } from "@repo/contracts/company-profile";
 
 import type { ArmApi } from "./types";
+import { toArmApplication, toArmProducts, toEmployees } from "./api-mapper";
 
 // Пути ручек согласовать с api. /api проксируется в Nest (next.config.js).
-const BASE = "/api/arm";
+const BASE = "/api/v1";
 
 async function request<T>(
   path: string,
@@ -38,16 +41,21 @@ async function request<T>(
   return schema.parse(await res.json());
 }
 
-const post = (body: unknown): RequestInit => ({
-  method: "POST",
-  body: JSON.stringify(body),
-});
-
 export const httpArmApi: ArmApi = {
-  listApplications: () =>
-    request<Application[]>("/applications", applicationSchema.array()),
-  getApplication: (id) =>
-    request<Application>(`/applications/${id}`, applicationSchema),
+  listApplications: async () => {
+    const applications = await request<ApiApplication[]>(
+      "/applications",
+      apiApplicationSchema.array(),
+    );
+    return applications.map((application) => toArmApplication(application));
+  },
+  getApplication: async (id) => {
+    const application = await request<ApiApplication>(
+      `/applications/${id}`,
+      apiApplicationSchema,
+    );
+    return toArmApplication(application);
+  },
   getCompanyProfile: (inn) =>
     request<CompanyProfileResponse>(
       `/v1/companies/${inn}/profile`,
@@ -55,19 +63,22 @@ export const httpArmApi: ArmApi = {
       undefined,
       "/api",
     ),
-  act: (id, action, employeeId) =>
-    request<Application>(
-      `/applications/${id}/actions`,
-      applicationSchema,
-      post({ action, employeeId }),
-    ),
-  simulateClient: () =>
-    Promise.reject(
-      new Error("Ответ клиента приходит из кабинета клиента, а не из АРМ"),
-    ),
-  listProducts: () =>
-    request<CreditProduct[]>("/products", creditProductSchema.array()),
+  act: async () => {
+    throw new Error("Действия АРМ появятся после подключения команд API");
+  },
+  simulateClient: async () => {
+    throw new Error("Ответы клиента появятся после подключения команд API");
+  },
+  listProducts: async () => {
+    const catalog = await request<ApiProductCatalog>(
+      "/products",
+      apiProductCatalogSchema,
+    );
+    return toArmProducts(catalog);
+  },
   listEmployees: () =>
-    request<Employee[]>("/employees", employeeSchema.array()),
-  reset: () => Promise.resolve(),
+    request<Employee[]>("/employees", employeeSchema.array()).then(toEmployees),
+  reset: async () => {
+    throw new Error("Сброс демо-данных выполняется командой db:seed");
+  },
 };

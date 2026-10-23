@@ -6,7 +6,6 @@ import { z } from "zod";
 export enum ServiceName {
   Api = "api",
   Scoring = "scoring",
-  Mocks = "mocks",
 }
 
 export * from "./autonomy.js";
@@ -111,7 +110,7 @@ export const scoreResponseSchema = z.object({
 });
 export type ScoreResponse = z.infer<typeof scoreResponseSchema>;
 
-/** Сквозная ручка client -> api -> mocks + scoring. */
+/** Сквозная ручка client -> api -> scoring. */
 export const companyCheckResponseSchema = z.object({
   inn: innSchema,
   sources: z.object({

@@ -5,7 +5,7 @@ export const en = {
   [Message.CabinetDescription]:
     "Company check by INN: company registry extract, credit bureau and tax data, scoring.",
   [Message.CabinetLead]:
-    "Scaffold. End-to-end path: client → api → mocks + scoring.",
+    "Scaffold. End-to-end path: client → api → scoring.",
   [Message.CabinetCheckTitle]: "Company check",
   [Message.CabinetCheckDescription]:
     "Enter an INN to get registry, credit bureau, tax data and a score.",

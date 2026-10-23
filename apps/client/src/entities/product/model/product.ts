@@ -1,6 +1,6 @@
 import type { CreditProduct, CreditPurpose } from "@repo/contracts/cabinet";
 
-import { monthlyPayment } from "@/shared/api/cabinet";
+import { monthlyPayment } from "./monthly-payment";
 
 export const purposes: CreditPurpose[] = [
   "working_capital",

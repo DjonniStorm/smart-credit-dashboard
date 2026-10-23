@@ -8,7 +8,8 @@
     "./cabinet": "./src/cabinet.ts",
     "./application": "./src/application.ts",
     "./workflow": "./src/workflow.ts",
-    "./company-profile": "./src/company-profile.ts"
+    "./company-profile": "./src/company-profile.ts",
+    "./api": "./src/api.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",

@@ -2,8 +2,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * Сквозные тесты запускаются против поднятого compose-стека. Моки нельзя
- * включать в CI: это проверяет только UI и скрывает разрывы API-контрактов.
+ * Сквозные тесты запускаются против поднятого compose-стека и API-контрактов.
  */
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -34,7 +33,6 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       env: {
-        NEXT_PUBLIC_CABINET_API: "http",
         API_URL: process.env.API_URL ?? "http://localhost:4000",
       },
     },
@@ -44,7 +42,6 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       env: {
-        NEXT_PUBLIC_ARM_API: "http",
         API_URL: process.env.API_URL ?? "http://localhost:4000",
       },
     },

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { creditProductIdSchema } from "./application.js";
+import { apiScoringSchema } from "./api.js";
 
 /** Команда создания заявки из кабинета клиента. */
 export const createApplicationRequestSchema = z.object({
@@ -30,6 +31,7 @@ export const applicationWorkflowSchema = z.object({
       score: z.number().min(0).max(100),
       model: z.string(),
       recommendation: z.string().optional(),
+      details: apiScoringSchema.optional(),
     })
     .nullable(),
   createdAt: z.string(),
@@ -66,7 +68,12 @@ export const scoringJobSchema = z.object({
   error: z.string().nullable(),
   attempts: z.number().int().nonnegative().default(0),
   result: z
-    .object({ score: z.number().min(0).max(100), model: z.string(), recommendation: z.string().optional() })
+    .object({
+      score: z.number().min(0).max(100),
+      model: z.string(),
+      recommendation: z.string().optional(),
+      details: apiScoringSchema.optional(),
+    })
     .nullable(),
 });
 export type ScoringJob = z.infer<typeof scoringJobSchema>;

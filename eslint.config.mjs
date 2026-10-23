@@ -19,7 +19,7 @@ export default defineConfig([
     extends: nextJsConfig,
   },
   {
-    files: ["apps/api/**/*.{js,ts,mjs}", "apps/mocks/**/*.{js,ts}"],
+    files: ["apps/api/**/*.{js,ts,mjs}"],
     extends: nodeConfig,
   },
   {

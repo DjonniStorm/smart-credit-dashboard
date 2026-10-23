@@ -18,15 +18,12 @@ import {
   IconChevronDown,
   IconLogout,
   IconMoon,
-  IconRefresh,
   IconSun,
 } from "@tabler/icons-react";
-import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import type { Application, DemoAccount } from "@repo/contracts/cabinet";
-import { alfi } from "@repo/ui/alfi";
 
 import {
   needsClient,
@@ -34,7 +31,6 @@ import {
   useApplications,
 } from "@/entities/application";
 import { useSignOut } from "@/entities/session";
-import { isMockApi, resetMockState } from "@/shared/api/cabinet";
 import { lx, tx } from "@/shared/i18n";
 
 import { CabinetLogo as Logo } from "./cabinet-logo";
@@ -98,17 +94,9 @@ function Notifications({ waiting }: { waiting: Application[] }) {
 
 function Account({ account }: { account: DemoAccount }) {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const signOut = useSignOut();
   const { setColorScheme } = useMantineColorScheme();
   const scheme = useComputedColorScheme("light");
-
-  function reset() {
-    resetMockState();
-    queryClient.clear();
-    alfi.showSuccess(tx.demo.resetDone, { raw: "demo_reset_completed" });
-    router.replace("/login");
-  }
 
   return (
     <Menu position="bottom-end" width={280} shadow="md">
@@ -150,14 +138,6 @@ function Account({ account }: { account: DemoAccount }) {
         >
           {scheme === "dark" ? lx.account.lightTheme : lx.account.theme}
         </Menu.Item>
-        {isMockApi && (
-          <Menu.Item
-            leftSection={<IconRefresh size={16} stroke={1.5} />}
-            onClick={reset}
-          >
-            {tx.demo.reset}
-          </Menu.Item>
-        )}
         <Menu.Divider />
         <Menu.Item
           leftSection={<IconLogout size={16} stroke={1.5} />}

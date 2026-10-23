@@ -7,7 +7,7 @@ import type {
 } from "@repo/contracts/application";
 import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
 
-/** Всё, что АРМ спрашивает у бэкенда. Мок и HTTP реализуют один интерфейс. */
+/** Всё, что АРМ спрашивает у бэкенда через HTTP API. */
 export interface ArmApi {
   listApplications(): Promise<Application[]>;
   getApplication(id: string): Promise<Application>;

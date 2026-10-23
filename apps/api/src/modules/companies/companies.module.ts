@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 
+import { DemoDataModule } from "../../common/demo-data/demo-data.module.ts";
 import { GrantBkiConsentHandler } from "./commands/grant-bki-consent.handler.ts";
 import { CompaniesController } from "./companies.controller.ts";
 import { CompaniesService } from "./companies.service.ts";
@@ -9,6 +10,7 @@ import { CheckCompanyHandler } from "./queries/check-company.handler.ts";
 import { GetCompanyProfileHandler } from "./queries/get-company-profile.handler.ts";
 
 @Module({
+  imports: [DemoDataModule],
   controllers: [CompaniesController],
   providers: [
     CompaniesService,

@@ -5,7 +5,7 @@ export const ru = {
   [Message.CabinetDescription]:
     "Проверка компании по ИНН: выписка ЕГРЮЛ, данные БКИ и ФНС, оценка скоринга.",
   [Message.CabinetLead]:
-    "Каркас. Сквозная ручка: client → api → mocks + scoring.",
+    "Каркас. Сквозная ручка: client → api → scoring.",
   [Message.CabinetCheckTitle]: "Проверка компании",
   [Message.CabinetCheckDescription]:
     "Введите ИНН, чтобы получить данные ЕГРЮЛ, БКИ, ФНС и оценку скоринга.",

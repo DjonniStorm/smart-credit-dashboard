@@ -1,6 +1,5 @@
 // Контракты кабинета клиента: продукты, заявка, решение банка, подписание.
-// Кабинет пока работает на мок-адаптере (apps/client/src/shared/api/cabinet),
-// api должен отдавать те же формы.
+// Кабинет получает данные через API-адаптер; формы сохраняют совместимость UI.
 import { z } from "zod";
 
 import { applicationStatusSchema, innSchema } from "@repo/contracts";
