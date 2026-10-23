@@ -6,7 +6,7 @@ export type ClientOptions = {
 
 export type HealthDto = {
     status: 'ok' | 'degraded';
-    service: 'api' | 'scoring' | 'mocks';
+    service: 'api' | 'scoring';
     checks?: {
         [key: string]: 'up' | 'down';
     };

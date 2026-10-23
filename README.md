@@ -26,7 +26,6 @@ pnpm dev
 | backoffice: АРМ сотрудника банка | http://localhost:3001 |
 | api, Swagger | http://localhost:4000/docs |
 | scoring | http://localhost:8000/docs |
-| mocks: БКИ, ЕГРЮЛ/ЕГРИП, ФНС | http://localhost:4100/health |
 | PostgreSQL | localhost:5432 |
 
 Порты должны быть свободны.
@@ -34,6 +33,14 @@ pnpm dev
 Один сервис вместе с PostgreSQL: `pnpm dev --filter=client`.
 
 Остановить PostgreSQL: `pnpm db:down`.
+
+Перед первым запуском API заполнить синтетические данные:
+
+```bash
+pnpm --filter api db:seed
+```
+
+Команда идемпотентна и не запускается автоматически.
 
 ### Только интерфейс
 
