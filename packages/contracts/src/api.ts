@@ -9,30 +9,18 @@ import {
   companySourceSnapshotSchema,
 } from "./company-profile.js";
 
-export const apiProductIdSchema = z.enum([
-  "working_capital",
-  "cash_gap",
-  "equipment",
-  "development",
-]);
-export type ApiProductId = z.infer<typeof apiProductIdSchema>;
+import {
+  type CreditProduct,
+  type CreditProductId,
+  creditProductIdSchema,
+  creditProductSchema,
+} from "./product-catalog.js";
 
-export const apiCreditProductSchema = z.object({
-  id: apiProductIdSchema,
-  name: z.string(),
-  purpose: z.string(),
-  purposes: z.array(z.string()).min(1),
-  description: z.string(),
-  minAmount: z.number().positive(),
-  maxAmount: z.number().positive(),
-  minTermMonths: z.number().int().positive(),
-  maxTermMonths: z.number().int().positive(),
-  spreadPp: z.number(),
-  maxDebtLoad: z.number().min(0).max(1),
-  minBusinessAgeMonths: z.number().int().nonnegative(),
-  collateral: z.string().nullable(),
-});
-export type ApiCreditProduct = z.infer<typeof apiCreditProductSchema>;
+export const apiProductIdSchema = creditProductIdSchema;
+export type ApiProductId = CreditProductId;
+
+export const apiCreditProductSchema = creditProductSchema;
+export type ApiCreditProduct = CreditProduct;
 
 export const apiProductCatalogSchema = z.object({
   keyRate: z.number(),

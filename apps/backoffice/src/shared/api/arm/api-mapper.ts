@@ -6,9 +6,11 @@ import type {
 } from "@repo/contracts/api";
 import type {
   Application,
-  CreditProduct,
   Employee,
 } from "@repo/contracts/application";
+import { productRate } from "@repo/contracts/product-catalog";
+
+import type { ArmProduct } from "./types";
 
 function statusOf(status: ApiApplication["status"]): Application["status"] {
   switch (status) {
@@ -186,20 +188,10 @@ function toCheck(snapshot: ApiCheckSnapshot): Application["checks"][number] | nu
   };
 }
 
-export function toArmProducts(catalog: ApiProductCatalog): CreditProduct[] {
+export function toArmProducts(catalog: ApiProductCatalog): ArmProduct[] {
   return catalog.products.map((product) => ({
-    id: product.id,
-    name: product.name,
-    purpose: product.purpose,
-    minAmount: product.minAmount,
-    maxAmount: product.maxAmount,
-    minTermMonths: product.minTermMonths,
-    maxTermMonths: product.maxTermMonths,
-    ratePct: catalog.keyRate + product.spreadPp,
-    minScore: 0,
-    maxDebtLoad: product.maxDebtLoad,
-    minBusinessAgeMonths: product.minBusinessAgeMonths,
-    collateral: product.collateral,
+    ...product,
+    ratePct: productRate(product, catalog.keyRate),
   }));
 }
 
