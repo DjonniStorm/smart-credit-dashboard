@@ -3,6 +3,9 @@
   "extends": ["//"],
   "tags": ["app"],
   "tasks": {
+    "test": {
+      "env": ["TEST_DATABASE_URL"]
+    },
     "generate": {
       "outputs": ["../../packages/sdk/openapi.json"]
     }
