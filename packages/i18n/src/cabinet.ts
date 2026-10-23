@@ -1,5 +1,5 @@
-import { negotiationRu } from "./cabinet-negotiation.js";
-import { Locale } from "./locale.js";
+import { negotiationRu } from "./cabinet-negotiation.ts";
+import { Locale } from "./locale.ts";
 
 // Тексты кабинета клиента. Отдельный словарь, чтобы страницы кабинета
 // не делили enum Message с АРМ. Английской версии пока нет: en отдаёт ru.
