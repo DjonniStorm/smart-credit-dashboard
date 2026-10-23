@@ -310,6 +310,12 @@
                 "minimum": 0,
                 "maximum": 1
               },
+              "missing_sources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
               "recommendation": {
                 "type": "string",
                 "enum": [

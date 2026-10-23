@@ -5,8 +5,6 @@ import type { DataSource } from "typeorm";
 import { CREDIT_PRODUCTS } from "@repo/contracts/product-catalog";
 import type { ApplicationWorkflow } from "@repo/contracts/workflow";
 
-import type { WorkflowStore } from "../src/modules/applications/workflow-store.ts";
-
 export const catalog = {
   keyRate: 16,
   keyRateDate: "2026-10-01",
@@ -15,7 +13,6 @@ export const catalog = {
 
 export async function seedApplication(
   db: DataSource,
-  store: WorkflowStore,
   patch: Partial<ApplicationWorkflow> = {},
 ): Promise<ApplicationWorkflow> {
   const now = new Date().toISOString();
@@ -43,12 +40,21 @@ export async function seedApplication(
     updatedAt: now,
     ...patch,
   };
-  await store.saveApplication(application);
-  if (patch.status && patch.status !== "in_review") {
-    await db.query("update applications set status=$2 where id=$1", [
+  await db.query(
+    `insert into applications(id,number,inn,product_id,amount,term_months,purpose,status,scoring,created_at,updated_at)
+     values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10)`,
+    [
       application.id,
-      patch.status,
-    ]);
-  }
+      application.number,
+      application.inn,
+      application.productId,
+      application.amount,
+      application.termMonths,
+      application.purpose,
+      application.status,
+      application.scoring,
+      now,
+    ],
+  );
   return application;
 }
