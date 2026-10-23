@@ -64,6 +64,8 @@ function mapApplication(
     hold: management.hold,
     urgent: management.urgent,
     urgentReason: management.urgentReason,
+    urgentSource: management.urgentSource,
+    urgentRequest: management.urgentRequest,
     autonomy: context?.autonomy,
     autonomyCase: application.autonomyCase,
     comments: management.comments,

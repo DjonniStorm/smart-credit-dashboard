@@ -42,6 +42,13 @@ export interface CabinetApi {
     idempotencyKey: string,
   ): Promise<{ demoCode: string }>;
   sign(id: string, code: string, idempotencyKey: string): Promise<Application>;
+  /** Срочный режим по заявке клиента: включение требует причину. */
+  setUrgent(
+    id: string,
+    enabled: boolean,
+    reason: string,
+    idempotencyKey: string,
+  ): Promise<Application>;
 }
 
 export class ApiError extends Error {

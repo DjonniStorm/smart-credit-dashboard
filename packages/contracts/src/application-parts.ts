@@ -80,6 +80,24 @@ export const applicationHoldSchema = z.object({
 });
 export type ApplicationHold = z.infer<typeof applicationHoldSchema>;
 
+/** Кто и когда включил срочный режим. Срочность управляющая, публичным статусом не становится. */
+export const urgentSourceSchema = z.object({
+  by: z.enum(["client", "employee"]),
+  at: z.string(),
+});
+export type UrgentSource = z.infer<typeof urgentSourceSchema>;
+
+/** Запрос клиента на срочный режим. Сам по себе не меняет действующий режим: решает менеджер. */
+export const urgentRequestSchema = z.object({
+  state: z.enum(["pending", "accepted", "declined"]),
+  reason: z.string(),
+  requestedAt: z.string(),
+  resolvedAt: z.string().nullable().default(null),
+  resolvedBy: actorSchema.nullable().default(null),
+  declineReason: z.string().nullable().default(null),
+});
+export type UrgentRequest = z.infer<typeof urgentRequestSchema>;
+
 export const applicationStageSchema = z.enum([
   "intake",
   "completeness",

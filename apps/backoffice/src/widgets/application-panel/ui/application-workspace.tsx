@@ -30,18 +30,18 @@ import {
   formatDateTimeFull,
   productLabel,
   useApplication,
-  useProducts,
   useCompanyProfile,
+  useProducts,
 } from "@/entities/application";
 import { useEmployees, useSignedInEmployee } from "@/entities/employee";
 import { armActionsTarget } from "@/features/alfi-assistant";
 import { ActionBar, RerunCheckButton } from "@/features/application-actions";
 import { formatRub } from "@/shared/lib/money";
-
 import { purposeLabel } from "@/shared/lib/purpose";
 
 import classes from "./application-panel.module.css";
 import { Outcome, RiskBlock, Summary } from "./parts";
+import { UrgentNote } from "./urgent-note";
 
 type Tab = "data" | "checks" | "decision" | "history";
 const tx = backofficeText(i18n.defaultLocale);
@@ -146,6 +146,7 @@ function Workspace({
               </Text>
             </Group>
           </Group>
+          <UrgentNote app={app} />
         </Stack>
 
         <div className={classes.workspace}>
@@ -154,8 +155,12 @@ function Workspace({
               <Tabs.List mb="md">
                 <Tabs.Tab value="data">{tx.application.tabs.data}</Tabs.Tab>
                 <Tabs.Tab value="checks">{tx.application.tabs.checks}</Tabs.Tab>
-                <Tabs.Tab value="decision">{tx.application.tabs.decision}</Tabs.Tab>
-                <Tabs.Tab value="history">{tx.application.tabs.history}</Tabs.Tab>
+                <Tabs.Tab value="decision">
+                  {tx.application.tabs.decision}
+                </Tabs.Tab>
+                <Tabs.Tab value="history">
+                  {tx.application.tabs.history}
+                </Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel value="data">
                 <Stack gap="lg">
@@ -169,12 +174,20 @@ function Workspace({
                             label: tx.application.card.product,
                             value: productLabel[request.productId],
                           },
-                          { label: tx.application.card.amount, value: formatRub(request.amount) },
+                          {
+                            label: tx.application.card.amount,
+                            value: formatRub(request.amount),
+                          },
                           {
                             label: tx.application.card.term,
-                            value: tx.application.card.termValue(request.termMonths),
+                            value: tx.application.card.termValue(
+                              request.termMonths,
+                            ),
                           },
-                          { label: tx.application.card.purpose, value: purposeLabel(request.purpose) },
+                          {
+                            label: tx.application.card.purpose,
+                            value: purposeLabel(request.purpose),
+                          },
                           {
                             label: tx.application.card.rate,
                             value: product
@@ -183,7 +196,8 @@ function Workspace({
                           },
                           {
                             label: tx.application.card.assignee,
-                            value: assignee?.name ?? tx.application.card.unassigned,
+                            value:
+                              assignee?.name ?? tx.application.card.unassigned,
                           },
                         ]}
                       />
@@ -195,10 +209,22 @@ function Workspace({
                       <FactGrid
                         cols={3}
                         facts={[
-                          { label: tx.application.applicant.applicant, value: applicant.name },
-                          { label: tx.application.applicant.ogrn, value: applicant.ogrn },
-                          { label: tx.application.applicant.director, value: applicant.director },
-                          { label: tx.application.applicant.region, value: applicant.region },
+                          {
+                            label: tx.application.applicant.applicant,
+                            value: applicant.name,
+                          },
+                          {
+                            label: tx.application.applicant.ogrn,
+                            value: applicant.ogrn,
+                          },
+                          {
+                            label: tx.application.applicant.director,
+                            value: applicant.director,
+                          },
+                          {
+                            label: tx.application.applicant.region,
+                            value: applicant.region,
+                          },
                           {
                             label: tx.application.applicant.revenue,
                             value: formatRub(applicant.annualRevenue),
@@ -216,7 +242,11 @@ function Workspace({
                     mode="backoffice"
                     density="full"
                     loading={companyProfile.isPending}
-                    error={companyProfile.isError ? companyProfile.error.message : null}
+                    error={
+                      companyProfile.isError
+                        ? companyProfile.error.message
+                        : null
+                    }
                     retry={() => void companyProfile.refetch()}
                   />
                 </Stack>
@@ -243,7 +273,9 @@ function Workspace({
                   <Stack gap="lg">
                     <Card>
                       <Stack gap="md">
-                        <Title order={3}>{tx.application.decision.scoringTitle}</Title>
+                        <Title order={3}>
+                          {tx.application.decision.scoringTitle}
+                        </Title>
                         <ScoreBreakdown scoring={app.scoring} />
                       </Stack>
                     </Card>

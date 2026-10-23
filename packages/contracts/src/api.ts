@@ -10,6 +10,8 @@ import {
   clientReplySchema,
   offerTermsSchema,
   rejectReasonSchema,
+  urgentRequestSchema,
+  urgentSourceSchema,
   waitingOnSchema,
   workflowStatusSchema,
 } from "./application-parts.ts";
@@ -200,6 +202,13 @@ export const apiApplicationSchema = z.object({
   deal: applicationDealSchema.nullable().default(null),
   /** Кто закрыл заявку отменой: клиент отказался от предложения или сотрудник её отменил. */
   cancelledBy: actorSchema.shape.kind.nullable().default(null),
+  /** Запрос клиента на срочный режим и решение банка по нему. Автора решения клиенту не показываем. */
+  urgentRequest: urgentRequestSchema
+    .omit({ resolvedBy: true })
+    .nullable()
+    .default(null),
+  /** Кто включил срочный режим сейчас: клиент или банк. Null, если режим выключен. */
+  urgentBy: urgentSourceSchema.shape.by.nullable().default(null),
   /** Комментарии сотрудника с видимостью client; внутренние сюда не попадают. */
   clientComments: z.array(applicationCommentSchema).default([]),
   createdAt: z.string(),
@@ -217,6 +226,8 @@ export const apiApplicationManagementSchema = z.object({
   hold: applicationHoldSchema.nullable(),
   urgent: z.boolean(),
   urgentReason: z.string().nullable(),
+  urgentSource: urgentSourceSchema.nullable(),
+  urgentRequest: urgentRequestSchema.nullable(),
   assigneeId: z.string().nullable(),
   handoff: applicationHandoffSchema.nullable(),
   comments: z.array(applicationCommentSchema),

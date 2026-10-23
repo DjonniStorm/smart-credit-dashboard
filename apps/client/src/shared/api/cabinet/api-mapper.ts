@@ -222,6 +222,8 @@ export function toCabinetApplication(
     requests: requestsOf(application),
     decision: decisionOf(application),
     deal: dealOf(application),
+    urgentRequest: application.urgentRequest,
+    urgentBy: application.urgentBy,
     events: [],
   };
 }

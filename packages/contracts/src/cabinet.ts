@@ -8,6 +8,8 @@ import { apiScoringSchema } from "./api.ts";
 import {
   attachedDocumentSchema,
   clientReplySchema,
+  urgentRequestSchema,
+  urgentSourceSchema,
 } from "./application-parts.ts";
 import {
   creditProductIdSchema,
@@ -176,6 +178,13 @@ export const applicationSchema = applicationInputSchema.extend({
       account: z.string(),
     })
     .nullable(),
+  /** Запрос клиента на срочный режим и решение банка по нему. */
+  urgentRequest: urgentRequestSchema
+    .omit({ resolvedBy: true })
+    .nullable()
+    .default(null),
+  /** Кто включил срочный режим: клиент или банк. Банк показываем клиенту без подробностей. */
+  urgentBy: urgentSourceSchema.shape.by.nullable().default(null),
   events: z.array(applicationEventSchema),
 });
 export type Application = z.infer<typeof applicationSchema>;

@@ -12,6 +12,7 @@ import type {
 } from "@repo/contracts/workflow";
 
 import type { CommandEvent } from "./application-commands.ts";
+import { isClosed } from "./application-flow.ts";
 
 export interface ClientCommandOutcome {
   application: ApplicationWorkflow;
@@ -134,6 +135,60 @@ export function runClientCommand(
       }
       next.deal = { ...current.deal, signedAt: now, disbursedAt: now };
       return changeStatus("funded", "Договор подписан, кредит выдан");
+    }
+    case "set_urgent": {
+      // Клиент только запрашивает срочность: действующий режим меняет менеджер.
+      if (isClosed(current)) {
+        throw new ConflictException("Заявка закрыта, действия недоступны");
+      }
+      if (action.enabled) {
+        if (current.urgent) {
+          throw new ConflictException("Срочный режим уже включён");
+        }
+        if (current.urgentRequest) {
+          throw new ConflictException(
+            "Запрос срочности уже отправлен или рассмотрен",
+          );
+        }
+        const reason = action.reason.trim();
+        if (!reason) {
+          throw new UnprocessableEntityException(
+            "Укажите причину срочного режима",
+          );
+        }
+        next.urgentRequest = {
+          state: "pending",
+          reason,
+          requestedAt: now,
+          resolvedAt: null,
+          resolvedBy: null,
+          declineReason: null,
+        };
+        return {
+          application: next,
+          event: {
+            kind: "action",
+            title: "Клиент запросил срочный режим",
+            comment: reason,
+            metadata: { ...base, urgentRequest: "pending" },
+          },
+        };
+      }
+      if (current.urgentRequest?.state !== "pending") {
+        throw new ConflictException(
+          "Отозвать можно только запрос, который ждёт решения",
+        );
+      }
+      next.urgentRequest = null;
+      return {
+        application: next,
+        event: {
+          kind: "action",
+          title: "Клиент отозвал запрос срочности",
+          comment: null,
+          metadata: { ...base, urgentRequest: "withdrawn" },
+        },
+      };
     }
   }
 }

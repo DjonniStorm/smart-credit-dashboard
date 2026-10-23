@@ -35,7 +35,6 @@ import {
   ApplicationHistory,
   DecisionFactors,
   HealthIndices,
-  UrgencyIndicator,
   isDeclinedByClient,
   nextStepOf,
   stageOf,
@@ -47,6 +46,7 @@ import { alfiTargets } from "@/features/alfi-assistant";
 import { AnswerRequestForm } from "@/features/answer-request";
 import { OfferDecision } from "@/features/decide-offer";
 import { SignContract } from "@/features/sign-contract";
+import { UrgentRequest } from "@/features/urgent-request";
 import { ApiError } from "@/shared/api/cabinet";
 import { formatDate, formatDateTime, lx, tx } from "@/shared/i18n";
 import { QueryError } from "@/shared/ui/query-state";
@@ -144,7 +144,7 @@ function Detail({ app }: { app: Application }) {
 
       <HealthIndices app={app} />
 
-      <UrgencyIndicator app={app} />
+      <UrgentRequest app={app} />
 
       {catalog.data && <TermsSandbox app={app} catalog={catalog.data} />}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, Group, Stack, Text, Title } from "@mantine/core";
+import { Badge, Button, Card, Group, Stack, Text, Title } from "@mantine/core";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -12,7 +12,6 @@ import { StateBlock } from "@repo/ui/state-block";
 
 import {
   type ApplicationDraft,
-  UrgencyIndicator,
   clearDraft,
   loadDraft,
   needsClient,
@@ -125,7 +124,11 @@ export function ApplicationList() {
               current={stage.current}
               nextStep={
                 <Group gap="sm" wrap="wrap">
-                  <UrgencyIndicator app={app} compact />
+                  {app.urgentRequest?.state === "pending" && (
+                    <Badge color="orange" variant="light">
+                      {tx.application.urgent.requestBadge}
+                    </Badge>
+                  )}
                   <Text>{nextStepOf(app)}</Text>
                 </Group>
               }

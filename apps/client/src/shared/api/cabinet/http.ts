@@ -129,6 +129,8 @@ export const httpApi: CabinetApi = {
     return { demoCode: response.demoCode ?? "" };
   },
   sign: (id, code, key) => clientAction(id, { type: "sign", code }, key),
+  setUrgent: (id, enabled, reason, key) =>
+    clientAction(id, { type: "set_urgent", enabled, reason }, key),
 };
 
 function sendClientAction(

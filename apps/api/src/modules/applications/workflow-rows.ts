@@ -21,6 +21,10 @@ export function applicationFromRow(row: Row): ApplicationWorkflow {
     hold: (row.hold as ApplicationWorkflow["hold"]) ?? null,
     urgent: Boolean(row.urgent),
     urgentReason: (row.urgent_reason as string | null) ?? null,
+    urgentSource:
+      (row.urgent_source as ApplicationWorkflow["urgentSource"]) ?? null,
+    urgentRequest:
+      (row.urgent_request as ApplicationWorkflow["urgentRequest"]) ?? null,
     assigneeId: (row.assignee_id as string | null) ?? null,
     handoff: (row.handoff as ApplicationWorkflow["handoff"]) ?? null,
     clientReply:

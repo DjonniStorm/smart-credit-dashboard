@@ -297,13 +297,63 @@ export function runCommand(
       };
     }
     case "set_urgent": {
+      // Включение по ожидающему запросу клиента принимает его.
+      const pending =
+        current.urgentRequest?.state === "pending"
+          ? current.urgentRequest
+          : null;
+      const accepts = action.enabled && pending !== null;
       next.urgent = action.enabled;
       next.urgentReason = action.enabled ? action.reason || null : null;
+      next.urgentSource = action.enabled
+        ? { by: "employee", at: ctx.now }
+        : null;
+      if (accepts) {
+        next.urgentRequest = {
+          ...pending,
+          state: "accepted",
+          resolvedAt: ctx.now,
+          resolvedBy: actor,
+        };
+      }
       return plain(
         "action",
-        action.enabled ? "Срочный режим включён" : "Срочный режим снят",
+        accepts
+          ? "Срочный режим включён по запросу клиента"
+          : action.enabled
+            ? "Срочный режим включён"
+            : "Срочный режим снят",
         action.reason || null,
-        { urgent: String(action.enabled) },
+        {
+          urgent: String(action.enabled),
+          ...(accepts ? { urgentRequest: "accepted" } : {}),
+        },
+      );
+    }
+    case "decline_urgent": {
+      // Отказ действует только на запрос клиента; действующий режим не трогает.
+      if (!action.reason.trim()) {
+        throw new UnprocessableEntityException("Укажите причину отказа");
+      }
+      if (current.urgentRequest?.state !== "pending") {
+        throw new ConflictException(
+          "Отклонить можно только запрос, который ждёт решения",
+        );
+      }
+      next.urgentRequest = {
+        ...current.urgentRequest,
+        state: "declined",
+        declineReason: action.reason.trim(),
+        resolvedAt: ctx.now,
+        resolvedBy: actor,
+      };
+      return plain(
+        "action",
+        "Запрос срочности отклонён",
+        action.reason.trim(),
+        {
+          urgentRequest: "declined",
+        },
       );
     }
     case "intercept_autonomy": {
