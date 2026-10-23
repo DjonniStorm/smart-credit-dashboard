@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { BrandTooltip } from "@repo/ui/brand-tooltip";
 
+import { ax } from "@/features/alfi-assistant";
+
 import classes from "./arm-shell.module.css";
 
 /**
@@ -10,7 +12,7 @@ import classes from "./arm-shell.module.css";
  */
 export function BrandMark() {
   return (
-    <BrandTooltip>
+    <BrandTooltip label={ax.brand.story}>
       <Link
         href="/"
         className={classes.brand}
@@ -20,7 +22,7 @@ export function BrandMark() {
           А
         </span>
         <span className={classes.brandName} aria-hidden>
-          Альфи-Банк
+          {ax.brand.name}
         </span>
         <span className={classes.brandProduct} aria-hidden>
           Кредитный конвейер
