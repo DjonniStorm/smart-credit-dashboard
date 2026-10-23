@@ -16,6 +16,7 @@ import {
   employeeActionSchema,
   rejectReasonSchema,
 } from "./application.ts";
+import { creditPurposeSchema } from "./product-catalog.ts";
 
 export {
   workflowStatusSchema,
@@ -35,7 +36,7 @@ export const applicationWorkflowSchema = z.object({
   productId: creditProductIdSchema,
   amount: z.number(),
   termMonths: z.number().int(),
-  purpose: z.string(),
+  purpose: creditPurposeSchema,
   status: workflowStatusSchema,
   offer: offerTermsSchema.nullable().default(null),
   requestedInfo: z.array(z.string()).default([]),

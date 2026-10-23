@@ -37,6 +37,8 @@ import { useEmployees, useSignedInEmployee } from "@/entities/employee";
 import { ActionBar, RerunCheckButton } from "@/features/application-actions";
 import { formatRub } from "@/shared/lib/money";
 
+import { purposeLabel } from "@/shared/lib/purpose";
+
 import classes from "./application-panel.module.css";
 import { Outcome, RiskBlock, Summary } from "./parts";
 
@@ -171,7 +173,7 @@ function Workspace({
                             label: tx.application.card.term,
                             value: tx.application.card.termValue(request.termMonths),
                           },
-                          { label: tx.application.card.purpose, value: request.purpose },
+                          { label: tx.application.card.purpose, value: purposeLabel(request.purpose) },
                           {
                             label: tx.application.card.rate,
                             value: product

@@ -129,15 +129,36 @@ export const CREDIT_PRODUCTS: readonly CreditProduct[] = [
   },
 ];
 
-/** Цель допустима, только если она входит в цели выбранного продукта каталога. */
-export function isPurposeAllowed(
-  productId: CreditProductId,
-  purpose: CreditPurpose,
-): boolean {
-  return CREDIT_PRODUCTS.some(
-    (product) => product.id === productId && product.purposes.includes(purpose),
-  );
-}
-
 export const purposeNotInProductMessage =
   "Цель не входит в цели выбранного продукта";
+
+export const amountOutOfProductMessage =
+  "Сумма вне лимитов выбранного продукта";
+export const termOutOfProductMessage = "Срок вне лимитов выбранного продукта";
+
+/** Какие поля заявки нарушают каталог: цель, сумма или срок продукта. */
+export function productViolations(input: {
+  productId: CreditProductId;
+  purpose: CreditPurpose;
+  amount: number;
+  termMonths: number;
+}): { path: "purpose" | "amount" | "termMonths"; message: string }[] {
+  const product = CREDIT_PRODUCTS.find((item) => item.id === input.productId);
+  if (!product) {
+    return [];
+  }
+  const violations: ReturnType<typeof productViolations> = [];
+  if (!product.purposes.includes(input.purpose)) {
+    violations.push({ path: "purpose", message: purposeNotInProductMessage });
+  }
+  if (input.amount < product.minAmount || input.amount > product.maxAmount) {
+    violations.push({ path: "amount", message: amountOutOfProductMessage });
+  }
+  if (
+    input.termMonths < product.minTermMonths ||
+    input.termMonths > product.maxTermMonths
+  ) {
+    violations.push({ path: "termMonths", message: termOutOfProductMessage });
+  }
+  return violations;
+}
