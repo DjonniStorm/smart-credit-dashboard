@@ -1,7 +1,11 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 
 import type { ScoreResponse } from "@repo/contracts";
-import type { ApiApplication, ApiApplicationResponse, ApiJob } from "@repo/contracts/api";
+import type {
+  ApiApplication,
+  ApiApplicationResponse,
+  ApiJob,
+} from "@repo/contracts/api";
 import type {
   ApplicationCheckRequest,
   ApplicationWorkflow,
@@ -11,8 +15,8 @@ import type {
 } from "@repo/contracts/workflow";
 
 import { CompaniesService } from "../companies/companies.service.ts";
-import { decide } from "./decision-engine.ts";
 import { toApiApplication, toApiJob, toApiScoring } from "./api-mapper.ts";
+import { decide } from "./decision-engine.ts";
 import { MAX_JOB_ATTEMPTS, WorkflowStore } from "./workflow-store.ts";
 
 @Injectable()
@@ -38,7 +42,9 @@ export class ApplicationsService {
     return toApiApplication(await this.getApplication(id));
   }
 
-  async createApiApplication(input: CreateApplicationRequest): Promise<ApiApplicationResponse> {
+  async createApiApplication(
+    input: CreateApplicationRequest,
+  ): Promise<ApiApplicationResponse> {
     const response = await this.create(input);
     return {
       application: toApiApplication(response.application),
@@ -66,7 +72,10 @@ export class ApplicationsService {
     return job;
   }
 
-  async startApiCheck(id: string, input: ApplicationCheckRequest): Promise<ApiJob> {
+  async startApiCheck(
+    id: string,
+    input: ApplicationCheckRequest,
+  ): Promise<ApiJob> {
     return toApiJob(await this.startCheck(id, input));
   }
 
@@ -93,6 +102,7 @@ export class ApplicationsService {
           score: result.scoring.score,
           model: result.scoring.model,
           recommendation: decision.recommendation,
+          details: toApiScoring(result.scoring),
         },
         {
           jobId: job.id,

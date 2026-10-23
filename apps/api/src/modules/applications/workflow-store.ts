@@ -66,7 +66,7 @@ export class WorkflowStore {
       const applicationRows = rowsOf(
         await manager.query(
           `insert into applications(id,number,inn,product_id,amount,term_months,purpose,status,check_job_id,scoring,created_at,updated_at)
-           values($1,nextval('application_number_seq')::text,$2,$3,$4,$5,$6,'in_review',$7,null,now(),now())
+           values($1,'SC-' || nextval('application_number_seq'),$2,$3,$4,$5,$6,'in_review',$7,null,now(),now())
            returning *`,
           [
             applicationId,
@@ -135,7 +135,11 @@ export class WorkflowStore {
   }
 
   async listApplications(): Promise<ApplicationWorkflow[]> {
-    const rows = rowsOf(await this.db.query("select * from applications order by created_at desc"));
+    const rows = rowsOf(
+      await this.db.query(
+        "select * from applications order by created_at desc",
+      ),
+    );
     return rows.map((row) => this.application(row));
   }
 

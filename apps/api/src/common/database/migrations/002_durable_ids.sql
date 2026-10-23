@@ -2,7 +2,7 @@
 create sequence if not exists application_number_seq;
 select setval(
   'application_number_seq',
-  greatest(1000, coalesce((select max(number::bigint) from applications where number ~ '^[0-9]+$'), 0))
+  greatest(1000, coalesce((select max(substr(number, 4)::bigint) from applications where number ~ '^SC-[0-9]+$'), 0))
 );
 
 create index if not exists scoring_jobs_application_idx on scoring_jobs(application_id);
