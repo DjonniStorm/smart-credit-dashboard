@@ -1,10 +1,14 @@
 import type { Application } from "@repo/contracts/application";
-import { AlfiState } from "@repo/ui/alfi";
-import type { AlfiDockHint } from "@repo/ui/alfi-dock";
 import {
+  type AlfiDockHint,
   type AlfiGuidanceContext,
+  AlfiState,
   getAlfiGuidance,
-} from "@repo/ui/alfi-guidance";
+} from "@repo/ui/alfi";
+
+import { ax } from "./text";
+
+const t = ax.arm;
 
 /** Блок действий по заявке, к которому ведёт кнопка «Показать». */
 export const armActionsTarget = "actions";
@@ -52,7 +56,7 @@ function applicationHint(app: Application): AlfiDockHint {
       ? `${guidance.message} ${guidance.action}.`
       : guidance.message,
     action: actionable
-      ? { label: "Показать действия", target: armActionsTarget }
+      ? { label: t.showActions, target: armActionsTarget }
       : undefined,
   };
 }
@@ -73,16 +77,15 @@ function queueHint(
   if (!oldest) {
     return {
       state: AlfiState.Idle,
-      title: "Ваша очередь разобрана",
-      message: "Заявок, которые ждут вашего решения, сейчас нет.",
+      ...t.queueEmpty,
     };
   }
   return {
     state: AlfiState.Explain,
-    title: `Ждут вашего решения: ${waiting.length}`,
-    message: `Начните с самой старой, ${oldest.number}. Решение принимаете вы, я только подсказываю порядок.`,
+    title: t.queue.title(waiting.length),
+    message: t.queue.message(oldest.number),
     action: {
-      label: `Открыть ${oldest.number}`,
+      label: t.open(oldest.number),
       href: `/applications/${oldest.id}`,
     },
   };

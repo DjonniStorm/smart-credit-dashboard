@@ -2,11 +2,12 @@
 
 import { usePathname, useRouter } from "next/navigation";
 
-import { AlfiDock } from "@repo/ui/alfi-dock";
+import { AlfiDock } from "@repo/ui/alfi";
 
 import { useApplications } from "@/entities/application";
 
 import { armHint } from "../model/arm-hint";
+import { ax } from "../model/text";
 
 /** Альфи АРМ: всегда в углу, подсказывает следующую заявку и нужное действие. */
 export function ArmAlfi({ employeeId }: { employeeId: string }) {
@@ -17,6 +18,7 @@ export function ArmAlfi({ employeeId }: { employeeId: string }) {
   return (
     <AlfiDock
       hint={armHint(pathname, applications.data ?? [], employeeId)}
+      labels={ax.dock}
       storageKey="arm:alfi-hidden"
       onNavigate={(href) => router.push(href)}
     />

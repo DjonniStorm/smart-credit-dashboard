@@ -2,9 +2,10 @@
 
 import { usePathname, useRouter } from "next/navigation";
 
-import { AlfiDock } from "@repo/ui/alfi-dock";
+import { AlfiDock } from "@repo/ui/alfi";
 
 import { useApplications } from "@/entities/application";
+import { ax } from "@/shared/i18n";
 
 import { cabinetHint } from "../model/cabinet-hint";
 
@@ -17,6 +18,7 @@ export function CabinetAlfi() {
   return (
     <AlfiDock
       hint={cabinetHint(pathname, applications.data ?? [])}
+      labels={ax.dock}
       storageKey="cabinet:alfi-hidden"
       onNavigate={(href) => router.push(href)}
     />

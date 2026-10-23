@@ -3,13 +3,17 @@
 import { Tooltip } from "@mantine/core";
 import type { ReactElement } from "react";
 
-/** История названия банка. Показывается при наведении и фокусе на логотип. */
-export const brandStory = "Альфи-Банк назван в честь Альфи.";
-
-export function BrandTooltip({ children }: { children: ReactElement }) {
+/** Подсказка у логотипа банка. Открывается при наведении, фокусе и касании. */
+export function BrandTooltip({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactElement;
+}) {
   return (
     <Tooltip
-      label={brandStory}
+      label={label}
       multiline
       w={260}
       withArrow
