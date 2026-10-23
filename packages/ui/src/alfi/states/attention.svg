@@ -1,8 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="t d">
   <title id="t">Нужна проверка</title><desc id="d">Альфи показывает предупреждающий знак: есть риск.</desc>
+  <style>
+  .antenna{transform-box:view-box;transform-origin:64px 24px;animation:antenna .9s ease-out 1}
+  .eyes{transform-box:fill-box;transform-origin:center;animation:blink 6s 1.2s infinite}
+  @keyframes antenna{0%{transform:rotate(0)}30%{transform:rotate(-12deg)}60%{transform:rotate(8deg)}100%{transform:rotate(0)}}
+  @keyframes blink{0%,95%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  .sign{transform-box:view-box;transform-origin:102px 110px;animation:shake .12s ease-in-out 6 alternate}
+  @keyframes shake{from{transform:rotate(-6deg)}to{transform:rotate(6deg)}}
+  </style>
+  <g class="alfi">
   <path d="M20 52 C20 6 108 6 108 52" fill="none" stroke="#2A2D34" stroke-width="6" stroke-linecap="round"/>
-  <path d="M64 24 V14" stroke="#8F1A12" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="64" cy="10" r="7" fill="#FFB81C"/><circle cx="62" cy="8" r="2.4" fill="#fff" opacity=".8"/>
+  <g class="antenna"><path d="M64 24 V14" stroke="#8F1A12" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="64" cy="10" r="7" fill="#FFB81C"/><circle cx="62" cy="8" r="2.4" fill="#fff" opacity=".8"/></g>
   <ellipse cx="64" cy="104" rx="30" ry="22" fill="#EF3124"/>
   <path d="M36 112 Q64 134 92 112 Q92 126 64 126 Q36 126 36 112Z" fill="#C42318"/>
   <ellipse cx="30" cy="102" rx="11" ry="19" transform="rotate(14 30 102)" fill="#C42318"/>
@@ -15,12 +25,13 @@
   <ellipse cx="18" cy="60" rx="9" ry="17" fill="#2A2D34"/><ellipse cx="110" cy="60" rx="9" ry="17" fill="#2A2D34"/>
   <ellipse cx="16" cy="56" rx="2.6" ry="7" fill="#656B78"/><ellipse cx="108" cy="56" rx="2.6" ry="7" fill="#656B78"/>
   <ellipse cx="64" cy="61" rx="32" ry="25" fill="#FFF4EE"/>
-  <ellipse cx="51" cy="58" rx="6" ry="7.5" fill="#1F1416"/><ellipse cx="77" cy="58" rx="6" ry="7.5" fill="#1F1416"/>
-    <circle cx="53" cy="55" r="2.4" fill="#fff"/><circle cx="79" cy="55" r="2.4" fill="#fff"/><path d="M41 48 L57 42" stroke="#1F1416" stroke-width="3.5" stroke-linecap="round"/><path d="M87 48 L71 42" stroke="#1F1416" stroke-width="3.5" stroke-linecap="round"/>
+  <g class="eyes"><ellipse cx="51" cy="58" rx="6" ry="7.5" fill="#1F1416"/><ellipse cx="77" cy="58" rx="6" ry="7.5" fill="#1F1416"/>
+    <circle cx="53" cy="55" r="2.4" fill="#fff"/><circle cx="79" cy="55" r="2.4" fill="#fff"/></g><path d="M41 48 L57 42" stroke="#1F1416" stroke-width="3.5" stroke-linecap="round"/><path d="M87 48 L71 42" stroke="#1F1416" stroke-width="3.5" stroke-linecap="round"/>
   <circle cx="42" cy="70" r="5.5" fill="#FF9C8C" opacity=".85"/><circle cx="86" cy="70" r="5.5" fill="#FF9C8C" opacity=".85"/>
   <path d="M58 71 H70" stroke="#1F1416" stroke-width="3.5" stroke-linecap="round"/>
   
-  <path d="M102 70 L124 110 H80 Z" fill="#FFB81C" stroke="#8F1A12" stroke-width="4" stroke-linejoin="round"/>
-    <path d="M102 82 V96" stroke="#1F1416" stroke-width="5" stroke-linecap="round"/><circle cx="102" cy="104" r="3" fill="#1F1416"/>
+  <g class="sign"><path d="M102 70 L124 110 H80 Z" fill="#FFB81C" stroke="#8F1A12" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M102 82 V96" stroke="#1F1416" stroke-width="5" stroke-linecap="round"/><circle cx="102" cy="104" r="3" fill="#1F1416"/></g>
     <circle cx="82" cy="108" r="8.5" fill="#EF3124"/>
+</g>
 </svg>
