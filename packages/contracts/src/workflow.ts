@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-import { creditProductIdSchema } from "./application.js";
+import {
+  applicationCommentSchema,
+  applicationHandoffSchema,
+  applicationHoldSchema,
+  creditProductIdSchema,
+  offerTermsSchema,
+} from "./application.js";
 import { apiDecisionSchema, apiScoringSchema } from "./api.js";
 
 /** Команда создания заявки из кабинета клиента. */
@@ -27,6 +33,16 @@ export const applicationWorkflowSchema = z.object({
   status: z.enum(["draft", "in_review", "needs_client", "approved", "rejected"]),
   checkJobId: z.string().nullable(),
   decision: apiDecisionSchema.nullable(),
+  offer: offerTermsSchema.nullable().default(null),
+  offerKind: z.enum(["initial", "counter"]).nullable().default(null),
+  requestedInfo: z.array(z.string()).default([]),
+  rejectReason: z.string().nullable().default(null),
+  assigneeId: z.string().nullable().default(null),
+  urgent: z.boolean().default(false),
+  urgentReason: z.string().nullable().default(null),
+  hold: applicationHoldSchema.nullable().default(null),
+  comments: z.array(applicationCommentSchema).default([]),
+  handoff: applicationHandoffSchema.nullable().default(null),
   scoring: z
     .object({
       score: z.number().min(0).max(100),

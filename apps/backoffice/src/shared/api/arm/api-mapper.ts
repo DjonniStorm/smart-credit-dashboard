@@ -55,13 +55,13 @@ function mapApplication(
     stage: scoring ? "decision" : "scoring",
     waitingOn: scoring ? "employee" : "system",
     hold: null,
-    urgent: false,
-    urgentReason: null,
+    urgent: application.urgent,
+    urgentReason: application.urgentReason,
     autonomy: context?.autonomy,
-    comments: [],
+    comments: application.comments,
     handoff: null,
     blocker: scoring?.reasons[0] ?? "Проверка заявки выполняется",
-    assigneeId: null,
+    assigneeId: application.assigneeId,
     applicant: {
       inn: application.inn,
       ogrn: profile?.ogrn ?? "Не загружен",
@@ -128,9 +128,9 @@ function mapApplication(
           computedAt: application.updatedAt,
         }
       : null,
-    offer: null,
-    requestedInfo: [],
-    rejectReason: null,
+    offer: application.offer,
+    requestedInfo: application.requestedInfo,
+    rejectReason: application.rejectReason as Application["rejectReason"],
     events:
       context?.audit.map((event) => {
         return {

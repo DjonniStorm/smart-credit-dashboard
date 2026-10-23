@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 
 import type { ScoreResponse } from "@repo/contracts";
 import type {
@@ -15,6 +15,7 @@ import type {
   CreateApplicationResponse,
   ScoringJob,
 } from "@repo/contracts/workflow";
+import type { ApplicationActionRequest } from "@repo/contracts/application";
 
 import {
   CompaniesService,
@@ -75,6 +76,22 @@ export class ApplicationsService {
       ),
       audit: await this.store.listEvents(application.id),
     };
+  }
+
+  async applyAction(
+    id: string,
+    input: ApplicationActionRequest,
+  ): Promise<ApiApplicationContext> {
+    await this.getApplication(id);
+    try {
+      await this.store.applyAction(id, input);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
+    return this.getApiApplicationContext(id);
   }
 
   async createApiApplication(

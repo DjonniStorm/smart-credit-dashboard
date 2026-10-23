@@ -6,6 +6,10 @@ import { DataSource, EntityManager } from "typeorm";
 
 import type { ApiAuditEvent } from "@repo/contracts/api";
 import type {
+  ApplicationActionRequest,
+  EmployeeAction,
+} from "@repo/contracts/application";
+import type {
   ApplicationWorkflow,
   CreateApplicationRequest,
   ScoringJob,
@@ -139,6 +143,163 @@ export class WorkflowStore {
       await this.eventIn(manager, applicationId, "check_requested", { jobId });
       return this.job(firstRow(rows));
     });
+  }
+
+  async applyAction(
+    applicationId: string,
+    input: ApplicationActionRequest,
+  ): Promise<ApplicationWorkflow> {
+    const actionResourceId = `action-${randomUUID()}`;
+    return this.db.transaction(async (manager) => {
+      const existing = await this.claimKey(
+        manager,
+        `action:${applicationId}`,
+        input.idempotencyKey,
+        actionResourceId,
+      );
+      if (existing) {
+        const current = await this.applicationIn(manager, applicationId);
+        if (!current) {
+          throw new Error(`Заявка ${applicationId} не найдена`);
+        }
+        return current;
+      }
+
+      const current = await this.applicationIn(manager, applicationId);
+      if (!current) {
+        throw new Error(`Заявка ${applicationId} не найдена`);
+      }
+      const next = this.actionResult(current, input.action);
+      const state = {
+        offer: next.offer,
+        offerKind: next.offerKind,
+        requestedInfo: next.requestedInfo,
+        rejectReason: next.rejectReason,
+        assigneeId: next.assigneeId,
+        comments: next.comments,
+      };
+      if (input.action.type === "rerun_check" && next.checkJobId) {
+        await manager.query(
+          `insert into scoring_jobs(id,application_id,status,idempotency_key,created_at)
+           values($1,$2,'queued',$3,now())`,
+          [next.checkJobId, current.id, `${input.idempotencyKey}:check`],
+        );
+      }
+      await manager.query(
+        `update applications set status=$2, action_state=$3, check_job_id=$4, updated_at=now()
+         where id=$1`,
+        [current.id, next.status, state, next.checkJobId],
+      );
+      await this.eventIn(manager, current.id, "application_action", {
+        action: input.action.type,
+        employeeId: input.employeeId,
+        fromStatus: current.status,
+        toStatus: next.status,
+        idempotencyKey: input.idempotencyKey,
+        payload: input.action,
+      });
+      const updated = await this.applicationIn(manager, current.id);
+      if (!updated) {
+        throw new Error(`Не удалось обновить заявку ${applicationId}`);
+      }
+      return updated;
+    });
+  }
+
+  private actionResult(
+    application: ApplicationWorkflow,
+    action: EmployeeAction,
+  ): ApplicationWorkflow {
+    const state = {
+      ...application,
+      comments: application.comments ?? [],
+      requestedInfo: application.requestedInfo ?? [],
+      offer: application.offer ?? null,
+      offerKind: application.offerKind ?? null,
+      rejectReason: application.rejectReason ?? null,
+      assigneeId: application.assigneeId ?? null,
+    };
+    if (action.type === "assign") {
+      return { ...state, assigneeId: action.assigneeId };
+    }
+    if (action.type === "comment") {
+      return {
+        ...state,
+        comments: [
+          ...state.comments,
+          {
+            id: `comment-${randomUUID()}`,
+            applicationId: application.id,
+            at: new Date().toISOString(),
+            author: { kind: "employee" as const, name: "Сотрудник" },
+            visibility: action.visibility,
+            body: action.body,
+          },
+        ],
+      };
+    }
+    if (action.type === "rerun_check") {
+      if (application.status === "rejected" || application.status === "approved") {
+        throw new Error("Повторная проверка недоступна для завершённой заявки");
+      }
+      return { ...state, status: "in_review", checkJobId: `job-${randomUUID()}` };
+    }
+    if (action.type === "request_info") {
+      this.requireReview(application);
+      return {
+        ...state,
+        status: "needs_client",
+        requestedInfo: action.items,
+      };
+    }
+    if (action.type === "approve") {
+      this.requireDecision(application);
+      this.requireOverrideComment(action.comment, application.decision?.recommendation, "approve");
+      return { ...state, status: "approved", offerKind: "initial" };
+    }
+    if (action.type === "counter_offer") {
+      this.requireDecision(application);
+      this.requireOverrideComment(
+        action.comment,
+        application.decision?.recommendation,
+        "counter_offer",
+      );
+      return {
+        ...state,
+        status: "approved",
+        offerKind: "counter",
+        offer: action.terms,
+      };
+    }
+    if (action.type === "reject") {
+      this.requireDecision(application);
+      this.requireOverrideComment(action.comment, application.decision?.recommendation, "reject");
+      return { ...state, status: "rejected", rejectReason: action.reason };
+    }
+    throw new Error(`Действие ${action.type} пока не подключено`);
+  }
+
+  private requireReview(application: ApplicationWorkflow): void {
+    if (application.status !== "in_review") {
+      throw new Error("Действие доступно только на рассмотрении");
+    }
+  }
+
+  private requireDecision(application: ApplicationWorkflow): void {
+    this.requireReview(application);
+    if (!application.scoring || !application.decision) {
+      throw new Error("Сначала завершите проверку заявки");
+    }
+  }
+
+  private requireOverrideComment(
+    comment: string,
+    recommendation: string | undefined,
+    expected: string,
+  ): void {
+    if (recommendation !== expected && !comment.trim()) {
+      throw new Error("Для решения, отличающегося от рекомендации, нужен комментарий");
+    }
   }
 
   async getApplication(id: string): Promise<ApplicationWorkflow | null> {
@@ -372,6 +533,7 @@ export class WorkflowStore {
   }
 
   private application(row: Row): ApplicationWorkflow {
+    const actionState = (row.action_state as Record<string, unknown> | null) ?? {};
     return {
       id: String(row.id),
       number: String(row.number),
@@ -384,6 +546,16 @@ export class WorkflowStore {
       checkJobId: (row.check_job_id as string | null) ?? null,
       scoring: (row.scoring as ApplicationWorkflow["scoring"]) ?? null,
       decision: (row.decision as ApplicationWorkflow["decision"]) ?? null,
+      offer: (actionState.offer as ApplicationWorkflow["offer"]) ?? null,
+      offerKind: (actionState.offerKind as ApplicationWorkflow["offerKind"]) ?? null,
+      requestedInfo: (actionState.requestedInfo as string[]) ?? [],
+      rejectReason: (actionState.rejectReason as string | null) ?? null,
+      assigneeId: (actionState.assigneeId as string | null) ?? null,
+      urgent: Boolean(actionState.urgent),
+      urgentReason: (actionState.urgentReason as string | null) ?? null,
+      hold: (actionState.hold as ApplicationWorkflow["hold"]) ?? null,
+      comments: (actionState.comments as ApplicationWorkflow["comments"]) ?? [],
+      handoff: (actionState.handoff as ApplicationWorkflow["handoff"]) ?? null,
       createdAt: new Date(String(row.created_at)).toISOString(),
       updatedAt: new Date(String(row.updated_at)).toISOString(),
     };

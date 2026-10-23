@@ -70,8 +70,20 @@ export const httpArmApi: ArmApi = {
       undefined,
       "/api",
     ),
-  act: async () => {
-    throw new Error("Действия АРМ появятся после подключения команд API");
+  act: async (id, action, employeeId) => {
+    const context = await request<ApiApplicationContext>(
+      `/applications/${id}/actions`,
+      apiApplicationContextSchema,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          action,
+          employeeId,
+          idempotencyKey: `arm-${crypto.randomUUID()}`,
+        }),
+      },
+    );
+    return toArmApplicationContext(context);
   },
   simulateClient: async () => {
     throw new Error("Ответы клиента появятся после подключения команд API");

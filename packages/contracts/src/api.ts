@@ -16,6 +16,13 @@ import {
   creditProductSchema,
 } from "./product-catalog.js";
 
+const apiOfferTermsSchema = z.object({
+  productId: creditProductIdSchema,
+  amount: z.number(),
+  termMonths: z.number().int(),
+  ratePct: z.number(),
+});
+
 export const apiProductIdSchema = creditProductIdSchema;
 export type ApiProductId = CreditProductId;
 
@@ -140,6 +147,20 @@ export const apiApplicationSchema = z.object({
   purpose: z.string(),
   status: publicApplicationStatusSchema,
   offerKind: offerKindSchema.nullable(),
+  offer: apiOfferTermsSchema.nullable().default(null),
+  requestedInfo: z.array(z.string()).default([]),
+  rejectReason: z.string().nullable().default(null),
+  assigneeId: z.string().nullable().default(null),
+  urgent: z.boolean().default(false),
+  urgentReason: z.string().nullable().default(null),
+  comments: z.array(z.object({
+    id: z.string(),
+    applicationId: z.string(),
+    at: z.string(),
+    author: z.object({ kind: z.enum(["system", "employee", "client"]), name: z.string() }),
+    visibility: z.enum(["client", "internal", "handoff"]),
+    body: z.string(),
+  })).default([]),
   checkJobId: z.string().nullable(),
   scoring: apiScoringSchema.nullable(),
   createdAt: z.string(),

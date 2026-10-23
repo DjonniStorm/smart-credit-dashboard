@@ -241,6 +241,15 @@ export type EmployeeAction = z.infer<typeof employeeActionSchema>;
 export const applicationCommandSchema = employeeActionSchema;
 export type ApplicationCommand = EmployeeAction;
 
+export const applicationActionRequestSchema = z.object({
+  action: employeeActionSchema,
+  employeeId: z.string().min(1),
+  idempotencyKey: z.string().min(8).max(128),
+});
+export type ApplicationActionRequest = z.infer<
+  typeof applicationActionRequestSchema
+>;
+
 /** Ответ клиента. В прототипе АРМ его моделирует сотрудник вместо кабинета клиента. */
 export const clientResponseSchema = z.enum([
   "documents_sent",
