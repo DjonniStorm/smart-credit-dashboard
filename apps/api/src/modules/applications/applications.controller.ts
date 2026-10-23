@@ -1,26 +1,53 @@
-import { Body, Controller, Get, HttpCode, Param, Post } from "@nestjs/common";
-import { CommandBus } from "@nestjs/cqrs";
-import { ApiOkResponse, ApiOperation } from "@nestjs/swagger";
-import { ZodSerializerDto, createZodDto } from "nestjs-zod";
 import {
-  apiApplicationResponseSchema,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  UseGuards,
+} from "@nestjs/common";
+import {
+  ApiConflictResponse,
+  ApiForbiddenResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiUnauthorizedResponse,
+} from "@nestjs/swagger";
+import { ZodSerializerDto, createZodDto } from "nestjs-zod";
+
+import {
   apiApplicationContextSchema,
+  apiApplicationResponseSchema,
   apiApplicationSchema,
   apiCheckRequestSchema,
   apiCreateApplicationSchema,
   apiJobSchema,
+  apiQueueItemSchema,
 } from "@repo/contracts/api";
-import { applicationActionRequestSchema } from "@repo/contracts/application";
+import type { Employee } from "@repo/contracts/application";
+import { applicationActionRequestSchema } from "@repo/contracts/workflow";
 
+import {
+  CurrentEmployee,
+  EmployeeSessionGuard,
+} from "../auth/employee-session.guard.ts";
+import { ApplicationActionsService } from "./application-actions.service.ts";
 import { ApplicationsService } from "./applications.service.ts";
 import { ApplyApplicationActionCommand } from "./commands/apply-application-action.command.ts";
 
 class CreateApplicationDto extends createZodDto(apiCreateApplicationSchema) {}
-class CreateApplicationResponseDto extends createZodDto(apiApplicationResponseSchema) {}
+class CreateApplicationResponseDto extends createZodDto(
+  apiApplicationResponseSchema,
+) {}
 class ApplicationContextDto extends createZodDto(apiApplicationContextSchema) {}
 class ApplicationCheckDto extends createZodDto(apiCheckRequestSchema) {}
 class ApplicationDto extends createZodDto(apiApplicationSchema) {}
 class ApplicationListDto extends createZodDto(apiApplicationSchema.array()) {}
+class QueueDto extends createZodDto(apiQueueItemSchema.array()) {}
+class ApplicationActionDto extends createZodDto(
+  applicationActionRequestSchema,
+) {}
 class JobDto extends createZodDto(apiJobSchema) {}
 class ApplicationActionRequestDto extends createZodDto(applicationActionRequestSchema) {}
 
@@ -28,8 +55,37 @@ class ApplicationActionRequestDto extends createZodDto(applicationActionRequestS
 export class ApplicationsController {
   constructor(
     private readonly applications: ApplicationsService,
-    private readonly commands: CommandBus,
+    private readonly actions: ApplicationActionsService,
   ) {}
+
+  @Get("queue")
+  @UseGuards(EmployeeSessionGuard)
+  @ApiOperation({ operationId: "ApplicationsController_queue" })
+  @ApiOkResponse({ type: QueueDto })
+  @ApiUnauthorizedResponse({ description: "Нет сессии сотрудника" })
+  @ZodSerializerDto(QueueDto)
+  queue(): Promise<QueueDto> {
+    return this.applications.listQueue();
+  }
+
+  @Post(":id/actions")
+  @HttpCode(200)
+  @UseGuards(EmployeeSessionGuard)
+  @ApiOperation({ operationId: "ApplicationsController_act" })
+  @ApiOkResponse({ type: ApplicationContextDto })
+  @ApiUnauthorizedResponse({ description: "Нет сессии сотрудника" })
+  @ApiForbiddenResponse({ description: "Лимит одобрения или роль" })
+  @ApiConflictResponse({
+    description: "Переход запрещён статусом, паузой или блокировкой",
+  })
+  @ZodSerializerDto(ApplicationContextDto)
+  async act(
+    @Param("id") id: string,
+    @Body() body: ApplicationActionDto,
+    @CurrentEmployee() employee: Employee,
+  ): Promise<ApplicationContextDto> {
+    return this.actions.execute(id, body, employee);
+  }
 
   @Get()
   @ApiOkResponse({ type: ApplicationDto, isArray: true })
@@ -42,7 +98,9 @@ export class ApplicationsController {
   @ApiOperation({ operationId: "ApplicationsController_create" })
   @ApiOkResponse({ type: CreateApplicationResponseDto })
   @ZodSerializerDto(CreateApplicationResponseDto)
-  async create(@Body() body: CreateApplicationDto): Promise<CreateApplicationResponseDto> {
+  async create(
+    @Body() body: CreateApplicationDto,
+  ): Promise<CreateApplicationResponseDto> {
     return this.applications.createApiApplication(body);
   }
 
@@ -66,7 +124,10 @@ export class ApplicationsController {
   @ApiOperation({ operationId: "ApplicationsController_startCheck" })
   @ApiOkResponse({ type: JobDto })
   @ZodSerializerDto(JobDto)
-  async check(@Param("id") id: string, @Body() body: ApplicationCheckDto): Promise<JobDto> {
+  async check(
+    @Param("id") id: string,
+    @Body() body: ApplicationCheckDto,
+  ): Promise<JobDto> {
     return this.applications.startApiCheck(id, body);
   }
 

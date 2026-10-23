@@ -46,6 +46,41 @@ export class DemoDataStore implements OnModuleInit {
       : [];
   }
 
+  async getEmployee(id: string): Promise<Employee | null> {
+    const rows = await this.db.query(
+      "select payload from demo_employees where id=$1",
+      [id],
+    );
+    return rows[0]?.payload ?? null;
+  }
+
+  async createEmployeeSession(
+    employeeId: string,
+    token: string,
+  ): Promise<void> {
+    await this.db.query(
+      `insert into employee_sessions(token, employee_id, created_at)
+       values($1,$2,now())`,
+      [token, employeeId],
+    );
+  }
+
+  async getEmployeeBySession(token: string): Promise<Employee | null> {
+    const rows = await this.db.query(
+      `select e.payload from employee_sessions s
+       join demo_employees e on e.id=s.employee_id
+       where s.token=$1`,
+      [token],
+    );
+    return rows[0]?.payload ?? null;
+  }
+
+  async deleteEmployeeSession(token: string): Promise<void> {
+    await this.db.query("delete from employee_sessions where token=$1", [
+      token,
+    ]);
+  }
+
   async getSources(inn: string): Promise<DemoSourceRecord | null> {
     const rows = await this.db.query(
       "select payload from demo_sources where inn=$1",
@@ -123,6 +158,11 @@ export class DemoDataStore implements OnModuleInit {
       create table if not exists demo_employees (
         id text primary key,
         payload jsonb not null
+      );
+      create table if not exists employee_sessions (
+        token text primary key,
+        employee_id text not null references demo_employees(id),
+        created_at timestamptz not null default now()
       );
       create table if not exists demo_sources (
         inn text primary key,

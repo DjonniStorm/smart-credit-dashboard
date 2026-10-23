@@ -6,6 +6,7 @@ import type {
   ApiApplicationContext,
   ApiApplicationResponse,
   ApiJob,
+  ApiQueueItem,
 } from "@repo/contracts/api";
 import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
 import type {
@@ -27,6 +28,7 @@ import {
   toApiApplication,
   toApiDecision,
   toApiJob,
+  toApiManagement,
   toApiScoring,
 } from "./api-mapper.ts";
 import { AutonomyStore } from "./autonomy.store.ts";
@@ -57,19 +59,37 @@ export class ApplicationsService {
 
   async listApiApplications(): Promise<ApiApplication[]> {
     const applications = await this.store.listApplications();
-    return applications.map(toApiApplication);
+    return applications.map((application) => toApiApplication(application));
+  }
+
+  /** Очередь АРМ: заявки с управленческим состоянием, только для сотрудников. */
+  async listQueue(): Promise<ApiQueueItem[]> {
+    const applications = await this.store.listApplications();
+    return applications.map((application) => ({
+      application: toApiApplication(application),
+      management: toApiManagement(application, []),
+    }));
   }
 
   async getApiApplication(id: string): Promise<ApiApplication> {
-    return toApiApplication(await this.getApplication(id));
+    const application = await this.getApplication(id);
+    return toApiApplication(
+      application,
+      await this.store.listComments(id, "client"),
+    );
   }
 
   async getApiApplicationContext(id: string): Promise<ApiApplicationContext> {
     const application = await this.getApplication(id);
     const companyProfile: CompanyProfileResponse =
       await this.profiles.getProfile(application.inn);
+    const comments = await this.store.listComments(application.id);
     return {
-      application: toApiApplication(application),
+      application: toApiApplication(
+        application,
+        comments.filter((comment) => comment.visibility === "client"),
+      ),
+      management: toApiManagement(application, comments),
       companyProfile,
       checks: companyProfile.sources,
       decision: application.decision,
