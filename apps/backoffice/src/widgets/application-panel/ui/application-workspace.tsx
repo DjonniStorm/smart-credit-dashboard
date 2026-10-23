@@ -15,6 +15,8 @@ import Link from "next/link";
 import { useState } from "react";
 
 import type { Application, Employee } from "@repo/contracts/application";
+import { backofficeText, i18n } from "@repo/i18n";
+import { CompanyPassport } from "@repo/ui/company-passport";
 import { StateBlock } from "@repo/ui/state-block";
 
 import {
@@ -24,10 +26,12 @@ import {
   FactGrid,
   ScoreBreakdown,
   StatusTag,
+  formatDate,
   formatDateTimeFull,
   productLabel,
   useApplication,
   useProducts,
+  useCompanyProfile,
 } from "@/entities/application";
 import { useEmployees, useSignedInEmployee } from "@/entities/employee";
 import { ActionBar, RerunCheckButton } from "@/features/application-actions";
@@ -37,6 +41,7 @@ import classes from "./application-panel.module.css";
 import { Outcome, RiskBlock, Summary } from "./parts";
 
 type Tab = "data" | "checks" | "decision" | "history";
+const tx = backofficeText(i18n.defaultLocale);
 
 /** Рабочее место по одной заявке: данные, проверки, скоринг, решение, история. */
 export function ApplicationWorkspace({ id }: { id: string }) {
@@ -47,7 +52,7 @@ export function ApplicationWorkspace({ id }: { id: string }) {
   if (query.isPending) {
     return (
       <div className={classes.page}>
-        <StateBlock kind="loading" title="Загружаем заявку" />
+        <StateBlock kind="loading" title={tx.application.loading} />
       </div>
     );
   }
@@ -57,10 +62,10 @@ export function ApplicationWorkspace({ id }: { id: string }) {
         <BackLink />
         <StateBlock
           kind="error"
-          title="Заявка не загрузилась"
+          title={tx.application.error}
           action={
             <Button variant="default" onClick={() => void query.refetch()}>
-              Повторить
+              {tx.application.retry}
             </Button>
           }
         >
@@ -89,7 +94,7 @@ function BackLink() {
     >
       <Group gap={4} component="span">
         <IconArrowLeft size={16} aria-hidden />
-        Очередь заявок
+        {tx.application.backToQueue}
       </Group>
     </Anchor>
   );
@@ -115,6 +120,7 @@ function Workspace({
   const assignee = employees.data?.find((e) => e.id === app.assigneeId);
   const product = products.find((p) => p.id === app.request.productId);
   const { applicant, request } = app;
+  const companyProfile = useCompanyProfile(applicant.inn);
 
   return (
     <div className={classes.page}>
@@ -124,16 +130,16 @@ function Workspace({
           <Group justify="space-between" align="flex-end" gap="sm">
             <Stack gap={2}>
               <Title order={1} className={classes.pageTitle}>
-                Заявка № {app.number}
+                {tx.application.number(app.number)}
               </Title>
               <Text c="dimmed" className={classes.num}>
-                {applicant.name}, ИНН {applicant.inn}
+                {applicant.name}, {tx.summary.inn} {applicant.inn}
               </Text>
             </Stack>
             <Group gap="sm">
               <StatusTag status={app.status} />
               <Text size="sm" c="dimmed" className={classes.num}>
-                Подана {formatDateTimeFull(app.createdAt)}
+                {tx.application.submitted(formatDateTimeFull(app.createdAt))}
               </Text>
             </Group>
           </Group>
@@ -143,38 +149,38 @@ function Workspace({
           <div className={classes.workspaceMain}>
             <Tabs value={tab} onChange={(v) => v && setTab(v as Tab)}>
               <Tabs.List mb="md">
-                <Tabs.Tab value="data">Данные</Tabs.Tab>
-                <Tabs.Tab value="checks">Проверки</Tabs.Tab>
-                <Tabs.Tab value="decision">Скоринг и решение</Tabs.Tab>
-                <Tabs.Tab value="history">История</Tabs.Tab>
+                <Tabs.Tab value="data">{tx.application.tabs.data}</Tabs.Tab>
+                <Tabs.Tab value="checks">{tx.application.tabs.checks}</Tabs.Tab>
+                <Tabs.Tab value="decision">{tx.application.tabs.decision}</Tabs.Tab>
+                <Tabs.Tab value="history">{tx.application.tabs.history}</Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel value="data">
                 <Stack gap="lg">
                   <Card>
                     <Stack gap="md">
-                      <Title order={3}>Заявка</Title>
+                      <Title order={3}>{tx.application.card.title}</Title>
                       <FactGrid
                         cols={3}
                         facts={[
                           {
-                            label: "Продукт",
+                            label: tx.application.card.product,
                             value: productLabel[request.productId],
                           },
-                          { label: "Сумма", value: formatRub(request.amount) },
+                          { label: tx.application.card.amount, value: formatRub(request.amount) },
                           {
-                            label: "Срок",
-                            value: `${request.termMonths} мес.`,
+                            label: tx.application.card.term,
+                            value: tx.application.card.termValue(request.termMonths),
                           },
-                          { label: "Цель", value: request.purpose },
+                          { label: tx.application.card.purpose, value: request.purpose },
                           {
-                            label: "Ставка продукта",
+                            label: tx.application.card.rate,
                             value: product
-                              ? `от ${product.ratePct} %`
-                              : "нет данных",
+                              ? tx.application.card.rateValue(product.ratePct)
+                              : tx.application.card.noProductData,
                           },
                           {
-                            label: "Ответственный",
-                            value: assignee?.name ?? "Не назначен",
+                            label: tx.application.card.assignee,
+                            value: assignee?.name ?? tx.application.card.unassigned,
                           },
                         ]}
                       />
@@ -182,40 +188,34 @@ function Workspace({
                   </Card>
                   <Card>
                     <Stack gap="md">
-                      <Title order={3}>Клиент</Title>
+                      <Title order={3}>{tx.application.applicant.title}</Title>
                       <FactGrid
                         cols={3}
                         facts={[
+                          { label: tx.application.applicant.applicant, value: applicant.name },
+                          { label: tx.application.applicant.ogrn, value: applicant.ogrn },
+                          { label: tx.application.applicant.director, value: applicant.director },
+                          { label: tx.application.applicant.region, value: applicant.region },
                           {
-                            label: "Форма",
-                            value:
-                              applicant.legalForm === "ip"
-                                ? "Индивидуальный предприниматель"
-                                : "ООО",
-                          },
-                          { label: "ИНН", value: applicant.inn },
-                          {
-                            label:
-                              applicant.legalForm === "ip" ? "ОГРНИП" : "ОГРН",
-                            value: applicant.ogrn,
-                          },
-                          { label: "Руководитель", value: applicant.director },
-                          { label: "ОКВЭД", value: applicant.okved },
-                          { label: "Регион", value: applicant.region },
-                          {
-                            label: "Дата регистрации",
-                            value: new Date(
-                              applicant.registeredAt,
-                            ).toLocaleDateString("ru-RU"),
+                            label: tx.application.applicant.revenue,
+                            value: formatRub(applicant.annualRevenue),
                           },
                           {
-                            label: "Выручка за 12 мес.",
-                            value: `${formatRub(applicant.annualRevenue)}, со слов клиента`,
+                            label: tx.application.applicant.registeredAt,
+                            value: formatDate(applicant.registeredAt),
                           },
                         ]}
                       />
                     </Stack>
                   </Card>
+                  <CompanyPassport
+                    profile={companyProfile.data}
+                    mode="backoffice"
+                    density="full"
+                    loading={companyProfile.isPending}
+                    error={companyProfile.isError ? companyProfile.error.message : null}
+                    retry={() => void companyProfile.refetch()}
+                  />
                 </Stack>
               </Tabs.Panel>
 
@@ -240,19 +240,17 @@ function Workspace({
                   <Stack gap="lg">
                     <Card>
                       <Stack gap="md">
-                        <Title order={3}>Скоринг: оценка риска</Title>
+                        <Title order={3}>{tx.application.decision.scoringTitle}</Title>
                         <ScoreBreakdown scoring={app.scoring} />
                       </Stack>
                     </Card>
                     <Card>
                       <Stack gap="md">
                         <Title order={3}>
-                          Кредитное решение: правила продукта
+                          {tx.application.decision.rulesTitle}
                         </Title>
                         <Text size="sm" c="dimmed">
-                          Скоринг говорит о риске. Решение учитывает ещё
-                          продукт, сумму, срок и проверки, поэтому при том же
-                          балле условия по разным продуктам могут отличаться.
+                          {tx.application.decision.explanation}
                         </Text>
                         <DecisionRules decision={app.decision} />
                       </Stack>
@@ -263,11 +261,11 @@ function Workspace({
                     kind={app.waitingOn === "system" ? "loading" : "empty"}
                     title={
                       app.waitingOn === "system"
-                        ? "Ждём ответы источников"
-                        : "Скоринга ещё нет"
+                        ? tx.application.decision.waitingSources
+                        : tx.application.decision.noScoring
                     }
                   >
-                    Скоринг считается, когда ответят все источники.
+                    {tx.application.decision.waitingText}
                   </StateBlock>
                 )}
               </Tabs.Panel>
@@ -280,7 +278,7 @@ function Workspace({
 
           <aside
             className={classes.workspaceAside}
-            aria-label="Сводка и действия"
+            aria-label={tx.application.aria.summary}
           >
             <Summary app={app} />
             <RiskBlock app={app} />

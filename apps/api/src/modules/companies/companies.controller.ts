@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
   Param,
   Post,
+  UseGuards,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import {
@@ -17,6 +19,7 @@ import {
 import { ZodSerializerDto } from "nestjs-zod";
 
 import { GrantBkiConsentCommand } from "./commands/grant-bki-consent.command.ts";
+import { CurrentActor, SessionGuard, type AuthenticatedActor } from "../auth/session.guard.ts";
 import { CompanyCheckDto, InnParamDto } from "./dto/company-check.dto.ts";
 import { BkiConsentDto, CompanyProfileDto } from "./dto/company-profile.dto.ts";
 import { CheckCompanyQuery } from "./queries/check-company.query.ts";
@@ -31,6 +34,7 @@ export class CompaniesController {
 
   /** Сквозная проверка синтетических источников и baseline scoring. */
   @Get(":inn/check")
+  @UseGuards(SessionGuard)
   @ApiParam({ name: "inn", required: true })
   @ApiOkResponse({ type: CompanyCheckDto })
   @ZodSerializerDto(CompanyCheckDto)
@@ -39,6 +43,7 @@ export class CompaniesController {
   }
 
   @Get(":inn/profile")
+  @UseGuards(SessionGuard)
   @ApiOperation({ operationId: "CompaniesController_profile" })
   @ApiParam({ name: "inn", required: true })
   @ApiOkResponse({ type: CompanyProfileDto })
@@ -48,6 +53,7 @@ export class CompaniesController {
   }
 
   @Post(":inn/consents/bki")
+  @UseGuards(SessionGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ operationId: "CompaniesController_grantBkiConsent" })
   @ApiParam({ name: "inn", required: true })
@@ -57,8 +63,14 @@ export class CompaniesController {
   grantBkiConsent(
     @Param() params: InnParamDto,
     @Body() body: BkiConsentDto,
+    @CurrentActor() actor: AuthenticatedActor,
   ): Promise<CompanyProfileDto> {
-    void body;
+    if (body.granted !== true) {
+      throw new ForbiddenException("Согласие на БКИ не подтверждено");
+    }
+    if (actor.kind !== "client" || actor.session.account.company.inn !== params.inn) {
+      throw new ForbiddenException("Согласие может выдать только клиент своей компании");
+    }
     return this.commands.execute(new GrantBkiConsentCommand(params.inn));
   }
 }

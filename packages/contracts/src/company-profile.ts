@@ -22,6 +22,14 @@ export const companySourceStateSchema = z.enum([
 ]);
 export type CompanySourceState = z.infer<typeof companySourceStateSchema>;
 
+export const companySourceActionSchema = z.enum([
+  "none",
+  "grant_bki_consent",
+  "retry_source",
+  "manual_review",
+]);
+export type CompanySourceAction = z.infer<typeof companySourceActionSchema>;
+
 export const companyProfileSchema = z.object({
   inn: innSchema,
   ogrn: z.string().min(1),
@@ -45,11 +53,25 @@ export const companyFactSchema = z.object({
 });
 export type CompanyFact = z.infer<typeof companyFactSchema>;
 
+export const companyDiscrepancySchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+  firstValue: z.string(),
+  secondValue: z.string(),
+  firstSource: companySourceSchema,
+  secondSource: companySourceSchema,
+  nextStep: z.string().min(1),
+});
+export type CompanyDiscrepancy = z.infer<typeof companyDiscrepancySchema>;
+
 export const companySourceSnapshotSchema = z.object({
   source: companySourceSchema,
   state: companySourceStateSchema,
   summary: z.string().min(1),
   facts: z.array(companyFactSchema),
+  discrepancies: z.array(companyDiscrepancySchema).default([]),
+  action: companySourceActionSchema.default("none"),
+  reason: z.string().nullable().default(null),
   checkedAt: z.string().nullable(),
 });
 export type CompanySourceSnapshot = z.infer<typeof companySourceSnapshotSchema>;

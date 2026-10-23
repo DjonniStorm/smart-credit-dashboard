@@ -84,6 +84,17 @@ export type CompanyProfileDto = {
             state: 'pending' | 'confirmed' | 'discrepancy' | 'unavailable' | 'manual_check';
             checkedAt: unknown;
         }>;
+        discrepancies?: Array<{
+            key: string;
+            label: string;
+            firstValue: string;
+            secondValue: string;
+            firstSource: 'egrul' | 'fns' | 'bki' | 'bank_turnover';
+            secondSource: 'egrul' | 'fns' | 'bki' | 'bank_turnover';
+            nextStep: string;
+        }>;
+        action?: 'none' | 'grant_bki_consent' | 'retry_source' | 'manual_review';
+        reason?: unknown;
         checkedAt: unknown;
     }>;
     bkiConsent: {

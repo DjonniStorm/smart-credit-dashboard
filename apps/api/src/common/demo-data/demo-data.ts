@@ -1,12 +1,18 @@
 import type { AutonomyConfig, AutonomyMetrics } from "@repo/contracts";
 import type { BkiReport, EgrulRecord, FnsProfile } from "@repo/contracts";
 import type { ApiProductId, DemoAccountApi } from "@repo/contracts/api";
+import type { CompanyDiscrepancy, CompanySource } from "@repo/contracts/company-profile";
 import type { Employee } from "@repo/contracts/application";
 
 export interface DemoSourceRecord {
   egrul: EgrulRecord;
   bki: BkiReport;
   fns: FnsProfile;
+}
+
+export interface DemoCompanyProfileScenario {
+  unavailableSources: CompanySource[];
+  discrepancies: CompanyDiscrepancy[];
 }
 
 export interface DemoAutonomyPolicy {
@@ -167,11 +173,28 @@ export const demoSources: Record<string, DemoSourceRecord> = {
       overdueDays: 47,
     },
     fns: {
-      inn: "9903000033",
+      inn: "9903000034",
       taxDebtRub: 0,
       employees: 9,
       massRegistrationAddress: false,
     },
+  },
+};
+
+export const demoCompanyProfileScenarios: Record<string, DemoCompanyProfileScenario> = {
+  "9903000033": {
+    unavailableSources: ["bank_turnover"],
+    discrepancies: [
+      {
+        key: "inn",
+        label: "ИНН источника",
+        firstValue: "9903000033",
+        secondValue: "9903000034",
+        firstSource: "egrul",
+        secondSource: "fns",
+        nextStep: "Подтвердите ИНН по регистрационным документам",
+      },
+    ],
   },
 };
 

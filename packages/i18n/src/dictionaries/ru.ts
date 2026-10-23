@@ -1,4 +1,4 @@
-import { Message } from "../message";
+import { Message } from "../message.js";
 
 export const ru = {
   [Message.CabinetTitle]: "Кабинет предпринимателя",

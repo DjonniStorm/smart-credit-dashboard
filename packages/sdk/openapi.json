@@ -18,7 +18,9 @@
           }
         },
         "summary": "",
-        "tags": ["Health"]
+        "tags": [
+          "Health"
+        ]
       }
     },
     "/v1/companies/{inn}/check": {
@@ -45,7 +47,9 @@
           }
         },
         "summary": "",
-        "tags": ["Companies"]
+        "tags": [
+          "Companies"
+        ]
       }
     },
     "/v1/companies/{inn}/profile": {
@@ -72,7 +76,9 @@
           }
         },
         "summary": "",
-        "tags": ["Companies"]
+        "tags": [
+          "Companies"
+        ]
       }
     },
     "/v1/companies/{inn}/consents/bki": {
@@ -109,7 +115,9 @@
           }
         },
         "summary": "",
-        "tags": ["Companies"]
+        "tags": [
+          "Companies"
+        ]
       }
     }
   },
@@ -128,21 +136,33 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["ok", "degraded"]
+            "enum": [
+              "ok",
+              "degraded"
+            ]
           },
           "service": {
             "type": "string",
-            "enum": ["api", "scoring"]
+            "enum": [
+              "api",
+              "scoring"
+            ]
           },
           "checks": {
             "type": "object",
             "additionalProperties": {
               "type": "string",
-              "enum": ["up", "down"]
+              "enum": [
+                "up",
+                "down"
+              ]
             }
           }
         },
-        "required": ["status", "service"]
+        "required": [
+          "status",
+          "service"
+        ]
       },
       "CompanyCheckDto": {
         "type": "object",
@@ -241,7 +261,11 @@
                 ]
               }
             },
-            "required": ["egrul", "bki", "fns"]
+            "required": [
+              "egrul",
+              "bki",
+              "fns"
+            ]
           },
           "scoring": {
             "type": "object",
@@ -276,7 +300,12 @@
                       "type": "number"
                     }
                   },
-                  "required": ["id", "label", "value", "impact"]
+                  "required": [
+                    "id",
+                    "label",
+                    "value",
+                    "impact"
+                  ]
                 }
               },
               "model_version": {
@@ -284,7 +313,12 @@
               },
               "grade": {
                 "type": "string",
-                "enum": ["A", "B", "C", "D"]
+                "enum": [
+                  "A",
+                  "B",
+                  "C",
+                  "D"
+                ]
               },
               "pd": {
                 "type": "number",
@@ -293,7 +327,11 @@
               },
               "risk_band": {
                 "type": "string",
-                "enum": ["low", "moderate", "high"]
+                "enum": [
+                  "low",
+                  "moderate",
+                  "high"
+                ]
               },
               "health_index": {
                 "type": "number",
@@ -339,10 +377,18 @@
                 }
               }
             },
-            "required": ["inn", "score", "model"]
+            "required": [
+              "inn",
+              "score",
+              "model"
+            ]
           }
         },
-        "required": ["inn", "sources", "scoring"]
+        "required": [
+          "inn",
+          "sources",
+          "scoring"
+        ]
       },
       "CompanyProfileDto": {
         "type": "object",
@@ -364,7 +410,10 @@
               },
               "legalForm": {
                 "type": "string",
-                "enum": ["ip", "ooo"]
+                "enum": [
+                  "ip",
+                  "ooo"
+                ]
               },
               "registeredAt": {
                 "type": "string",
@@ -406,7 +455,12 @@
               "properties": {
                 "source": {
                   "type": "string",
-                  "enum": ["egrul", "fns", "bki", "bank_turnover"]
+                  "enum": [
+                    "egrul",
+                    "fns",
+                    "bki",
+                    "bank_turnover"
+                  ]
                 },
                 "state": {
                   "type": "string",
@@ -440,7 +494,12 @@
                       },
                       "source": {
                         "type": "string",
-                        "enum": ["egrul", "fns", "bki", "bank_turnover"]
+                        "enum": [
+                          "egrul",
+                          "fns",
+                          "bki",
+                          "bank_turnover"
+                        ]
                       },
                       "state": {
                         "type": "string",
@@ -453,7 +512,10 @@
                         ]
                       },
                       "checkedAt": {
-                        "type": ["string", "null"]
+                        "type": [
+                          "string",
+                          "null"
+                        ]
                       }
                     },
                     "required": [
@@ -466,11 +528,91 @@
                     ]
                   }
                 },
+                "discrepancies": {
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "label": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "firstValue": {
+                        "type": "string"
+                      },
+                      "secondValue": {
+                        "type": "string"
+                      },
+                      "firstSource": {
+                        "type": "string",
+                        "enum": [
+                          "egrul",
+                          "fns",
+                          "bki",
+                          "bank_turnover"
+                        ]
+                      },
+                      "secondSource": {
+                        "type": "string",
+                        "enum": [
+                          "egrul",
+                          "fns",
+                          "bki",
+                          "bank_turnover"
+                        ]
+                      },
+                      "nextStep": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "label",
+                      "firstValue",
+                      "secondValue",
+                      "firstSource",
+                      "secondSource",
+                      "nextStep"
+                    ]
+                  }
+                },
+                "action": {
+                  "default": "none",
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "grant_bki_consent",
+                    "retry_source",
+                    "manual_review"
+                  ]
+                },
+                "reason": {
+                  "default": null,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "checkedAt": {
-                  "type": ["string", "null"]
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
-              "required": ["source", "state", "summary", "facts", "checkedAt"]
+              "required": [
+                "source",
+                "state",
+                "summary",
+                "facts",
+                "checkedAt"
+              ]
             }
           },
           "bkiConsent": {
@@ -478,26 +620,43 @@
             "properties": {
               "status": {
                 "type": "string",
-                "enum": ["required", "granted"]
+                "enum": [
+                  "required",
+                  "granted"
+                ]
               },
               "grantedAt": {
-                "type": ["string", "null"]
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
-            "required": ["status", "grantedAt"]
+            "required": [
+              "status",
+              "grantedAt"
+            ]
           }
         },
-        "required": ["profile", "sources", "bkiConsent"]
+        "required": [
+          "profile",
+          "sources",
+          "bkiConsent"
+        ]
       },
       "BkiConsentDto": {
         "type": "object",
         "properties": {
           "granted": {
             "type": "boolean",
-            "enum": [true]
+            "enum": [
+              true
+            ]
           }
         },
-        "required": ["granted"]
+        "required": [
+          "granted"
+        ]
       }
     }
   }

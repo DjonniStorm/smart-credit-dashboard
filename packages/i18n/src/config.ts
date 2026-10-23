@@ -1,4 +1,4 @@
-import { Locale } from "./locale";
+import { Locale } from "./locale.js";
 
 export const i18n = {
   defaultLocale: Locale.Ru,

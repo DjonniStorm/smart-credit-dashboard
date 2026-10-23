@@ -485,6 +485,9 @@ importers:
       '@repo/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@repo/i18n':
+        specifier: workspace:*
+        version: link:../i18n
       '@tabler/icons-react':
         specifier: 3.49.0
         version: 3.49.0(react@19.2.8)
