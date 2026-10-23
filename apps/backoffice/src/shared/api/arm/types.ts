@@ -4,8 +4,8 @@ import type {
   Employee,
   EmployeeAction,
 } from "@repo/contracts/application";
-import type { CreditProduct } from "@repo/contracts/product-catalog";
 import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
+import type { CreditProduct } from "@repo/contracts/product-catalog";
 
 /** Продукт каталога и его ставка при текущей ключевой: ключевая + спред. */
 export type ArmProduct = CreditProduct & { ratePct: number };
@@ -24,6 +24,11 @@ export interface ArmApi {
   simulateClient(id: string, response: ClientResponse): Promise<Application>;
   listProducts(): Promise<ArmProduct[]>;
   listEmployees(): Promise<Employee[]>;
+  /** Открыть сессию сотрудника: без неё API не принимает команды. */
+  signInEmployee(employeeId: string): Promise<Employee>;
+  signOutEmployee(): Promise<void>;
+  /** Сотрудник текущей сессии, null если сессии нет или она истекла. */
+  currentEmployee(): Promise<Employee | null>;
   /** Вернуть демо-данные к началу. */
   reset(): Promise<void>;
 }

@@ -1,49 +1,50 @@
 import type {
   ApiApplication,
   ApiApplicationContext,
+  ApiApplicationManagement,
+  ApiAuditEvent,
   ApiCheckSnapshot,
   ApiProductCatalog,
+  ApiQueueItem,
 } from "@repo/contracts/api";
-import type {
-  Application,
-  Employee,
-} from "@repo/contracts/application";
+import type { Application, Employee } from "@repo/contracts/application";
 import { productRate } from "@repo/contracts/product-catalog";
 
 import type { ArmProduct } from "./types";
 
-function statusOf(status: ApiApplication["status"]): Application["status"] {
+function statusOf(
+  status: ApiApplicationManagement["businessStatus"],
+): Application["status"] {
   switch (status) {
-    case "DRAFT":
+    case "draft":
       return "draft";
-    case "NEEDS_INFO":
+    case "needs_client":
       return "needs_client";
-    case "OFFERED":
+    case "counter_offer":
+      return "counter_offer";
+    case "approved":
       return "approved";
-    case "REJECTED":
-    case "CANCELLED":
+    case "rejected":
+    case "cancelled":
       return "rejected";
-    case "BLOCKED":
-      return "blocked";
-    case "FUNDED":
-      return "disbursed";
     default:
       return "in_review";
   }
 }
 
-export function toArmApplication(application: ApiApplication): Application {
-  return mapApplication(application);
+export function toArmApplication(item: ApiQueueItem): Application {
+  return mapApplication(item.application, item.management);
 }
 
 export function toArmApplicationContext(
   context: ApiApplicationContext,
 ): Application {
-  return mapApplication(context.application, context);
+  return mapApplication(context.application, context.management, context);
 }
 
 function mapApplication(
   application: ApiApplication,
+  management: ApiApplicationManagement,
   context?: ApiApplicationContext,
 ): Application {
   const scoring = application.scoring;
@@ -53,17 +54,17 @@ function mapApplication(
     number: application.number,
     createdAt: application.createdAt,
     updatedAt: application.updatedAt,
-    status: statusOf(application.status),
-    stage: scoring ? "decision" : "scoring",
-    waitingOn: scoring ? "employee" : "system",
-    hold: application.hold as Application["hold"],
-    urgent: application.urgent,
-    urgentReason: application.urgentReason,
+    status: statusOf(management.businessStatus),
+    stage: management.stage,
+    waitingOn: management.waitingOn,
+    hold: management.hold,
+    urgent: management.urgent,
+    urgentReason: management.urgentReason,
     autonomy: context?.autonomy,
-    comments: application.comments,
-    handoff: application.handoff,
-    blocker: scoring?.reasons[0] ?? "Проверка заявки выполняется",
-    assigneeId: application.assigneeId,
+    comments: management.comments,
+    handoff: management.handoff,
+    blocker: management.blocker,
+    assigneeId: management.assigneeId,
     applicant: {
       inn: application.inn,
       ogrn: profile?.ogrn ?? "Не загружен",
@@ -82,9 +83,11 @@ function mapApplication(
       purpose: application.purpose,
     },
     checks: context
-      ? context.checks.map(toCheck).filter((check): check is Application["checks"][number] => {
-          return check !== null;
-        })
+      ? context.checks
+          .map(toCheck)
+          .filter((check): check is Application["checks"][number] => {
+            return check !== null;
+          })
       : [],
     scoring: scoring
       ? {
@@ -132,37 +135,69 @@ function mapApplication(
       : null,
     offer: application.offer,
     requestedInfo: application.requestedInfo,
-    rejectReason: application.rejectReason as Application["rejectReason"],
-    events:
-      context?.audit.map((event) => {
-        return {
-          id: event.id,
-          applicationId: event.applicationId,
-          at: event.at,
-          actor: { kind: "system" as const, name: "Система" },
-          title: event.kind,
-          comment: null,
-          fromStatus: null,
-          toStatus: null,
-          kind: "action" as const,
-          metadata: Object.fromEntries(
-            Object.entries(event.metadata).map(([key, value]) => {
-              return [key, String(value)];
-            }),
-          ),
-        };
-      }) ?? [],
+    rejectReason: application.rejectReason,
+    events: context?.audit.map(toArmEvent) ?? [],
   };
 }
 
-function factorSource(source?: string): "egrul" | "fns" | "bki" | "application" {
+const eventKinds = new Set([
+  "status_changed",
+  "action",
+  "comment_added",
+  "handoff",
+  "hold",
+]);
+
+const armStatusByWorkflow: Record<string, Application["status"]> = {
+  draft: "draft",
+  in_review: "in_review",
+  needs_client: "needs_client",
+  approved: "approved",
+  counter_offer: "counter_offer",
+  rejected: "rejected",
+  cancelled: "rejected",
+};
+
+/**
+ * Событие сотрудника несёт автора, заголовок и переход статуса в metadata;
+ * остальные события конвейера показываются как системные.
+ */
+function toArmEvent(event: ApiAuditEvent): Application["events"][number] {
+  const metadata = Object.fromEntries(
+    Object.entries(event.metadata).map(([key, value]) => [key, String(value)]),
+  );
+  const byEmployee = metadata.actorKind === "employee";
+  return {
+    id: event.id,
+    applicationId: event.applicationId,
+    at: event.at,
+    actor: byEmployee
+      ? { kind: "employee", name: metadata.actorName ?? "Сотрудник" }
+      : { kind: "system", name: "Система" },
+    title: metadata.title ?? event.kind,
+    comment:
+      metadata.comment && metadata.comment !== "null" ? metadata.comment : null,
+    fromStatus: armStatusByWorkflow[metadata.fromStatus ?? ""] ?? null,
+    toStatus: armStatusByWorkflow[metadata.toStatus ?? ""] ?? null,
+    kind: eventKinds.has(event.kind)
+      ? (event.kind as NonNullable<Application["events"][number]["kind"]>)
+      : "action",
+    metadata,
+  };
+}
+
+function factorSource(
+  source?: string,
+): "egrul" | "fns" | "bki" | "application" {
   if (source === "egrul" || source === "fns" || source === "bki") {
     return source;
   }
   return "application";
 }
 
-function toCheck(snapshot: ApiCheckSnapshot): Application["checks"][number] | null {
+function toCheck(
+  snapshot: ApiCheckSnapshot,
+): Application["checks"][number] | null {
   if (snapshot.source === "bank_turnover") {
     return null;
   }

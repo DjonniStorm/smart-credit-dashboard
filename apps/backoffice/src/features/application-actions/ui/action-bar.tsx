@@ -1,34 +1,38 @@
 "use client";
 
-import { Button, Group, Stack, Text } from "@mantine/core";
+import {
+  ActionIcon,
+  Alert,
+  Button,
+  Group,
+  Menu,
+  Stack,
+  Text,
+} from "@mantine/core";
+import { IconAlertCircle, IconDotsVertical } from "@tabler/icons-react";
 import { useState } from "react";
 
-import type { Application, Employee, EmployeeAction } from "@repo/contracts/application";
+import type {
+  Application,
+  Employee,
+  EmployeeAction,
+} from "@repo/contracts/application";
 
-import type { ArmProduct } from "@/shared/api/arm";
 import { useApplicationAction } from "@/entities/application";
-import {
-  ApproveDialog,
-  CancelDialog,
-  CommentDialog,
-  CounterDialog,
-  HandoffDialog,
-  HoldDialog,
-  RejectDialog,
-  RequestDialog,
-} from "./dialogs";
+import { useEmployees } from "@/entities/employee";
+import type { ArmProduct } from "@/shared/api/arm";
+import { formatRub } from "@/shared/lib/money";
 
-type DialogKind =
-  | "request"
-  | "approve"
-  | "counter"
-  | "reject"
-  | "comment"
-  | "pause"
-  | "block"
-  | "handoff"
-  | "cancel";
+import { type DialogKind, buildActionLayout } from "../model/action-items";
+import { ActionDialogs } from "./action-dialogs";
+import { showActionFeedback } from "./alfi-feedback";
+import { RejectIcon } from "./dialogs";
 
+/**
+ * Действия по заявке одной строкой: красная кнопка следующего шага,
+ * вторичная и меню с остальным. Каждое действие уходит в API, меняет заявку
+ * и пишется в журнал.
+ */
 export function ActionBar({
   app,
   employee,
@@ -42,158 +46,137 @@ export function ActionBar({
 }) {
   const [dialog, setDialog] = useState<DialogKind | null>(null);
   const mutation = useApplicationAction(app.id, employee.id);
-  const close = () => {
-    setDialog(null);
+  const employees = useEmployees().data ?? [];
+
+  function run(action: EmployeeAction, done: string) {
+    mutation.mutate(action, {
+      onSuccess: () => {
+        setDialog(null);
+        showActionFeedback(action, done);
+      },
+    });
+  }
+  function open(next: DialogKind) {
     mutation.reset();
-  };
-  const submit = (action: EmployeeAction) => {
-    mutation.mutate(action, { onSuccess: close });
-  };
+    setDialog(next);
+  }
+
+  const { canDecide, overLimit, primary, secondary, menu, hint } =
+    buildActionLayout({
+      app,
+      employee,
+      employees,
+      pendingType: mutation.isPending
+        ? (mutation.variables?.type ?? null)
+        : null,
+      open,
+      run,
+    });
 
   return (
     <Stack gap="xs">
-      <Group gap="xs" wrap="wrap">
-        <Button size="xs" onClick={() => setDialog("request")}>
-          Запросить данные
-        </Button>
-        <Button size="xs" variant="light" onClick={() => setDialog("approve")}>
-          Одобрить
-        </Button>
-        <Button size="xs" variant="light" onClick={() => setDialog("counter")}>
-          Встречное предложение
-        </Button>
-        <Button size="xs" color="red" variant="light" onClick={() => setDialog("reject")}>
-          Отказать
-        </Button>
-        <Button size="xs" variant="default" onClick={() => setDialog("comment")}>
-          Комментарий
-        </Button>
-        <Button size="xs" variant="default" onClick={() => setDialog("handoff")}>
-          Передать
-        </Button>
-        <Button size="xs" variant="default" onClick={() => setDialog("pause")}>
-          Пауза
-        </Button>
-        <Button size="xs" variant="default" onClick={() => setDialog("block")}>
-          Блокировка
-        </Button>
-        <Button
-          size="xs"
-          variant="default"
-          onClick={() => setDialog("cancel")}
+      {canDecide && overLimit && (
+        <Alert
+          variant="light"
+          color="amber"
+          icon={<IconAlertCircle size={18} aria-hidden />}
+          p="xs"
         >
-          Отменить
-        </Button>
-        {app.hold && (
-          <Button
-            size="xs"
-            color="teal"
-            onClick={() => submit({ type: "resume", comment: "" })}
-            loading={mutation.isPending && dialog === null}
-          >
-            Продолжить
-          </Button>
-        )}
-        <Button
-          size="xs"
-          variant="default"
-          onClick={() =>
-            submit({
-              type: "set_urgent",
-              enabled: !app.urgent,
-              reason: app.urgent ? "" : "Срочная потребность клиента",
-            })
-          }
-          loading={mutation.isPending && dialog === null}
+          <Text size="xs">
+            Одобрить {formatRub(app.request.amount)} может руководитель: ваш
+            лимит {formatRub(employee.approvalLimit)}.
+          </Text>
+        </Alert>
+      )}
+      {hint && (
+        <Text size="xs" c="dimmed">
+          {hint}
+        </Text>
+      )}
+      {app.hold && (
+        <Alert
+          color={app.hold.state === "blocked" ? "red" : "yellow"}
+          variant="light"
+          p="xs"
         >
-          {app.urgent ? "Снять срочность" : "Срочный режим"}
-        </Button>
-      </Group>
-      <Text size="xs" c="dimmed">
-        Команды проходят серверную проверку статуса и сохраняются в аудите.
-      </Text>
-      {dialog === "request" && (
-        <RequestDialog
-          opened
-          app={app}
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={close}
-          onSubmit={submit}
-        />
+          <Text size="xs" fw={600}>
+            {app.hold.state === "blocked"
+              ? "Заявка заблокирована"
+              : "Заявка на паузе"}
+          </Text>
+          <Text size="xs">{app.hold.reason}</Text>
+        </Alert>
       )}
-      {dialog === "approve" && (
-        <ApproveDialog
-          opened
-          app={app}
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={close}
-          onSubmit={(comment) => submit({ type: "approve", comment })}
-        />
+      {mutation.error && !dialog && (
+        <Text size="xs" c="var(--kk-danger)" role="alert">
+          {mutation.error.message}
+        </Text>
       )}
-      {dialog === "counter" && (
-        <CounterDialog
-          opened
-          app={app}
-          products={products}
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={close}
-          onSubmit={submit}
-        />
+      {(primary || secondary || menu.length > 0) && (
+        <Group gap="xs" wrap="wrap">
+          {primary && (
+            <Button
+              size="sm"
+              loading={primary.loading}
+              onClick={primary.run}
+              style={{ flex: "1 1 auto" }}
+            >
+              {primary.label}
+            </Button>
+          )}
+          {secondary && (
+            <Button
+              size="sm"
+              variant="default"
+              loading={secondary.loading}
+              leftSection={secondary.destructive ? <RejectIcon /> : undefined}
+              onClick={secondary.run}
+              style={{ flex: "1 1 auto" }}
+            >
+              {secondary.label}
+            </Button>
+          )}
+          {menu.length > 0 && (
+            <Menu position="top-end" withinPortal>
+              <Menu.Target>
+                <ActionIcon
+                  variant="default"
+                  size={36}
+                  ml="auto"
+                  aria-label="Другие действия"
+                >
+                  <IconDotsVertical size={18} stroke={1.5} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                {menu.map((item) => (
+                  <Menu.Item
+                    key={item.key}
+                    leftSection={item.destructive ? <RejectIcon /> : undefined}
+                    disabled={item.disabled}
+                    onClick={item.run}
+                  >
+                    {item.label}
+                    {item.disabled && " (выше лимита)"}
+                  </Menu.Item>
+                ))}
+              </Menu.Dropdown>
+            </Menu>
+          )}
+        </Group>
       )}
-      {dialog === "reject" && (
-        <RejectDialog
-          opened
-          app={app}
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={close}
-          onSubmit={submit}
-        />
-      )}
-      {dialog === "comment" && (
-        <CommentDialog
-          opened
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={close}
-          onSubmit={submit}
-        />
-      )}
-      {(dialog === "pause" || dialog === "block") && (
-        <HoldDialog
-          opened
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={close}
-          kind={dialog}
-          onSubmit={(reason) => submit({ type: dialog, reason })}
-        />
-      )}
-      {dialog === "handoff" && (
-        <HandoffDialog
-          opened
-          employees={employees}
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={close}
-          onSubmit={submit}
-        />
-      )}
-      {dialog === "cancel" && (
-        <CancelDialog
-          opened
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={close}
-          onSubmit={submit}
-        />
-      )}
-      <Text size="xs" c="dimmed">
-        Номер заявки: {app.number}
-      </Text>
+
+      <ActionDialogs
+        dialog={dialog}
+        app={app}
+        employee={employee}
+        employees={employees}
+        products={products}
+        pending={mutation.isPending}
+        error={mutation.error}
+        onClose={() => setDialog(null)}
+        run={run}
+      />
     </Stack>
   );
 }
