@@ -2,6 +2,7 @@
 // под приоритет клиента. Ничего не создаёт и не обещает одобрение: это
 // ориентир по правилам прототипа, те же пороги использует мок-решение банка.
 import type { CreditProduct, CreditPurpose, Financials } from "./cabinet.js";
+import type { CreditProductId } from "./product-catalog.js";
 
 /** Доля платежей по долгам в месячном обороте, выше которой банк снижает сумму. */
 export const MAX_DEBT_LOAD = 0.35;
@@ -47,7 +48,7 @@ export type ExpectedRequest =
 
 export interface NegotiationOption {
   tag: NegotiationTag;
-  productId: string;
+  productId: CreditProductId;
   amount: number;
   termMonths: number;
   ratePercent: number;
