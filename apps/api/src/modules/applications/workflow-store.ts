@@ -7,10 +7,6 @@ import { DataSource, EntityManager } from "typeorm";
 import type { ApiAuditEvent } from "@repo/contracts/api";
 import type { ApplicationComment } from "@repo/contracts/application";
 import type {
-  ApplicationActionRequest,
-  EmployeeAction,
-} from "@repo/contracts/application";
-import type {
   ApplicationWorkflow,
   CreateApplicationRequest,
   ScoringJob,

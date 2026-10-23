@@ -3,7 +3,9 @@ import { expect, test } from "@playwright/test";
 const apiBase = process.env.API_BASE_URL ?? "http://localhost:4000";
 
 test.describe("workflow API without mocks", () => {
-  test("creates an application, starts an idempotent check and reaches a terminal job", async ({ request }) => {
+  test("creates an application, starts an idempotent check and reaches a terminal job", async ({
+    request,
+  }) => {
     const idempotencyKey = `e2e-${Date.now()}-create`;
     const payload = {
       inn: "0012345012",
@@ -14,20 +16,27 @@ test.describe("workflow API without mocks", () => {
       idempotencyKey,
     };
 
-    const created = await request.post(`${apiBase}/v1/applications`, { data: payload });
+    const created = await request.post(`${apiBase}/v1/applications`, {
+      data: payload,
+    });
     expect(created.ok()).toBeTruthy();
     const first = await created.json();
     expect(first.application.id).toMatch(/^app-/);
     expect(first.checkJob.id).toMatch(/^job-/);
 
-    const replay = await request.post(`${apiBase}/v1/applications`, { data: payload });
+    const replay = await request.post(`${apiBase}/v1/applications`, {
+      data: payload,
+    });
     expect(replay.ok()).toBeTruthy();
     expect((await replay.json()).application.id).toBe(first.application.id);
 
     const checkKey = `e2e-${Date.now()}-check`;
-    const started = await request.post(`${apiBase}/v1/applications/${first.application.id}/checks`, {
-      data: { idempotencyKey: checkKey },
-    });
+    const started = await request.post(
+      `${apiBase}/v1/applications/${first.application.id}/checks`,
+      {
+        data: { idempotencyKey: checkKey },
+      },
+    );
     expect(started.status()).toBe(202);
     const job = await started.json();
 
@@ -42,7 +51,9 @@ test.describe("workflow API without mocks", () => {
     expect(["succeeded", "failed"]).toContain(terminal.status);
   });
 
-  test("applies a request-info command idempotently and records the audit event", async ({ request }) => {
+  test("applies a request-info command idempotently and records the audit event", async ({
+    request,
+  }) => {
     const application = await request.post(`${apiBase}/v1/applications`, {
       data: {
         inn: "0012345012",
@@ -61,23 +72,42 @@ test.describe("workflow API without mocks", () => {
         items: ["Выписка по расчётному счёту за 6 месяцев"],
         comment: "Нужна выписка для уточнения оборотов",
       },
-      employeeId: "employee-analyst",
       idempotencyKey: `e2e-${Date.now()}-request-info`,
     };
 
-    const first = await request.post(`${apiBase}/v1/applications/${created.application.id}/actions`, {
-      data: action,
+    // Автор команды берётся из сессии сотрудника, в теле его нет.
+    const signedIn = await request.post(`${apiBase}/v1/auth/employee-sign-in`, {
+      data: { employeeId: "an-1" },
     });
+    expect(signedIn.ok()).toBeTruthy();
+
+    const first = await request.post(
+      `${apiBase}/v1/applications/${created.application.id}/actions`,
+      {
+        data: action,
+      },
+    );
     expect(first.ok()).toBeTruthy();
     const context = await first.json();
     expect(context.application.status).toBe("NEEDS_INFO");
     expect(context.application.requestedInfo).toEqual(action.action.items);
-    expect(context.audit.some((event) => event.kind === "application_action")).toBeTruthy();
+    const audit = context.audit.find(
+      (event) => event.kind === "status_changed",
+    );
+    expect(audit.metadata.actionType).toBe("request_info");
+    expect(audit.metadata.actorName).toBe("Аналитик Демо 1");
 
-    const replay = await request.post(`${apiBase}/v1/applications/${created.application.id}/actions`, {
-      data: action,
-    });
+    const replay = await request.post(
+      `${apiBase}/v1/applications/${created.application.id}/actions`,
+      {
+        data: action,
+      },
+    );
     expect(replay.ok()).toBeTruthy();
-    expect((await replay.json()).application.status).toBe("NEEDS_INFO");
+    const replayed = await replay.json();
+    expect(replayed.application.status).toBe("NEEDS_INFO");
+    expect(
+      replayed.audit.filter((event) => event.kind === "status_changed"),
+    ).toHaveLength(1);
   });
 });

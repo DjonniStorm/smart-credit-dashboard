@@ -11,6 +11,7 @@ import {
 } from "./applications.controller.ts";
 import { ApplicationsService } from "./applications.service.ts";
 import { AutonomyStore } from "./autonomy.store.ts";
+import { ApplyApplicationActionHandler } from "./commands/apply-application-action.handler.ts";
 import { QueueWorkerService } from "./queue-worker.service.ts";
 import { WorkflowStore } from "./workflow-store.ts";
 
@@ -23,6 +24,7 @@ import { WorkflowStore } from "./workflow-store.ts";
     WorkflowStore,
     QueueWorkerService,
     AutonomyStore,
+    ApplyApplicationActionHandler,
   ],
 })
 export class ApplicationsModule {}

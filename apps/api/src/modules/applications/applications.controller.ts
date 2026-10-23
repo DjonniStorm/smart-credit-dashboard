@@ -7,6 +7,7 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
+import { CommandBus } from "@nestjs/cqrs";
 import {
   ApiConflictResponse,
   ApiForbiddenResponse,
@@ -32,7 +33,6 @@ import {
   CurrentEmployee,
   EmployeeSessionGuard,
 } from "../auth/employee-session.guard.ts";
-import { ApplicationActionsService } from "./application-actions.service.ts";
 import { ApplicationsService } from "./applications.service.ts";
 import { ApplyApplicationActionCommand } from "./commands/apply-application-action.command.ts";
 
@@ -49,13 +49,12 @@ class ApplicationActionDto extends createZodDto(
   applicationActionRequestSchema,
 ) {}
 class JobDto extends createZodDto(apiJobSchema) {}
-class ApplicationActionRequestDto extends createZodDto(applicationActionRequestSchema) {}
 
 @Controller("v1/applications")
 export class ApplicationsController {
   constructor(
     private readonly applications: ApplicationsService,
-    private readonly actions: ApplicationActionsService,
+    private readonly commands: CommandBus,
   ) {}
 
   @Get("queue")
@@ -84,7 +83,9 @@ export class ApplicationsController {
     @Body() body: ApplicationActionDto,
     @CurrentEmployee() employee: Employee,
   ): Promise<ApplicationContextDto> {
-    return this.actions.execute(id, body, employee);
+    return this.commands.execute(
+      new ApplyApplicationActionCommand(id, body, employee),
+    );
   }
 
   @Get()
@@ -129,17 +130,6 @@ export class ApplicationsController {
     @Body() body: ApplicationCheckDto,
   ): Promise<JobDto> {
     return this.applications.startApiCheck(id, body);
-  }
-
-  @Post(":id/actions")
-  @ApiOperation({ operationId: "ApplicationsController_action" })
-  @ApiOkResponse({ type: ApplicationContextDto })
-  @ZodSerializerDto(ApplicationContextDto)
-  action(
-    @Param("id") id: string,
-    @Body() body: ApplicationActionRequestDto,
-  ): Promise<ApplicationContextDto> {
-    return this.commands.execute(new ApplyApplicationActionCommand(id, body));
   }
 }
 

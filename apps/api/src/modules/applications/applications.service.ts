@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 
 import type { ScoreResponse } from "@repo/contracts";
 import type {
@@ -16,13 +16,11 @@ import type {
   CreateApplicationResponse,
   ScoringJob,
 } from "@repo/contracts/workflow";
-import type { ApplicationActionRequest } from "@repo/contracts/application";
 
 import {
   CompaniesService,
   SourceCheckError,
 } from "../companies/companies.service.ts";
-import { DemoDataStore } from "../../common/demo-data/demo-data.store.ts";
 import { CompanyProfileService } from "../companies/company-profile.service.ts";
 import {
   toApiApplication,
@@ -47,7 +45,6 @@ export class ApplicationsService {
     private readonly profiles: CompanyProfileService,
     private readonly autonomy: AutonomyStore,
     private readonly store: WorkflowStore,
-    private readonly demoData: DemoDataStore,
   ) {}
 
   async create(
@@ -98,32 +95,6 @@ export class ApplicationsService {
       ),
       audit: await this.store.listEvents(application.id),
     };
-  }
-
-  async applyAction(
-    id: string,
-    input: ApplicationActionRequest,
-  ): Promise<ApiApplicationContext> {
-    await this.getApplication(id);
-    if (input.action.type === "resume") {
-      const employee = (await this.demoData.listEmployees()).find(
-        (candidate) => candidate.id === input.employeeId,
-      );
-      if (employee?.role !== "lead") {
-        throw new BadRequestException(
-          "Снять блокировку или паузу может только руководитель",
-        );
-      }
-    }
-    try {
-      await this.store.applyAction(id, input);
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new BadRequestException(error.message);
-      }
-      throw error;
-    }
-    return this.getApiApplicationContext(id);
   }
 
   async createApiApplication(

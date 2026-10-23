@@ -41,8 +41,8 @@ export async function seedApplication(
     ...patch,
   };
   await db.query(
-    `insert into applications(id,number,inn,product_id,amount,term_months,purpose,status,scoring,created_at,updated_at)
-     values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10)`,
+    `insert into applications(id,number,inn,product_id,amount,term_months,purpose,status,scoring,decision,created_at,updated_at)
+     values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11)`,
     [
       application.id,
       application.number,
@@ -53,6 +53,7 @@ export async function seedApplication(
       application.purpose,
       application.status,
       application.scoring,
+      application.decision,
       now,
     ],
   );

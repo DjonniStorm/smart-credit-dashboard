@@ -17,6 +17,12 @@ import type {
 } from "@repo/contracts/workflow";
 
 import { deriveFlow, isClosed } from "./application-flow.ts";
+import {
+  findProduct,
+  requireEmployee,
+  requireLimit,
+  requireOverrideComment,
+} from "./command-guards.ts";
 
 export interface CommandContext {
   employee: Employee;
@@ -44,7 +50,6 @@ export interface CommandOutcome {
 const decisionTypes = new Set<EmployeeAction["type"]>([
   "approve",
   "counter_offer",
-  "request_info",
   "reject",
 ]);
 
@@ -114,6 +119,7 @@ export function runCommand(
 
   switch (action.type) {
     case "approve": {
+      requireOverrideComment(current, "approve", action.comment);
       requireLimit(ctx.employee, current.amount);
       const product = findProduct(ctx.catalog, current.productId);
       next.offer = {
@@ -129,6 +135,7 @@ export function runCommand(
       );
     }
     case "counter_offer": {
+      requireOverrideComment(current, "counter_offer", action.comment);
       requireLimit(ctx.employee, action.terms.amount);
       const product = findProduct(ctx.catalog, action.terms.productId);
       if (
@@ -154,6 +161,12 @@ export function runCommand(
       );
     }
     case "request_info": {
+      // Документы можно запросить и пока скоринг не закончился (plan.md: VALIDATING, UNDER_REVIEW → NEEDS_INFO).
+      if (current.status !== "in_review") {
+        throw new ConflictException(
+          "Запрос документов возможен на рассмотрении",
+        );
+      }
       next.requestedInfo = action.items;
       return changeStatus(
         "needs_client",
@@ -162,6 +175,7 @@ export function runCommand(
       );
     }
     case "reject": {
+      requireOverrideComment(current, "reject", action.comment);
       next.rejectReason = action.reason;
       return changeStatus("rejected", "Отказ", action.comment || null, {
         reason: action.reason,
@@ -276,26 +290,4 @@ export function runCommand(
       );
     }
   }
-}
-
-function requireLimit(employee: Employee, amount: number): void {
-  if (amount > employee.approvalLimit) {
-    throw new ForbiddenException(
-      "Сумма выше вашего лимита одобрения: передайте руководителю",
-    );
-  }
-}
-
-function requireEmployee(ctx: CommandContext, id: string): void {
-  if (!ctx.employeeIds.has(id)) {
-    throw new UnprocessableEntityException("Сотрудник не найден");
-  }
-}
-
-function findProduct(catalog: ApiProductCatalog, id: string) {
-  const product = catalog.products.find((item) => item.id === id);
-  if (!product) {
-    throw new UnprocessableEntityException("Продукт не найден в каталоге");
-  }
-  return product;
 }

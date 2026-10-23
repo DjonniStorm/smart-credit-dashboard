@@ -1,15 +1,17 @@
 import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 
-import { ApplicationsService } from "../applications.service.ts";
+import { ApplicationActionsService } from "../application-actions.service.ts";
 import { ApplyApplicationActionCommand } from "./apply-application-action.command.ts";
 
 @CommandHandler(ApplyApplicationActionCommand)
-export class ApplyApplicationActionHandler
-  implements ICommandHandler<ApplyApplicationActionCommand>
-{
-  constructor(private readonly applications: ApplicationsService) {}
+export class ApplyApplicationActionHandler implements ICommandHandler<ApplyApplicationActionCommand> {
+  constructor(private readonly actions: ApplicationActionsService) {}
 
   execute(command: ApplyApplicationActionCommand) {
-    return this.applications.applyAction(command.applicationId, command.input);
+    return this.actions.execute(
+      command.applicationId,
+      command.input,
+      command.employee,
+    );
   }
 }
