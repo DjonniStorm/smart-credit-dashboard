@@ -1,0 +1,422 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": ["Health"]
+      }
+    },
+    "/v1/companies/{inn}/check": {
+      "get": {
+        "operationId": "CompaniesController_check",
+        "parameters": [
+          {
+            "name": "inn",
+            "required": true,
+            "in": "path",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCheckDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": ["Companies"]
+      }
+    },
+    "/v1/companies/{inn}/profile": {
+      "get": {
+        "operationId": "CompaniesController_profile",
+        "parameters": [
+          {
+            "name": "inn",
+            "required": true,
+            "in": "path",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyProfileDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": ["Companies"]
+      }
+    },
+    "/v1/companies/{inn}/consents/bki": {
+      "post": {
+        "operationId": "CompaniesController_grantBkiConsent",
+        "parameters": [
+          {
+            "name": "inn",
+            "required": true,
+            "in": "path",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BkiConsentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyProfileDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": ["Companies"]
+      }
+    }
+  },
+  "info": {
+    "title": "alfa-future api",
+    "description": "Заявки, статусы, кредитное решение",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "HealthDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok", "degraded"]
+          },
+          "service": {
+            "type": "string",
+            "enum": ["api", "scoring", "mocks"]
+          },
+          "checks": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "enum": ["up", "down"]
+            }
+          }
+        },
+        "required": ["status", "service"]
+      },
+      "CompanyCheckDto": {
+        "type": "object",
+        "properties": {
+          "inn": {
+            "type": "string",
+            "pattern": "^\\d{10,12}$"
+          },
+          "sources": {
+            "type": "object",
+            "properties": {
+              "egrul": {
+                "type": "object",
+                "properties": {
+                  "inn": {
+                    "type": "string",
+                    "pattern": "^\\d{10,12}$"
+                  },
+                  "ogrn": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "registeredAt": {
+                    "type": "string"
+                  },
+                  "okved": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "inn",
+                  "ogrn",
+                  "name",
+                  "status",
+                  "registeredAt",
+                  "okved"
+                ]
+              },
+              "bki": {
+                "type": "object",
+                "properties": {
+                  "inn": {
+                    "type": "string",
+                    "pattern": "^\\d{10,12}$"
+                  },
+                  "activeLoans": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "totalDebtRub": {
+                    "type": "number"
+                  },
+                  "overdueDays": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "inn",
+                  "activeLoans",
+                  "totalDebtRub",
+                  "overdueDays"
+                ]
+              },
+              "fns": {
+                "type": "object",
+                "properties": {
+                  "inn": {
+                    "type": "string",
+                    "pattern": "^\\d{10,12}$"
+                  },
+                  "taxDebtRub": {
+                    "type": "number"
+                  },
+                  "employees": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "massRegistrationAddress": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "inn",
+                  "taxDebtRub",
+                  "employees",
+                  "massRegistrationAddress"
+                ]
+              }
+            },
+            "required": ["egrul", "bki", "fns"]
+          },
+          "scoring": {
+            "type": "object",
+            "properties": {
+              "inn": {
+                "type": "string",
+                "pattern": "^\\d{10,12}$"
+              },
+              "score": {
+                "type": "number"
+              },
+              "model": {
+                "type": "string"
+              }
+            },
+            "required": ["inn", "score", "model"]
+          }
+        },
+        "required": ["inn", "sources", "scoring"]
+      },
+      "CompanyProfileDto": {
+        "type": "object",
+        "properties": {
+          "profile": {
+            "type": "object",
+            "properties": {
+              "inn": {
+                "type": "string",
+                "pattern": "^\\d{10,12}$"
+              },
+              "ogrn": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "legalForm": {
+                "type": "string",
+                "enum": ["ip", "ooo"]
+              },
+              "registeredAt": {
+                "type": "string",
+                "minLength": 1
+              },
+              "okved": {
+                "type": "string",
+                "minLength": 1
+              },
+              "region": {
+                "type": "string",
+                "minLength": 1
+              },
+              "address": {
+                "type": "string",
+                "minLength": 1
+              },
+              "director": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "inn",
+              "ogrn",
+              "name",
+              "legalForm",
+              "registeredAt",
+              "okved",
+              "region",
+              "address",
+              "director"
+            ]
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "enum": ["egrul", "fns", "bki", "bank_turnover"]
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "confirmed",
+                    "discrepancy",
+                    "unavailable",
+                    "manual_check"
+                  ]
+                },
+                "summary": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "facts": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "label": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "value": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string",
+                        "enum": ["egrul", "fns", "bki", "bank_turnover"]
+                      },
+                      "state": {
+                        "type": "string",
+                        "enum": [
+                          "pending",
+                          "confirmed",
+                          "discrepancy",
+                          "unavailable",
+                          "manual_check"
+                        ]
+                      },
+                      "checkedAt": {
+                        "type": ["string", "null"]
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "label",
+                      "value",
+                      "source",
+                      "state",
+                      "checkedAt"
+                    ]
+                  }
+                },
+                "checkedAt": {
+                  "type": ["string", "null"]
+                }
+              },
+              "required": ["source", "state", "summary", "facts", "checkedAt"]
+            }
+          },
+          "bkiConsent": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": ["required", "granted"]
+              },
+              "grantedAt": {
+                "type": ["string", "null"]
+              }
+            },
+            "required": ["status", "grantedAt"]
+          }
+        },
+        "required": ["profile", "sources", "bkiConsent"]
+      },
+      "BkiConsentDto": {
+        "type": "object",
+        "properties": {
+          "granted": {
+            "type": "boolean",
+            "enum": [true]
+          }
+        },
+        "required": ["granted"]
+      }
+    }
+  }
+}

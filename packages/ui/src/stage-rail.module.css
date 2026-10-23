@@ -1,0 +1,80 @@
+.root {
+  container-type: inline-size;
+}
+
+.caption {
+  display: none;
+  margin: 0 0 8px;
+  font-size: var(--mantine-font-size-sm);
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.rail {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--stages), minmax(0, 1fr));
+  gap: 6px;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.segment {
+  position: relative;
+  display: block;
+  height: 8px;
+  box-sizing: border-box;
+  border-radius: var(--mantine-radius-sm);
+  background: var(--kk-surface-sunken);
+  overflow: hidden;
+}
+
+.fill {
+  position: absolute;
+  inset: 0;
+  background: var(--mantine-color-text);
+}
+
+/* Текущий этап: фирменный красный. brand-graphic держит 3:1 к дорожке в обеих темах. */
+.item[data-state="current"] .fill {
+  background: var(--kk-brand-graphic);
+}
+
+/* Банк ждёт клиента. amber на фоне даёт 1.7:1, поэтому тёмная обводка в обеих темах. */
+.item[data-state="action"] .segment {
+  background: var(--mantine-color-amber-5);
+  border: 1.5px solid #1b1c1f;
+}
+
+.label {
+  font-size: var(--mantine-font-size-xs);
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--mantine-color-dimmed);
+  overflow-wrap: anywhere;
+}
+
+.item[data-state="current"] .label,
+.item[data-state="action"] .label {
+  color: var(--mantine-color-text);
+  font-weight: 600;
+}
+
+/* Узкая дорожка (колонка, телефон): подписи под сегментами не помещаются,
+   вместо них одна строка над дорожкой. Считается от ширины дорожки, не экрана. */
+@container (max-width: 32.5em) {
+  .label {
+    display: none;
+  }
+
+  .caption {
+    display: block;
+  }
+}

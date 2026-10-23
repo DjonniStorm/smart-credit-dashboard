@@ -1,0 +1,9 @@
+**/node_modules
+**/dist
+**/.next
+**/src/generated
+pnpm-lock.yaml
+apps/scoring
+coverage
+.turbo
+*.tsbuildinfo

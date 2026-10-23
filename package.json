@@ -2,18 +2,24 @@
   "name": "smart-credit-dashboard",
   "private": true,
   "scripts": {
+    "prepare": "lefthook install",
     "dev": "pnpm db:up && turbo run dev",
+    "dev:ui": "turbo run dev --filter=client --filter=backoffice",
     "build": "turbo run build",
-    "lint": "turbo run lint",
+    "lint": "eslint . --max-warnings 0",
     "check-types": "turbo run check-types",
     "boundaries": "turbo boundaries",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "format": "prettier --write .",
     "db:up": "docker compose -f infra/dev/docker-compose.yml up -d --wait",
     "db:down": "docker compose -f infra/dev/docker-compose.yml down",
     "docker:up": "docker compose -f infra/prod/docker-compose.yml up --build -d --wait",
     "docker:down": "docker compose -f infra/prod/docker-compose.yml down"
   },
   "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@trivago/prettier-plugin-sort-imports": "5.2.2",
+    "eslint": "10.9.1",
+    "lefthook": "2.0.13",
     "prettier": "3.9.6",
     "turbo": "^2.11.9",
     "typescript": "6.0.3"

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" shape-rendering="crispEdges" role="img" aria-labelledby="t d">
+  <title id="t">Альфи — приветствует</title><desc id="d">Альфи поднимает руку и показывает следующий шаг.</desc>
+  <path fill="#171717" d="M38 8h48v4h8v12h4v18h8v20h-8v28h-8v18H68v-8H60v8H40v-18h-8V76h-4V44h4V24h6Z"/>
+  <path fill="#EF3124" d="M40 14h44v8h8v18H32V24h8Zm-8 34h60v28H84v8H40v-8H32Z"/>
+  <path fill="#FFFFFF" d="M40 48h44v24H40Z"/><path fill="#D9D9D6" d="M44 52h36v4H44Z"/>
+  <path fill="#171717" d="M46 60h8v8h-8Zm24 0h8v8h-8Zm-10 8h12v4H60ZM38 80h12v14H38Zm38 0h12v14H76ZM44 104h14v10H44Zm26 0h14v10H70Z"/>
+  <path fill="#505759" d="M34 52h4v20h-4Zm50 0h4v20h-4Z"/>
+  <path fill="#171717" d="M90 36h8v-8h6v8h8v6h-8v8h-6v-8h-8Z"/>
+  <path fill="#FFFFFF" d="M92 38h6v6h-6Z"/>
+  <path fill="#171717" d="M86 82h26v4h4v22h-4v4H86v-4h-4V86h4Z"/><path fill="#FFFFFF" d="M88 88h24v18H88Z"/>
+  <path fill="#EF3124" d="M98 90h4v12h-4Zm-4 4h12v4H94Z"/>
+</svg>

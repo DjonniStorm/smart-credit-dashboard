@@ -1,0 +1,42 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.search {
+  flex: 1 1 220px;
+  max-width: 280px;
+}
+
+.product,
+.assignee {
+  width: 150px;
+}
+
+.amount,
+.stage {
+  width: 112px;
+}
+
+.period {
+  width: 220px;
+}
+
+/* Телефон: поиск и период во всю строку, селекты по два. */
+@media (max-width: 48em) {
+  .search,
+  .period {
+    flex-basis: 100%;
+    max-width: none;
+    width: 100%;
+  }
+  .product,
+  .assignee,
+  .amount,
+  .stage {
+    flex: 1 1 calc(50% - 4px);
+    width: auto;
+  }
+}

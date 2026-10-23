@@ -35,4 +35,10 @@ jobs:
       # apps не зависят друг от друга, packages не зависят от apps (правила в turbo.json).
       - run: pnpm turbo boundaries
 
+      - run: pnpm lint
       - run: pnpm turbo run lint check-types build
+      - name: API unit and integration tests
+        run: pnpm --filter api test
+      - name: Scoring unit tests
+        working-directory: apps/scoring
+        run: uv run --locked python -m unittest discover -s tests -v

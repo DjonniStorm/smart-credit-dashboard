@@ -9,6 +9,24 @@ Read `docs/TURBO.md` inside that installed package first, then read the relevant
 This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": true` in the root `turbo.json` or `turbo.jsonc` to opt in; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
 <!-- END:turborepo-agent-rules -->
 
+## Условие трека
+
+- `docs/TRACK.md`: условие кейса по PDF. Текст совпадает с оригиналом, кроме одного помеченного пропуска
+  (фраза про новостную ленту). Свой текст туда не дописывать.
+- `docs/CLARIFICATIONS.md`: разъяснения организаторов, читать вместе с `TRACK.md`. Как они соотносятся с
+  условием, написано в самом файле.
+- `docs/QA_SESSION_QUESTIONS.md`: ответы организаторов с вебинара. Вместе с `TRACK.md` это основной
+  источник требований; при расхождении с чужими планами правы они.
+- `plan.md`: единый текстовый источник истины по продукту и техническим правилам плана.
+  `docs/smart-credit-dashboard-plan.pdf` — производная версия для команды и жюри. При изменениях сначала
+  правим `plan.md`, затем пересобираем PDF. Старый технический аддендум удалён и больше не используется.
+- `docs/REQUIREMENTS.md` пишет человек, агенты его не правят.
+
+## Перед началом работы
+
+`git fetch origin` и `git log --oneline HEAD..origin/dev`: если вывод не пустой, сначала
+`git rebase origin/dev`.
+
 ## Правила зависимостей в монорепо
 
 - `apps/*` зависят от `packages/*`, но не наоборот: пакет не импортирует приложение.
@@ -19,3 +37,12 @@ This block is written and re-added by `turbo` before repository-scoped commands 
 
 Проверяется командой `pnpm boundaries` (`turbo boundaries`, теги `app` и `package` в `turbo.json`
 каждого пакета) и в CI.
+
+## Правила TypeScript и TSX
+
+- Условия, циклы и колбэки всегда используют фигурные блоки: `if (...) {}` и `() => {}`.
+- Названия переменных и функций должны объяснять смысл, но не разрастаться без необходимости.
+- Файлы `.ts` и `.tsx` длиннее 300 строк нужно разделять по ответственности.
+- Документация пишется на русском только там, где она помогает пользоваться кодом или понять решение.
+- Комментарии не дублируют код и не добавляются ради формального описания очевидного.
+- Изменяемое состояние инкапсулируется в классах или отдельных объектах; изменяемые переменные на уровне модуля не использовать.

@@ -1,0 +1,28 @@
+.page {
+  min-height: 100dvh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  padding: 0 24px;
+  background: var(--kk-surface);
+  border-bottom: 1px solid var(--kk-line);
+}
+
+.main {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 40px 24px 48px;
+}
+
+@media (max-width: 48em) {
+  .header {
+    padding: 0 16px;
+  }
+
+  .main {
+    padding: 24px 16px 40px;
+  }
+}

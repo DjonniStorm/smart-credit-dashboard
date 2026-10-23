@@ -1,5 +1,9 @@
+import { IconCircleCheck, IconCircleX } from "@tabler/icons-react";
 import { type JSX } from "react";
 
+import { ToneBadge } from "./tone-badge";
+
+/** Да/нет-статус: состояние сервиса, результат проверки. */
 export function StatusBadge({
   ok,
   label,
@@ -8,8 +12,11 @@ export function StatusBadge({
   label: string;
 }): JSX.Element {
   return (
-    <span style={{ color: ok ? "green" : "crimson" }}>
-      {ok ? "●" : "○"} {label}
-    </span>
+    <ToneBadge
+      tone={ok ? "success" : "danger"}
+      icon={ok ? IconCircleCheck : IconCircleX}
+    >
+      {label}
+    </ToneBadge>
   );
 }

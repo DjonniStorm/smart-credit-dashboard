@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" shape-rendering="crispEdges" role="img" aria-labelledby="t d">
+  <title id="t">Альфи — нужно внимание</title><desc id="d">Альфи показывает важный фактор, который требует проверки.</desc>
+  <path fill="#171717" d="M40 8h48v4h8v12h4v20h4v32h-8v18h-8v18H68v-8H60v8H40v-18h-8V76h-4V44h4V24h8Z"/>
+  <path fill="#EF3124" d="M40 14h44v8h8v18H32V24h8Zm-8 34h60v28H84v8H40v-8H32Z"/>
+  <path fill="#FFFFFF" d="M40 48h44v24H40Z"/><path fill="#D9D9D6" d="M44 52h36v4H44Z"/>
+  <path fill="#171717" d="M46 60h8v8h-8Zm24 0h8v8h-8Zm-10 8h12v4H60ZM38 80h12v14H38Zm38 0h12v14H76ZM44 104h14v10H44Zm26 0h14v10H70Z"/>
+  <path fill="#505759" d="M34 52h4v20h-4Zm50 0h4v20h-4Z"/>
+  <path fill="#171717" d="M98 78h8l16 30v8H82v-8Z"/><path fill="#F4B41A" d="m102 86 10 24H92Z"/>
+  <path fill="#171717" d="M100 94h4v10h-4Zm0 14h4v4h-4Z"/>
+</svg>

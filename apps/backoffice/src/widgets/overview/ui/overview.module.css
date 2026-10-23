@@ -1,0 +1,136 @@
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.tiles {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px;
+  border: 1px solid var(--kk-line);
+  border-radius: var(--mantine-radius-lg);
+  background: var(--kk-surface);
+  color: var(--mantine-color-text);
+  text-decoration: none;
+}
+
+.tile:hover {
+  border-color: var(--mantine-color-default-border);
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--kk-brand);
+  outline-offset: 2px;
+}
+
+.tileValue {
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tileLabel {
+  font-size: 13px;
+  color: var(--mantine-color-dimmed);
+}
+
+.card {
+  padding: 20px;
+  border: 1px solid var(--kk-line);
+  border-radius: var(--mantine-radius-lg);
+  background: var(--kk-surface);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.stages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.track {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--kk-surface-sunken);
+  overflow: hidden;
+}
+
+.bar {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: var(--mantine-color-text);
+}
+
+.stageCount {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.decisions {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.decision {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-block: 10px;
+  border-bottom: 1px solid var(--kk-line);
+}
+
+.decision:last-child {
+  border-bottom: 0;
+}
+
+.decisionStatus {
+  white-space: nowrap;
+}
+
+@media (max-width: 62em) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 30em) {
+  .stage {
+    grid-template-columns: 96px minmax(0, 1fr) 24px;
+    gap: 8px;
+  }
+}

@@ -1,0 +1,440 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--kk-surface);
+}
+
+.head {
+  padding: 20px 20px 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.title:focus-visible {
+  outline: 2px solid var(--kk-brand);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 20px 20px;
+}
+
+.foot {
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--kk-line);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.gap {
+  display: inline-block;
+  width: 12px;
+}
+
+.company {
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 700;
+}
+
+.amounts {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--kk-line);
+}
+
+.big {
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.productIcon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--kk-line);
+  border-radius: var(--mantine-radius-md);
+  background: var(--kk-surface-sunken);
+  color: var(--mantine-color-dimmed);
+}
+
+.workflow {
+  padding-top: 2px;
+}
+
+.workflowGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workflowItem {
+  min-width: 0;
+}
+
+.workflowCard {
+  position: relative;
+  min-height: 68px;
+  height: auto;
+  padding: 12px 13px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0;
+  border: 2px solid var(--kk-line);
+  border-radius: var(--mantine-radius-sm);
+  background: var(--kk-surface-sunken);
+  text-align: left;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    transform 150ms ease;
+}
+
+.workflowCard:hover {
+  border-color: var(--kk-brand);
+  background: var(--kk-surface);
+  transform: translateY(-1px);
+}
+
+.workflowCard[data-selected="true"] {
+  border-color: var(--kk-brand);
+}
+
+.workflowCard[data-state="done"] {
+  border-color: var(--kk-brand);
+  background: var(--kk-brand-soft);
+}
+
+.workflowCard[data-state="current"] {
+  /* Fallback для браузеров без mask-composite: пунктир всё равно виден. */
+  border: 2px dashed var(--kk-brand);
+  background: var(--kk-surface);
+  isolation: isolate;
+}
+
+.workflowCard[data-state="current"]::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: -3px;
+  padding: 2px;
+  border-radius: calc(var(--mantine-radius-sm) + 2px);
+  background: repeating-conic-gradient(
+    from var(--workflow-angle),
+    var(--kk-brand) 0deg 18deg,
+    transparent 18deg 34deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: workflow-border-spin 1.5s linear infinite;
+}
+
+.workflowCard[data-state="waiting"] {
+  border-color: var(--mantine-color-amber-5);
+  background: var(--mantine-color-yellow-0);
+}
+
+.workflowText {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  display: block;
+  width: 100%;
+}
+
+.workflowText strong,
+.workflowText small {
+  display: block;
+  overflow: visible;
+  white-space: normal;
+}
+
+.workflowText strong {
+  color: var(--mantine-color-text);
+  font-size: 13px;
+  line-height: 17px;
+}
+
+.workflowText small {
+  color: var(--mantine-color-dimmed);
+  font-size: 11px;
+  line-height: 15px;
+}
+
+@property --workflow-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes workflow-border-spin {
+  to {
+    --workflow-angle: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workflowCard[data-state="current"]::before {
+    animation: none;
+  }
+}
+
+.workflowDetail {
+  margin-top: 6px;
+  padding: 9px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-left: 3px solid var(--kk-brand);
+  background: var(--kk-surface-sunken);
+  border-radius: 0 var(--mantine-radius-sm) var(--mantine-radius-sm) 0;
+}
+
+.workflowOwner {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--mantine-color-dimmed);
+  font-size: 10px;
+}
+
+@media (max-width: 42em) {
+  .workflowGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tabsList {
+  gap: 4px;
+}
+
+.tab {
+  padding-inline: 10px;
+}
+
+.checks {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Источник, итог и время в одну строку, как в макете; узко переносится. */
+.check {
+  display: grid;
+  grid-template-columns: 18px 44px minmax(0, 1fr);
+  grid-template-areas:
+    "icon name state"
+    ". . time"
+    ". . action";
+  column-gap: 10px;
+  row-gap: 2px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--kk-line);
+}
+
+.checkIcon {
+  grid-area: icon;
+  margin-top: 1px;
+  color: var(--mantine-color-dimmed);
+}
+
+.checkName {
+  grid-area: name;
+}
+
+.checkState {
+  grid-area: state;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.checkState svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.checkState[data-tone="success"] {
+  color: var(--kk-success);
+}
+
+.checkState[data-tone="warning"] {
+  color: var(--kk-warning);
+}
+
+.checkState[data-tone="danger"] {
+  color: var(--kk-danger);
+}
+
+.checkTime {
+  grid-area: time;
+  padding-left: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.checkAction {
+  grid-area: action;
+  padding-top: 6px;
+}
+
+.risk {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--kk-line);
+  border-radius: var(--mantine-radius-md);
+}
+
+.riskLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.riskLabel {
+  flex: 1;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot[data-tone="success"] {
+  background: var(--kk-success);
+}
+
+.dot[data-tone="warning"] {
+  background: var(--mantine-color-amber-5);
+}
+
+.dot[data-tone="danger"] {
+  background: var(--kk-danger);
+}
+
+.reason {
+  padding: 10px 12px;
+  border-radius: var(--mantine-radius-sm);
+  background: var(--kk-surface-sunken);
+}
+
+.facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fact dt {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--mantine-color-dimmed);
+}
+
+.fact dd {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Отдельная страница заявки: вкладки слева, сводка и действия справа. */
+.page {
+  padding: 24px;
+}
+
+.pageTitle {
+  font-size: 28px;
+  line-height: 34px;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+}
+
+.workspaceMain {
+  min-width: 0;
+}
+
+.workspaceAside {
+  position: sticky;
+  top: 76px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--kk-line);
+  border-radius: var(--mantine-radius-lg);
+  background: var(--kk-surface);
+}
+
+.asideFoot {
+  padding-top: 12px;
+  border-top: 1px solid var(--kk-line);
+}
+
+@media (max-width: 75em) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Сводка с действиями поднимается над вкладками. */
+  .workspaceAside {
+    position: static;
+    order: -1;
+  }
+}
+
+@media (max-width: 48em) {
+  .page {
+    padding: 16px;
+  }
+  .pageTitle {
+    font-size: 22px;
+    line-height: 28px;
+  }
+}

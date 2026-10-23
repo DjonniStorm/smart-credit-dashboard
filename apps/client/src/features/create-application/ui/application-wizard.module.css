@@ -1,0 +1,461 @@
+/* Раскладка business.jpg: слева заголовок, степпер и карточка шага,
+   справа сводка 320px, внизу подвал на всю рабочую область. */
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-areas:
+    "top side"
+    "panel side"
+    "footer footer";
+  column-gap: 24px;
+  row-gap: var(--mantine-spacing-lg);
+  align-items: start;
+}
+
+.top {
+  grid-area: top;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-md);
+  min-width: 0;
+}
+
+.side {
+  grid-area: side;
+  position: sticky;
+  top: calc(52px + var(--mantine-spacing-lg));
+}
+
+.panel {
+  grid-area: panel;
+  overflow: hidden;
+}
+
+.panelBody {
+  padding: var(--mantine-spacing-lg) 24px 28px;
+}
+
+.footer {
+  grid-area: footer;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-sm);
+  margin-inline: -24px;
+  margin-bottom: calc(var(--mantine-spacing-xl) * -1);
+  padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
+  background: var(--kk-surface);
+  border-top: 1px solid var(--kk-line);
+}
+
+.footerEnd {
+  margin-inline-start: auto;
+}
+
+.saveDraft {
+  color: var(--kk-link);
+}
+
+.crumbs {
+  font-size: var(--mantine-font-size-sm);
+}
+
+/* Степпер: номер в кружке, подпись, линия до следующего шага. */
+.stepCaption {
+  display: none;
+  margin: 0 0 8px;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 600;
+}
+
+.stepper {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.stepItem {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.stepItem:last-child {
+  flex: none;
+}
+
+.stepItem:not(:last-child)::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  margin-inline: 12px;
+  background: var(--kk-line);
+}
+
+.stepButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--mantine-color-text);
+  font: inherit;
+  font-size: var(--mantine-font-size-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.stepButton:disabled {
+  color: var(--mantine-color-dimmed);
+  cursor: default;
+}
+
+.stepButton:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 2px;
+  border-radius: var(--mantine-radius-sm);
+}
+
+.stepIndex {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--kk-line);
+  background: var(--kk-surface);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.stepItem[data-state="current"] .stepIndex {
+  background: var(--kk-brand);
+  border-color: var(--kk-brand);
+  color: var(--kk-on-brand);
+}
+
+.stepItem[data-state="current"] .stepLabel {
+  font-weight: 600;
+}
+
+.stepItem[data-state="done"] .stepIndex {
+  border-color: var(--mantine-color-text);
+}
+
+.stepTitle:focus {
+  outline: none;
+}
+
+.stepTitle:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 4px;
+}
+
+/* Сводка «Параметры кредита». */
+.summary {
+  padding: var(--mantine-spacing-lg);
+}
+
+.editLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  color: var(--kk-link);
+  font-size: var(--mantine-font-size-sm);
+}
+
+.summaryNumbers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-md);
+}
+
+.bigValue {
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.midValue {
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.offerNote {
+  display: flex;
+  gap: 8px;
+  margin-top: var(--mantine-spacing-md);
+  padding: 12px;
+  border-radius: var(--mantine-radius-md);
+  background: var(--kk-brand-soft);
+  color: var(--kk-brand-text);
+}
+
+.offerNote svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.sunken {
+  background: var(--kk-surface-sunken);
+  border-radius: var(--mantine-radius-lg);
+  padding: var(--mantine-spacing-lg);
+}
+
+.review {
+  padding-bottom: var(--mantine-spacing-md);
+  border-bottom: 1px solid var(--kk-line);
+}
+
+/* Нагрузка на оборот: полоса долей и сводка справа, как у графика в макете. */
+.load {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 24px;
+  padding-top: var(--mantine-spacing-lg);
+  border-top: 1px solid var(--kk-line);
+}
+
+.loadMain {
+  min-width: 0;
+}
+
+.loadBar {
+  display: flex;
+  height: 28px;
+  border-radius: var(--mantine-radius-sm);
+  background: var(--kk-chart-bar);
+  overflow: hidden;
+}
+
+.loadCurrent {
+  background: var(--mantine-color-text);
+  transition: width 200ms var(--kk-ease, ease);
+}
+
+.loadNext {
+  background: var(--kk-brand-bright);
+  transition: width 200ms var(--kk-ease, ease);
+}
+
+.legend {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: var(--mantine-font-size-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.swatchCurrent,
+.swatchNext,
+.swatchFree {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.swatchCurrent {
+  background: var(--mantine-color-text);
+}
+
+.swatchNext {
+  background: var(--kk-brand-bright);
+}
+
+.swatchFree {
+  background: var(--kk-chart-bar);
+}
+
+.loadStats {
+  margin: 0;
+  padding: var(--mantine-spacing-md);
+  border-radius: var(--mantine-radius-md);
+  background: var(--kk-surface-sunken);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.loadStats dt {
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-dimmed);
+}
+
+.loadStats dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.loadStats .statNote {
+  font-weight: 400;
+  font-size: var(--mantine-font-size-xs);
+  color: var(--mantine-color-dimmed);
+}
+
+/* Документы: зона перетаскивания и рекомендуемые рядом. */
+.docsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
+  gap: var(--mantine-spacing-md);
+}
+
+.dropzone {
+  border: 1px dashed var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-lg);
+  background: var(--kk-surface);
+}
+
+.dropIcon {
+  flex: none;
+  color: var(--mantine-color-dimmed);
+}
+
+.link {
+  color: var(--kk-link);
+  text-decoration: underline;
+}
+
+.recommended {
+  padding: var(--mantine-spacing-md);
+  border-radius: var(--mantine-radius-lg);
+  background: var(--kk-surface-sunken);
+}
+
+.recommended ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.files {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-xs);
+}
+
+.file {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
+  padding: 8px 8px 8px 12px;
+  border: 1px solid var(--kk-line);
+  border-radius: var(--mantine-radius-md);
+}
+
+.fileName {
+  flex: 1;
+  min-width: 0;
+}
+
+.fileKind {
+  width: 260px;
+  flex: none;
+}
+
+/* Ниже 1200px сводка встаёт над формой. */
+@media (max-width: 75em) {
+  .page {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "top"
+      "side"
+      "panel"
+      "footer";
+  }
+
+  .side {
+    position: static;
+  }
+}
+
+@media (max-width: 62em) {
+  .load,
+  .docsGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stepLabel {
+    display: none;
+  }
+
+  .stepCaption {
+    display: block;
+  }
+
+  .stepItem[data-state="current"] .stepLabel {
+    display: none;
+  }
+}
+
+@media (max-width: 48em) {
+  /* На телефоне сводка короткая: сумма и срок в строку, без диапазонов. */
+  .summaryNumbers {
+    flex-direction: row;
+    gap: var(--mantine-spacing-lg);
+  }
+
+  .range {
+    display: none;
+  }
+
+  .bigValue {
+    font-size: 20px;
+    line-height: 26px;
+  }
+
+  .summary :global(.mantine-Divider-root) {
+    margin-block: var(--mantine-spacing-sm);
+  }
+
+  .panelBody {
+    padding: var(--mantine-spacing-md);
+  }
+
+  .footer {
+    margin-inline: -16px;
+    padding-inline: 16px;
+  }
+
+  .saveDraft {
+    padding-inline: 8px;
+  }
+
+  .file {
+    flex-wrap: wrap;
+  }
+
+  .fileKind {
+    order: 3;
+    width: 100%;
+  }
+}

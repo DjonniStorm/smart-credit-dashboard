@@ -31,9 +31,27 @@ pnpm dev
 
 Порты должны быть свободны.
 
-Один сервис: `pnpm dev --filter=client`. 
+Один сервис вместе с PostgreSQL: `pnpm dev --filter=client`.
 
 Остановить PostgreSQL: `pnpm db:down`.
+
+### Только интерфейс
+
+Посмотреть кабинет и АРМ без Docker и базы:
+
+```bash
+pnpm dev:ui
+```
+
+Запускает client (http://localhost:3000) и backoffice (http://localhost:3001). Одно приложение: `pnpm exec turbo run dev --filter=client`. Без api страницы открываются, а запросы к нему показывают ошибку: форма проверки ИНН в client и блок «Состояние api» в backoffice. Это нормально.
+
+Тема Mantine, шрифт и пресеты Motion лежат в `packages/ui`. Светлая или тёмная схема берётся из настроек системы.
+
+Сквозной сценарий банковского АРМ с тестовыми заявками и ожидаемыми переходами: [`docs/DEMO_ARM_SCENARIO.md`](docs/DEMO_ARM_SCENARIO.md).
+Матрица действий, hold-состояний и правил аудита: [`docs/BACKOFFICE_ACTIONS.md`](docs/BACKOFFICE_ACTIONS.md).
+Клиентский сквозной сценарий и UX-контракты: [`docs/CLIENT_CABINET_PLAN.md`](docs/CLIENT_CABINET_PLAN.md).
+ML/scoring, калибровка, объяснимость и автономность: [`docs/ML_SCORING_PLAN.md`](docs/ML_SCORING_PLAN.md).
+Доменные команды, handoff и аудит: [`docs/application-contracts.md`](docs/application-contracts.md).
 
 ## Проверки
 

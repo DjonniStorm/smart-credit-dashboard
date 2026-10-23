@@ -4,16 +4,25 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./cabinet": "./src/cabinet.ts",
+    "./application": "./src/application.ts",
+    "./workflow": "./src/workflow.ts",
+    "./company-profile": "./src/company-profile.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "tsx --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "eslint": "10.9.1",
+    "tsx": "4.21.0",
     "typescript": "6.0.3"
   }
 }
