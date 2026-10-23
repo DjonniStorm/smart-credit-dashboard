@@ -53,6 +53,7 @@ export type CompanyCheckDto = {
         health_index?: number;
         readiness_index?: number;
         confidence?: number;
+        missing_sources?: Array<string>;
         recommendation?: 'approve' | 'counter_offer' | 'request_info' | 'manual_review' | 'reject';
         reasons?: Array<string>;
         next_actions?: Array<string>;

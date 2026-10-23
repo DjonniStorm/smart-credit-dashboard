@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import test, { after, before } from "node:test";
+import { randomUUID } from "node:crypto";
+import baseTest, { after, before } from "node:test";
 
 import { DataSource } from "typeorm";
 
@@ -15,9 +16,10 @@ import { WorkflowStore } from "../src/modules/applications/workflow-store.ts";
 import { catalog, seedApplication } from "./action-fixtures.ts";
 
 // Тесты идут против настоящего Postgres: блокировка строки и идемпотентность
-// держатся на SQL, на памяти их не проверить. Локально: `pnpm db:up`.
-const url =
-  process.env.DATABASE_URL ?? "postgres://alfa:alfa@localhost:5432/alfa";
+// держатся на SQL, на памяти их не проверить. Каждый прогон живёт в своей схеме.
+// Локально: `pnpm db:up` и TEST_DATABASE_URL=postgres://alfa:alfa@localhost:5432/alfa.
+const databaseUrl = process.env.TEST_DATABASE_URL;
+const schema = `t_${randomUUID().replaceAll("-", "")}`;
 
 const analyst = demoEmployees[0]!;
 const lead = demoEmployees.find((employee) => employee.role === "lead")!;
@@ -26,37 +28,40 @@ let db: DataSource;
 let store: WorkflowStore;
 let actions: ApplicationActionsService;
 
-before(async () => {
-  db = await new DataSource({ type: "postgres", url }).initialize();
-  const data = new DemoDataStore(db);
-  await data.seed();
-  await runMigrations(db);
-  store = new WorkflowStore(db);
-  actions = new ApplicationActionsService(
-    store,
-    { getCatalog: () => catalog } as never,
-    data,
-    { getApiApplicationContext: async () => ({}) } as never,
-  );
-});
-
-after(async () => {
-  // Тестовые заявки не должны попадать в очередь АРМ и кабинет на общей базе.
-  for (const table of [
-    "application_comments",
-    "application_events",
-    "scoring_jobs",
-  ]) {
-    await db.query(
-      `delete from ${table} where application_id like 'app-test-%'`,
+if (databaseUrl) {
+  before(async () => {
+    const admin = await new DataSource({
+      type: "postgres",
+      url: databaseUrl,
+    }).initialize();
+    await admin.query(`create schema ${schema}`);
+    await admin.destroy();
+    db = await new DataSource({
+      type: "postgres",
+      url: databaseUrl,
+      extra: { options: `-c search_path=${schema}` },
+    }).initialize();
+    await runMigrations(db);
+    const data = new DemoDataStore(db);
+    await data.seed();
+    store = new WorkflowStore(db);
+    actions = new ApplicationActionsService(
+      store,
+      { getCatalog: () => catalog } as never,
+      data,
+      { getApiApplicationContext: async () => ({}) } as never,
     );
-  }
-  await db.query(
-    "delete from idempotency_keys where scope like 'action:app-test-%'",
-  );
-  await db.query("delete from applications where id like 'app-test-%'");
-  await db.destroy();
-});
+  });
+
+  after(async () => {
+    await db.query(`drop schema ${schema} cascade`);
+    await db.destroy();
+  });
+}
+
+const test = databaseUrl
+  ? baseTest
+  : (name: string) => baseTest.skip(`${name} (TEST_DATABASE_URL не задан)`);
 
 let counter = 0;
 function act(
@@ -77,7 +82,7 @@ async function reload(id: string): Promise<ApplicationWorkflow> {
 const approve: EmployeeAction = { type: "approve", comment: "Всё в порядке" };
 
 test("разрешённые решения переводят заявку и пишут автора в журнал", async () => {
-  const approved = await seedApplication(db, store);
+  const approved = await seedApplication(db);
   await act(approved.id, approve);
   const afterApprove = await reload(approved.id);
   assert.equal(afterApprove.status, "approved");
@@ -88,7 +93,7 @@ test("разрешённые решения переводят заявку и �
   assert.equal(event?.metadata.toStatus, "approved");
   assert.equal(event?.metadata.comment, "Всё в порядке");
 
-  const countered = await seedApplication(db, store);
+  const countered = await seedApplication(db);
   await act(countered.id, {
     type: "counter_offer",
     terms: {
@@ -105,7 +110,7 @@ test("разрешённые решения переводят заявку и �
   assert.notEqual(afterCounter.offer?.ratePct, 0, "ставку считает сервер");
   assert.equal(toApiApplication(afterCounter).offerKind, "counter");
 
-  const asked = await seedApplication(db, store);
+  const asked = await seedApplication(db);
   await act(asked.id, {
     type: "request_info",
     items: ["Выписка"],
@@ -115,7 +120,7 @@ test("разрешённые решения переводят заявку и �
   assert.equal(afterAsk.status, "needs_client");
   assert.deepEqual(afterAsk.requestedInfo, ["Выписка"]);
 
-  const rejected = await seedApplication(db, store);
+  const rejected = await seedApplication(db);
   await act(rejected.id, {
     type: "reject",
     reason: "low_score",
@@ -128,22 +133,22 @@ test("разрешённые решения переводят заявку и �
 
 test("отмена доступна на любом нефинальном статусе и закрывает заявку", async () => {
   for (const status of ["in_review", "needs_client", "approved"] as const) {
-    const application = await seedApplication(db, store, { status });
+    const application = await seedApplication(db, { status });
     await act(application.id, { type: "cancel", reason: "Клиент передумал" });
     assert.equal((await reload(application.id)).status, "cancelled");
   }
 });
 
 test("запрещённые переходы дают 409", async () => {
-  const waitingClient = await seedApplication(db, store, {
+  const waitingClient = await seedApplication(db, {
     status: "needs_client",
   });
   await assert.rejects(act(waitingClient.id, approve), { status: 409 });
 
-  const noScoring = await seedApplication(db, store, { scoring: null });
+  const noScoring = await seedApplication(db, { scoring: null });
   await assert.rejects(act(noScoring.id, approve), { status: 409 });
 
-  const closed = await seedApplication(db, store, { status: "rejected" });
+  const closed = await seedApplication(db, { status: "rejected" });
   await assert.rejects(
     act(closed.id, { type: "comment", visibility: "internal", body: "поздно" }),
     { status: 409 },
@@ -152,14 +157,14 @@ test("запрещённые переходы дают 409", async () => {
     status: 409,
   });
 
-  const decided = await seedApplication(db, store);
+  const decided = await seedApplication(db);
   await act(decided.id, approve);
   await assert.rejects(
     act(decided.id, { type: "reject", reason: "other", comment: "" }),
     { status: 409 },
   );
 
-  const active = await seedApplication(db, store);
+  const active = await seedApplication(db);
   await assert.rejects(act(active.id, { type: "resume", comment: "" }), {
     status: 409,
   });
@@ -171,12 +176,12 @@ test("запрещённые переходы дают 409", async () => {
 });
 
 test("лимиты: сумма выше лимита, условия вне продукта, чужой сотрудник", async () => {
-  const large = await seedApplication(db, store, { amount: 9_000_000 });
+  const large = await seedApplication(db, { amount: 9_000_000 });
   await assert.rejects(act(large.id, approve), { status: 403 });
   await act(large.id, approve, lead);
   assert.equal((await reload(large.id)).status, "approved");
 
-  const application = await seedApplication(db, store);
+  const application = await seedApplication(db);
   await assert.rejects(
     act(application.id, {
       type: "counter_offer",
@@ -210,7 +215,7 @@ test("лимиты: сумма выше лимита, условия вне пр
 });
 
 test("пауза и блокировка отклоняют любые действия кроме снятия", async () => {
-  const application = await seedApplication(db, store);
+  const application = await seedApplication(db);
   await act(application.id, { type: "pause", reason: "Ждём звонка" });
   assert.equal((await reload(application.id)).status, "in_review");
   assert.equal(
@@ -247,22 +252,22 @@ test("пауза и блокировка отклоняют любые дейс�
 });
 
 test("скоринг, пришедший на паузе, не ломает решение после снятия паузы", async () => {
-  const application = await seedApplication(db, store, { scoring: null });
+  const application = await seedApplication(db, { scoring: null });
   await act(application.id, { type: "pause", reason: "Проверка идёт" });
   const hold = (await reload(application.id)).hold;
   assert.equal(hold?.previousWaitingOn, "system");
 
-  await store.saveApplication({
-    ...application,
-    scoring: { score: 70, model: "baseline" },
-  });
+  await db.query("update applications set scoring=$2 where id=$1", [
+    application.id,
+    { score: 70, model: "baseline" },
+  ]);
   await act(application.id, { type: "resume", comment: "" });
   await act(application.id, approve);
   assert.equal((await reload(application.id)).status, "approved");
 });
 
 test("повтор с тем же ключом не дублирует событие, комментарий и переход", async () => {
-  const application = await seedApplication(db, store);
+  const application = await seedApplication(db);
   const request = {
     action: {
       type: "comment",
@@ -284,7 +289,7 @@ test("повтор с тем же ключом не дублирует собы�
 });
 
 test("параллельные команды с одним ключом выполняются один раз", async () => {
-  const application = await seedApplication(db, store);
+  const application = await seedApplication(db);
   const request = { action: approve, idempotencyKey: "idem-parallel" };
   const results = await Promise.allSettled([
     actions.execute(application.id, request, analyst),
@@ -296,7 +301,7 @@ test("параллельные команды с одним ключом вып�
 });
 
 test("комментарии клиенту и внутренние хранятся раздельно", async () => {
-  const application = await seedApplication(db, store);
+  const application = await seedApplication(db);
   await act(application.id, {
     type: "comment",
     visibility: "client",
@@ -325,7 +330,7 @@ test("комментарии клиенту и внутренние хранят
 });
 
 test("назначение, передача, срочность и повторная проверка", async () => {
-  const application = await seedApplication(db, store);
+  const application = await seedApplication(db);
   await act(application.id, { type: "assign", assigneeId: analyst.id });
   assert.equal((await reload(application.id)).assigneeId, analyst.id);
 
