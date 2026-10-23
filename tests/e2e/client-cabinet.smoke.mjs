@@ -2,7 +2,8 @@ import { expect, test } from "@playwright/test";
 
 const apiBase = process.env.API_BASE_URL ?? "http://localhost:4000";
 const clientBase = process.env.CLIENT_BASE_URL ?? "http://localhost:3000";
-const backofficeBase = process.env.BACKOFFICE_BASE_URL ?? "http://localhost:3001";
+const backofficeBase =
+  process.env.BACKOFFICE_BASE_URL ?? "http://localhost:3001";
 
 async function waitForJob(request, jobId) {
   for (let attempt = 0; attempt < 30; attempt += 1) {
@@ -46,9 +47,7 @@ test("client and backoffice render the same scoring context", async ({
   expect(contextResponse.ok()).toBeTruthy();
   const context = await contextResponse.json();
   expect(context.application.scoring).toBeTruthy();
-  expect(context.autonomy.config.productId).toBe(
-    context.application.productId,
-  );
+  expect(context.autonomy.config.productId).toBe(context.application.productId);
   const bki = context.checks.find((check) => check.source === "bki");
   expect(bki.state).toBe("pending");
   expect(bki.facts).toHaveLength(0);
@@ -73,5 +72,18 @@ test("client and backoffice render the same scoring context", async ({
       exact: true,
     }),
   ).toBeVisible();
+
+  const applicationUrl = clientPage.url();
+  await clientPage
+    .getByRole("group", { name: "Что для вас важнее" })
+    .getByText("Сумма", { exact: true })
+    .click();
+  const options = clientPage.locator('[data-testid="negotiation-option"]');
+  await expect(options.first()).toBeVisible();
+  await expect(options.first()).toContainText("Это не одобрение");
+  const apply = options.first().getByRole("button");
+  await apply.click();
+  await expect(apply).toContainText("Подставлено в песочницу");
+  expect(clientPage.url()).toBe(applicationUrl);
   await clientPage.close();
 });

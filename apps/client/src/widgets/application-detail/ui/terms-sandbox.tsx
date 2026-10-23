@@ -18,9 +18,11 @@ import type {
   CreditProduct,
   ProductCatalog,
 } from "@repo/contracts/cabinet";
+import type { NegotiationOption } from "@repo/contracts/negotiation";
 import { formatRub } from "@repo/ui/money";
 
 import { estimate } from "@/entities/product";
+import { NegotiationSimulator } from "@/features/negotiation-sim";
 
 import classes from "./terms-sandbox.module.css";
 
@@ -68,6 +70,12 @@ export function TermsSandbox({
     setTermMonths((current) =>
       clamp(current, next.minTermMonths, next.maxTermMonths),
     );
+  };
+
+  const applyOption = (option: NegotiationOption) => {
+    setProductId(option.productId);
+    setAmount(option.amount);
+    setTermMonths(option.termMonths);
   };
 
   return (
@@ -137,6 +145,13 @@ export function TermsSandbox({
             является обещанием одобрения; параметры заявки не изменены.
           </Text>
         </div>
+        <NegotiationSimulator
+          app={app}
+          catalog={catalog}
+          current={{ productId: product.id, amount, termMonths }}
+          currentPayment={result.payment}
+          onApply={applyOption}
+        />
       </Stack>
     </Card>
   );

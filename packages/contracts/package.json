@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./cabinet": "./src/cabinet.ts",
+    "./negotiation": "./src/negotiation.ts",
     "./application": "./src/application.ts",
     "./product-catalog": "./src/product-catalog.ts",
     "./workflow": "./src/workflow.ts",
