@@ -20,6 +20,8 @@ const statusMap: Record<
   needs_client: "NEEDS_INFO",
   approved: "OFFERED",
   counter_offer: "OFFERED",
+  signing: "SIGNING",
+  funded: "FUNDED",
   rejected: "REJECTED",
   cancelled: "CANCELLED",
 };
@@ -35,8 +37,13 @@ function publicStatus(
 function offerKind(
   application: ApplicationWorkflow,
 ): ApiApplication["offerKind"] {
-  if (application.status === "approved") return "initial";
-  return application.status === "counter_offer" ? "counter" : null;
+  if (application.status === "approved") {
+    return "initial";
+  }
+  if (application.status === "counter_offer") {
+    return "counter";
+  }
+  return application.deal?.offerKind ?? null;
 }
 
 /** Строки, записанные до исправления, хранят source: null у факторов. */
@@ -72,6 +79,9 @@ export function toApiApplication(
     offer: application.offer,
     requestedInfo: application.requestedInfo,
     rejectReason: application.rejectReason,
+    clientReply: application.clientReply,
+    deal: application.deal,
+    cancelledBy: application.cancelledBy,
     clientComments,
     createdAt: application.createdAt,
     updatedAt: application.updatedAt,

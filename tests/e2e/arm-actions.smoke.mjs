@@ -18,11 +18,13 @@ async function waitForJob(request, jobId) {
   throw new Error(`Задача ${jobId} не завершилась вовремя`);
 }
 
-test("сотрудник одобряет заявку в АРМ, клиент видит решение", async ({
+test("сотрудник одобряет заявку в АРМ, клиент принимает условия и подписывает", async ({
   request,
   page,
   browser,
 }) => {
+  // Сценарий проходит три приложения, dev-сервер компилирует страницы при первом заходе.
+  test.setTimeout(120_000);
   const created = await request.post(`${apiBase}/v1/applications`, {
     data: {
       inn: "9901000017",
@@ -86,5 +88,35 @@ test("сотрудник одобряет заявку в АРМ, клиент �
   await clientPage.getByRole("button", { name: /Анна Лесовая/i }).click();
   await clientPage.goto(`${clientBase}/applications/${application.id}`);
   await expect(clientPage.getByText("Заявка одобрена").first()).toBeVisible();
+
+  // Без сессии клиента команды кабинета закрыты.
+  const foreign = await request.post(
+    `${apiBase}/v1/applications/${application.id}/client-actions`,
+    {
+      data: {
+        action: { type: "accept_offer" },
+        idempotencyKey: `e2e-foreign-${Date.now()}`,
+      },
+    },
+  );
+  expect(foreign.status()).toBe(401);
+
+  await clientPage.getByRole("button", { name: "Принять условия" }).click();
+  await clientPage.getByText("Перейти к подписанию").click();
+  await clientPage.getByRole("button", { name: "Получить код" }).click();
+  const hint = await clientPage.getByTestId("sign-demo-code").textContent();
+  const code = hint.match(/\d{6}/)[0];
+  await clientPage.getByTestId("sign-code").locator("input").first().click();
+  await clientPage.keyboard.type(code);
+  await clientPage.getByTestId("sign-submit").click();
+  await clientPage.waitForURL(`${clientBase}/applications/${application.id}`);
+
+  await clientPage.goto(`${clientBase}/applications/${application.id}`);
+  await expect(clientPage.getByText("Деньги на счёте").first()).toBeVisible();
+  const funded = await (
+    await request.get(`${apiBase}/v1/applications/${application.id}`)
+  ).json();
+  expect(funded.status).toBe("FUNDED");
+  expect(funded.deal.signedAt).toBeTruthy();
   await clientPage.close();
 });

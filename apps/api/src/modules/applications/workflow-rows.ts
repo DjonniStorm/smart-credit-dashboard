@@ -23,6 +23,11 @@ export function applicationFromRow(row: Row): ApplicationWorkflow {
     urgentReason: (row.urgent_reason as string | null) ?? null,
     assigneeId: (row.assignee_id as string | null) ?? null,
     handoff: (row.handoff as ApplicationWorkflow["handoff"]) ?? null,
+    clientReply:
+      (row.client_reply as ApplicationWorkflow["clientReply"]) ?? null,
+    deal: (row.deal as ApplicationWorkflow["deal"]) ?? null,
+    cancelledBy:
+      (row.cancelled_by as ApplicationWorkflow["cancelledBy"]) ?? null,
     checkJobId: (row.check_job_id as string | null) ?? null,
     scoring: (row.scoring as ApplicationWorkflow["scoring"]) ?? null,
     decision: (row.decision as ApplicationWorkflow["decision"]) ?? null,

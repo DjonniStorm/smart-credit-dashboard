@@ -1,10 +1,13 @@
 import { z } from "zod";
 
 import {
+  actorSchema,
   applicationCommentSchema,
+  applicationDealSchema,
   applicationHandoffSchema,
   applicationHoldSchema,
   applicationStageSchema,
+  clientReplySchema,
   offerTermsSchema,
   rejectReasonSchema,
   waitingOnSchema,
@@ -152,6 +155,10 @@ export const apiApplicationSchema = z.object({
   offer: offerTermsSchema.nullable().default(null),
   requestedInfo: z.array(z.string()).default([]),
   rejectReason: rejectReasonSchema.nullable().default(null),
+  clientReply: clientReplySchema.nullable().default(null),
+  deal: applicationDealSchema.nullable().default(null),
+  /** Кто закрыл заявку отменой: клиент отказался от предложения или сотрудник её отменил. */
+  cancelledBy: actorSchema.shape.kind.nullable().default(null),
   /** Комментарии сотрудника с видимостью client; внутренние сюда не попадают. */
   clientComments: z.array(applicationCommentSchema).default([]),
   createdAt: z.string(),

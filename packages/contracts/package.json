@@ -11,7 +11,8 @@
     "./product-catalog": "./src/product-catalog.ts",
     "./workflow": "./src/workflow.ts",
     "./company-profile": "./src/company-profile.ts",
-    "./api": "./src/api.ts"
+    "./api": "./src/api.ts",
+    "./client-actions": "./src/client-actions.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
