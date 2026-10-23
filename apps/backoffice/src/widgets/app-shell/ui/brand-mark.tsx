@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { BrandTooltip } from "@repo/ui/brand-tooltip";
+
 import classes from "./arm-shell.module.css";
 
 /**
@@ -8,20 +10,22 @@ import classes from "./arm-shell.module.css";
  */
 export function BrandMark() {
   return (
-    <Link
-      href="/"
-      className={classes.brand}
-      aria-label="Кредитный конвейер, очередь заявок"
-    >
-      <span className={classes.brandSign} aria-hidden>
-        А
-      </span>
-      <span className={classes.brandName} aria-hidden>
-        Альфи-Банк
-      </span>
-      <span className={classes.brandProduct} aria-hidden>
-        Кредитный конвейер
-      </span>
-    </Link>
+    <BrandTooltip>
+      <Link
+        href="/"
+        className={classes.brand}
+        aria-label="Кредитный конвейер, очередь заявок"
+      >
+        <span className={classes.brandSign} aria-hidden>
+          А
+        </span>
+        <span className={classes.brandName} aria-hidden>
+          Альфи-Банк
+        </span>
+        <span className={classes.brandProduct} aria-hidden>
+          Кредитный конвейер
+        </span>
+      </Link>
+    </BrandTooltip>
   );
 }

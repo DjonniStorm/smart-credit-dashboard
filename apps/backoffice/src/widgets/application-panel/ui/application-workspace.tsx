@@ -34,6 +34,7 @@ import {
   useCompanyProfile,
 } from "@/entities/application";
 import { useEmployees, useSignedInEmployee } from "@/entities/employee";
+import { armActionsTarget } from "@/features/alfi-assistant";
 import { ActionBar, RerunCheckButton } from "@/features/application-actions";
 import { formatRub } from "@/shared/lib/money";
 
@@ -285,7 +286,10 @@ function Workspace({
             <Summary app={app} />
             <RiskBlock app={app} />
             <Outcome app={app} />
-            <div className={classes.asideFoot}>
+            <div
+              className={classes.asideFoot}
+              data-alfi-target={armActionsTarget}
+            >
               <ActionBar
                 app={app}
                 employee={employee}

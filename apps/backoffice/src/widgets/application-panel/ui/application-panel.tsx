@@ -19,11 +19,12 @@ import {
   EventTimeline,
   StatusTag,
   formatDateTimeFull,
-  useCompanyProfile,
   useApplication,
+  useCompanyProfile,
   useProducts,
 } from "@/entities/application";
 import { useEmployees, useSignedInEmployee } from "@/entities/employee";
+import { armActionsTarget } from "@/features/alfi-assistant";
 import { ActionBar } from "@/features/application-actions";
 
 import classes from "./application-panel.module.css";
@@ -152,7 +153,7 @@ export function ApplicationPanel({
       </div>
 
       {app && (
-        <div className={classes.foot}>
+        <div className={classes.foot} data-alfi-target={armActionsTarget}>
           <ActionBar
             app={app}
             employee={employee}
