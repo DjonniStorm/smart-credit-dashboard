@@ -7,6 +7,7 @@ import type { ApplicationActionRequest } from "@repo/contracts/workflow";
 import { DemoDataStore } from "../../common/demo-data/demo-data.store.ts";
 import { CatalogService } from "../catalog/catalog.service.ts";
 import { runCommand } from "./application-commands.ts";
+import { deriveFlow } from "./application-flow.ts";
 import { ApplicationsService } from "./applications.service.ts";
 import { WorkflowStore } from "./workflow-store.ts";
 
@@ -70,7 +71,25 @@ export class ApplicationActionsService {
         title: outcome.event.title,
         comment: outcome.event.comment,
         actorKind: "employee",
+        actorId: employee.id,
         actorName: employee.name,
+        reportContext: {
+          version: 1,
+          productId: outcome.application.productId,
+          status: outcome.application.status,
+          stage: deriveFlow(outcome.application).stage,
+          assigneeId: outcome.application.assigneeId,
+          actorKind: "employee",
+          actorId: employee.id,
+          actorName: employee.name,
+          recommendation:
+            outcome.application.scoring?.recommendation ??
+            outcome.application.decision?.recommendation ??
+            null,
+          autonomyMode: outcome.application.autonomyCase?.mode ?? null,
+          autonomyDisposition:
+            outcome.application.autonomyCase?.disposition ?? null,
+        },
       });
       await tx.remember(scope, request.idempotencyKey, eventId);
     });

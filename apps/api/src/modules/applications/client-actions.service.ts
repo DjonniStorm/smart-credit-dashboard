@@ -6,6 +6,7 @@ import type {
   ClientActionResponse,
 } from "@repo/contracts/client-actions";
 
+import { deriveFlow } from "./application-flow.ts";
 import { ApplicationsService } from "./applications.service.ts";
 import {
   demoSignCode,
@@ -58,7 +59,25 @@ export class ClientActionsService {
         title: outcome.event.title,
         comment: outcome.event.comment,
         actorKind: "client",
+        actorId: session.account.id,
         actorName: session.account.person,
+        reportContext: {
+          version: 1,
+          productId: outcome.application.productId,
+          status: outcome.application.status,
+          stage: deriveFlow(outcome.application).stage,
+          assigneeId: outcome.application.assigneeId,
+          actorKind: "client",
+          actorId: session.account.id,
+          actorName: session.account.person,
+          recommendation:
+            outcome.application.scoring?.recommendation ??
+            outcome.application.decision?.recommendation ??
+            null,
+          autonomyMode: outcome.application.autonomyCase?.mode ?? null,
+          autonomyDisposition:
+            outcome.application.autonomyCase?.disposition ?? null,
+        },
       });
       await tx.remember(scope, request.idempotencyKey, eventId);
     });
@@ -88,6 +107,14 @@ export class ClientActionsService {
           comment: outcome.event.comment,
           actorKind: "system",
           actorName: "Кредитный конвейер",
+          reportContext: {
+            version: 1,
+            productId: outcome.application.productId,
+            status: outcome.application.status,
+            stage: deriveFlow(outcome.application).stage,
+            actorKind: "system",
+            actorName: "Кредитный конвейер",
+          },
         });
       }
       return accepted.length;

@@ -18,6 +18,7 @@ import {
   type CompanyProfileResponse,
   companyProfileResponseSchema,
 } from "@repo/contracts/company-profile";
+import { managerReportResponseSchema } from "@repo/contracts/reports";
 
 import {
   toArmApplication,
@@ -145,6 +146,26 @@ export const httpArmApi: ArmApi = {
         method: "POST",
         body: JSON.stringify(parsedBody),
       },
+    );
+  },
+  getManagerReport: (query) => {
+    const params = new URLSearchParams();
+    if (query?.view) {
+      params.set("view", query.view);
+    }
+    if (query?.cursor) {
+      params.set("cursor", query.cursor);
+    }
+    if (query?.actor) {
+      params.set("actor", query.actor);
+    }
+    if (query?.limit) {
+      params.set("limit", String(query.limit));
+    }
+    const suffix = params.toString() ? `?${params.toString()}` : "";
+    return request<import("@repo/contracts/reports").ManagerReportResponse>(
+      `/reports/manager${suffix}`,
+      managerReportResponseSchema,
     );
   },
 };

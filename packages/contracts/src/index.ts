@@ -12,6 +12,7 @@ export type ServiceName = (typeof ServiceName)[keyof typeof ServiceName];
 
 export * from "./autonomy.ts";
 export * from "./product-catalog.ts";
+export * from "./reports.ts";
 
 export const HealthStatus = {
   Ok: "ok",

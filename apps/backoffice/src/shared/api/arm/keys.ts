@@ -9,4 +9,6 @@ export const armKeys = {
     [...armKeys.autonomyPolicies(), productId] as const,
   autonomyAudit: (productId: string) =>
     [...armKeys.autonomyPolicy(productId), "audit"] as const,
+  managerReport: (view: "overview" | "journal") =>
+    [...armKeys.all, "manager-report", view] as const,
 };

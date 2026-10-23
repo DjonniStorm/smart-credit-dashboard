@@ -18,7 +18,9 @@
           }
         },
         "summary": "",
-        "tags": ["Health"]
+        "tags": [
+          "Health"
+        ]
       }
     },
     "/v1/companies/{inn}/check": {
@@ -45,7 +47,9 @@
           }
         },
         "summary": "",
-        "tags": ["Companies"]
+        "tags": [
+          "Companies"
+        ]
       }
     },
     "/v1/companies/{inn}/profile": {
@@ -72,7 +76,9 @@
           }
         },
         "summary": "",
-        "tags": ["Companies"]
+        "tags": [
+          "Companies"
+        ]
       }
     },
     "/v1/companies/{inn}/consents/bki": {
@@ -109,7 +115,9 @@
           }
         },
         "summary": "",
-        "tags": ["Companies"]
+        "tags": [
+          "Companies"
+        ]
       }
     },
     "/v1/autonomy/policies": {
@@ -129,7 +137,9 @@
           }
         },
         "summary": "",
-        "tags": ["Autonomy"]
+        "tags": [
+          "Autonomy"
+        ]
       }
     },
     "/v1/autonomy/policies/{productId}": {
@@ -158,7 +168,9 @@
           }
         },
         "summary": "",
-        "tags": ["Autonomy"]
+        "tags": [
+          "Autonomy"
+        ]
       }
     },
     "/v1/autonomy/policies/{productId}/audit": {
@@ -187,7 +199,9 @@
           }
         },
         "summary": "",
-        "tags": ["Autonomy"]
+        "tags": [
+          "Autonomy"
+        ]
       }
     },
     "/v1/autonomy/policies/{productId}/actions": {
@@ -226,7 +240,195 @@
           }
         },
         "summary": "",
-        "tags": ["Autonomy"]
+        "tags": [
+          "Autonomy"
+        ]
+      }
+    },
+    "/v1/reports/manager": {
+      "get": {
+        "operationId": "ReportsController_manager",
+        "parameters": [
+          {
+            "name": "sla",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "autonomyDisposition",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "autonomy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "recommendation",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "actor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "stage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "assignee",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "product",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bucket",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "day",
+                "week"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "view",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "overview",
+                "journal"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "timezone",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerReportDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Reports"
+        ]
       }
     }
   },
@@ -245,21 +447,33 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["ok", "degraded"]
+            "enum": [
+              "ok",
+              "degraded"
+            ]
           },
           "service": {
             "type": "string",
-            "enum": ["api", "scoring"]
+            "enum": [
+              "api",
+              "scoring"
+            ]
           },
           "checks": {
             "type": "object",
             "additionalProperties": {
               "type": "string",
-              "enum": ["up", "down"]
+              "enum": [
+                "up",
+                "down"
+              ]
             }
           }
         },
-        "required": ["status", "service"]
+        "required": [
+          "status",
+          "service"
+        ]
       },
       "CompanyCheckDto": {
         "type": "object",
@@ -358,7 +572,11 @@
                 ]
               }
             },
-            "required": ["egrul", "bki", "fns"]
+            "required": [
+              "egrul",
+              "bki",
+              "fns"
+            ]
           },
           "scoring": {
             "type": "object",
@@ -393,7 +611,12 @@
                       "type": "number"
                     }
                   },
-                  "required": ["id", "label", "value", "impact"]
+                  "required": [
+                    "id",
+                    "label",
+                    "value",
+                    "impact"
+                  ]
                 }
               },
               "model_version": {
@@ -401,7 +624,12 @@
               },
               "grade": {
                 "type": "string",
-                "enum": ["A", "B", "C", "D"]
+                "enum": [
+                  "A",
+                  "B",
+                  "C",
+                  "D"
+                ]
               },
               "pd": {
                 "type": "number",
@@ -410,7 +638,11 @@
               },
               "risk_band": {
                 "type": "string",
-                "enum": ["low", "moderate", "high"]
+                "enum": [
+                  "low",
+                  "moderate",
+                  "high"
+                ]
               },
               "health_index": {
                 "type": "number",
@@ -456,10 +688,18 @@
                 }
               }
             },
-            "required": ["inn", "score", "model"]
+            "required": [
+              "inn",
+              "score",
+              "model"
+            ]
           }
         },
-        "required": ["inn", "sources", "scoring"]
+        "required": [
+          "inn",
+          "sources",
+          "scoring"
+        ]
       },
       "CompanyProfileDto": {
         "type": "object",
@@ -481,7 +721,10 @@
               },
               "legalForm": {
                 "type": "string",
-                "enum": ["ip", "ooo"]
+                "enum": [
+                  "ip",
+                  "ooo"
+                ]
               },
               "registeredAt": {
                 "type": "string",
@@ -523,7 +766,12 @@
               "properties": {
                 "source": {
                   "type": "string",
-                  "enum": ["egrul", "fns", "bki", "bank_turnover"]
+                  "enum": [
+                    "egrul",
+                    "fns",
+                    "bki",
+                    "bank_turnover"
+                  ]
                 },
                 "state": {
                   "type": "string",
@@ -557,7 +805,12 @@
                       },
                       "source": {
                         "type": "string",
-                        "enum": ["egrul", "fns", "bki", "bank_turnover"]
+                        "enum": [
+                          "egrul",
+                          "fns",
+                          "bki",
+                          "bank_turnover"
+                        ]
                       },
                       "state": {
                         "type": "string",
@@ -570,7 +823,10 @@
                         ]
                       },
                       "checkedAt": {
-                        "type": ["string", "null"]
+                        "type": [
+                          "string",
+                          "null"
+                        ]
                       }
                     },
                     "required": [
@@ -605,11 +861,21 @@
                       },
                       "firstSource": {
                         "type": "string",
-                        "enum": ["egrul", "fns", "bki", "bank_turnover"]
+                        "enum": [
+                          "egrul",
+                          "fns",
+                          "bki",
+                          "bank_turnover"
+                        ]
                       },
                       "secondSource": {
                         "type": "string",
-                        "enum": ["egrul", "fns", "bki", "bank_turnover"]
+                        "enum": [
+                          "egrul",
+                          "fns",
+                          "bki",
+                          "bank_turnover"
+                        ]
                       },
                       "nextStep": {
                         "type": "string",
@@ -639,13 +905,25 @@
                 },
                 "reason": {
                   "default": null,
-                  "type": ["string", "null"]
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "checkedAt": {
-                  "type": ["string", "null"]
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
-              "required": ["source", "state", "summary", "facts", "checkedAt"]
+              "required": [
+                "source",
+                "state",
+                "summary",
+                "facts",
+                "checkedAt"
+              ]
             }
           },
           "bkiConsent": {
@@ -653,26 +931,43 @@
             "properties": {
               "status": {
                 "type": "string",
-                "enum": ["required", "granted"]
+                "enum": [
+                  "required",
+                  "granted"
+                ]
               },
               "grantedAt": {
-                "type": ["string", "null"]
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
-            "required": ["status", "grantedAt"]
+            "required": [
+              "status",
+              "grantedAt"
+            ]
           }
         },
-        "required": ["profile", "sources", "bkiConsent"]
+        "required": [
+          "profile",
+          "sources",
+          "bkiConsent"
+        ]
       },
       "BkiConsentDto": {
         "type": "object",
         "properties": {
           "granted": {
             "type": "boolean",
-            "enum": [true]
+            "enum": [
+              true
+            ]
           }
         },
-        "required": ["granted"]
+        "required": [
+          "granted"
+        ]
       },
       "AutonomySnapshotListDto": {
         "type": "array",
@@ -707,14 +1002,25 @@
                       "minimum": 0
                     }
                   },
-                  "required": ["min", "max"]
+                  "required": [
+                    "min",
+                    "max"
+                  ]
                 },
                 "level": {
                   "type": "string",
-                  "enum": ["new", "verified", "stable", "paused"]
+                  "enum": [
+                    "new",
+                    "verified",
+                    "stable",
+                    "paused"
+                  ]
                 },
                 "controlWindowEndsAt": {
-                  "type": ["string", "null"]
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "minClosedCases": {
                   "default": 100,
@@ -743,7 +1049,12 @@
                 "minGrade": {
                   "default": "B",
                   "type": "string",
-                  "enum": ["A", "B", "C", "D"]
+                  "enum": [
+                    "A",
+                    "B",
+                    "C",
+                    "D"
+                  ]
                 },
                 "controlWindowMinutes": {
                   "default": 30,
@@ -815,12 +1126,19 @@
                 "calibrationStatus": {
                   "default": "available",
                   "type": "string",
-                  "enum": ["available", "unavailable"]
+                  "enum": [
+                    "available",
+                    "unavailable"
+                  ]
                 },
                 "driftStatus": {
                   "default": "clear",
                   "type": "string",
-                  "enum": ["clear", "detected", "unavailable"]
+                  "enum": [
+                    "clear",
+                    "detected",
+                    "unavailable"
+                  ]
                 },
                 "computedAt": {
                   "default": "1970-01-01T00:00:00.000Z",
@@ -850,7 +1168,11 @@
                 },
                 "mode": {
                   "type": "string",
-                  "enum": ["shadow", "assist", "controlled"]
+                  "enum": [
+                    "shadow",
+                    "assist",
+                    "controlled"
+                  ]
                 },
                 "recommendation": {
                   "type": "string"
@@ -876,10 +1198,16 @@
                   ]
                 },
                 "controlWindowOpenedAt": {
-                  "type": ["string", "null"]
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "controlWindowEndsAt": {
-                  "type": ["string", "null"]
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "overrideCounted": {
                   "type": "boolean"
@@ -888,7 +1216,10 @@
                   "type": "boolean"
                 },
                 "autoDecisionAt": {
-                  "type": ["string", "null"]
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
               "required": [
@@ -923,13 +1254,24 @@
                 },
                 "controlWindow": {
                   "type": "string",
-                  "enum": ["open", "closed"]
+                  "enum": [
+                    "open",
+                    "closed"
+                  ]
                 }
               },
-              "required": ["eligible", "reasons", "controlWindow"]
+              "required": [
+                "eligible",
+                "reasons",
+                "controlWindow"
+              ]
             }
           },
-          "required": ["config", "metrics", "eligibility"]
+          "required": [
+            "config",
+            "metrics",
+            "eligibility"
+          ]
         }
       },
       "AutonomySnapshotDto": {
@@ -963,14 +1305,25 @@
                     "minimum": 0
                   }
                 },
-                "required": ["min", "max"]
+                "required": [
+                  "min",
+                  "max"
+                ]
               },
               "level": {
                 "type": "string",
-                "enum": ["new", "verified", "stable", "paused"]
+                "enum": [
+                  "new",
+                  "verified",
+                  "stable",
+                  "paused"
+                ]
               },
               "controlWindowEndsAt": {
-                "type": ["string", "null"]
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "minClosedCases": {
                 "default": 100,
@@ -999,7 +1352,12 @@
               "minGrade": {
                 "default": "B",
                 "type": "string",
-                "enum": ["A", "B", "C", "D"]
+                "enum": [
+                  "A",
+                  "B",
+                  "C",
+                  "D"
+                ]
               },
               "controlWindowMinutes": {
                 "default": 30,
@@ -1071,12 +1429,19 @@
               "calibrationStatus": {
                 "default": "available",
                 "type": "string",
-                "enum": ["available", "unavailable"]
+                "enum": [
+                  "available",
+                  "unavailable"
+                ]
               },
               "driftStatus": {
                 "default": "clear",
                 "type": "string",
-                "enum": ["clear", "detected", "unavailable"]
+                "enum": [
+                  "clear",
+                  "detected",
+                  "unavailable"
+                ]
               },
               "computedAt": {
                 "default": "1970-01-01T00:00:00.000Z",
@@ -1106,7 +1471,11 @@
               },
               "mode": {
                 "type": "string",
-                "enum": ["shadow", "assist", "controlled"]
+                "enum": [
+                  "shadow",
+                  "assist",
+                  "controlled"
+                ]
               },
               "recommendation": {
                 "type": "string"
@@ -1132,10 +1501,16 @@
                 ]
               },
               "controlWindowOpenedAt": {
-                "type": ["string", "null"]
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "controlWindowEndsAt": {
-                "type": ["string", "null"]
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "overrideCounted": {
                 "type": "boolean"
@@ -1144,7 +1519,10 @@
                 "type": "boolean"
               },
               "autoDecisionAt": {
-                "type": ["string", "null"]
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
             "required": [
@@ -1179,13 +1557,24 @@
               },
               "controlWindow": {
                 "type": "string",
-                "enum": ["open", "closed"]
+                "enum": [
+                  "open",
+                  "closed"
+                ]
               }
             },
-            "required": ["eligible", "reasons", "controlWindow"]
+            "required": [
+              "eligible",
+              "reasons",
+              "controlWindow"
+            ]
           }
         },
-        "required": ["config", "metrics", "eligibility"]
+        "required": [
+          "config",
+          "metrics",
+          "eligibility"
+        ]
       },
       "AutonomyAuditListDto": {
         "type": "array",
@@ -1199,7 +1588,10 @@
               "type": "string"
             },
             "applicationId": {
-              "type": ["string", "null"]
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "actorId": {
               "type": "string"
@@ -1212,11 +1604,21 @@
             },
             "fromLevel": {
               "type": "string",
-              "enum": ["new", "verified", "stable", "paused"]
+              "enum": [
+                "new",
+                "verified",
+                "stable",
+                "paused"
+              ]
             },
             "toLevel": {
               "type": "string",
-              "enum": ["new", "verified", "stable", "paused"]
+              "enum": [
+                "new",
+                "verified",
+                "stable",
+                "paused"
+              ]
             },
             "reason": {
               "type": "string"
@@ -1270,12 +1672,19 @@
                 "calibrationStatus": {
                   "default": "available",
                   "type": "string",
-                  "enum": ["available", "unavailable"]
+                  "enum": [
+                    "available",
+                    "unavailable"
+                  ]
                 },
                 "driftStatus": {
                   "default": "clear",
                   "type": "string",
-                  "enum": ["clear", "detected", "unavailable"]
+                  "enum": [
+                    "clear",
+                    "detected",
+                    "unavailable"
+                  ]
                 },
                 "computedAt": {
                   "default": "1970-01-01T00:00:00.000Z",
@@ -1335,12 +1744,19 @@
                 "calibrationStatus": {
                   "default": "available",
                   "type": "string",
-                  "enum": ["available", "unavailable"]
+                  "enum": [
+                    "available",
+                    "unavailable"
+                  ]
                 },
                 "driftStatus": {
                   "default": "clear",
                   "type": "string",
-                  "enum": ["clear", "detected", "unavailable"]
+                  "enum": [
+                    "clear",
+                    "detected",
+                    "unavailable"
+                  ]
                 },
                 "computedAt": {
                   "default": "1970-01-01T00:00:00.000Z",
@@ -1385,7 +1801,9 @@
                 "properties": {
                   "type": {
                     "type": "string",
-                    "enum": ["pause"]
+                    "enum": [
+                      "pause"
+                    ]
                   },
                   "reason": {
                     "type": "string",
@@ -1393,18 +1811,27 @@
                     "maxLength": 500
                   }
                 },
-                "required": ["type", "reason"]
+                "required": [
+                  "type",
+                  "reason"
+                ]
               },
               {
                 "type": "object",
                 "properties": {
                   "type": {
                     "type": "string",
-                    "enum": ["set_level"]
+                    "enum": [
+                      "set_level"
+                    ]
                   },
                   "level": {
                     "type": "string",
-                    "enum": ["new", "verified", "stable"]
+                    "enum": [
+                      "new",
+                      "verified",
+                      "stable"
+                    ]
                   },
                   "reason": {
                     "type": "string",
@@ -1412,7 +1839,11 @@
                     "maxLength": 500
                   }
                 },
-                "required": ["type", "level", "reason"]
+                "required": [
+                  "type",
+                  "level",
+                  "reason"
+                ]
               }
             ]
           },
@@ -1427,7 +1858,1390 @@
             "maximum": 9007199254740991
           }
         },
-        "required": ["action", "idempotencyKey", "expectedRevision"]
+        "required": [
+          "action",
+          "idempotencyKey",
+          "expectedRevision"
+        ]
+      },
+      "ManagerReportDto": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "to": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "timezone": {
+                "type": "string"
+              },
+              "view": {
+                "type": "string",
+                "enum": [
+                  "overview",
+                  "journal"
+                ]
+              },
+              "bucket": {
+                "type": "string",
+                "enum": [
+                  "day",
+                  "week"
+                ]
+              },
+              "filters": {
+                "type": "object",
+                "properties": {
+                  "productIds": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "working_capital",
+                        "cash_gap",
+                        "equipment",
+                        "development"
+                      ]
+                    }
+                  },
+                  "statuses": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "draft",
+                        "in_review",
+                        "needs_client",
+                        "approved",
+                        "counter_offer",
+                        "accepted",
+                        "signing",
+                        "funded",
+                        "rejected",
+                        "cancelled"
+                      ]
+                    }
+                  },
+                  "assigneeIds": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "stages": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "intake",
+                        "completeness",
+                        "enrichment",
+                        "scoring",
+                        "decision",
+                        "signing",
+                        "disbursement"
+                      ]
+                    }
+                  },
+                  "actorKinds": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "employee",
+                        "system",
+                        "client"
+                      ]
+                    }
+                  },
+                  "recommendations": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "approve",
+                        "counter_offer",
+                        "request_info",
+                        "manual_review",
+                        "reject",
+                        "unknown"
+                      ]
+                    }
+                  },
+                  "autonomyModes": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "shadow",
+                        "assist",
+                        "controlled"
+                      ]
+                    }
+                  },
+                  "autonomyDispositions": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "manual_required",
+                        "auto_offer_sent",
+                        "confirmed",
+                        "intercepted",
+                        "expired",
+                        "declined"
+                      ]
+                    }
+                  },
+                  "slaStates": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "on_track",
+                        "at_risk",
+                        "overdue",
+                        "paused",
+                        "unknown"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "required": [
+              "from",
+              "to",
+              "timezone",
+              "view",
+              "bucket",
+              "filters"
+            ]
+          },
+          "eventWatermark": {
+            "type": "object",
+            "properties": {
+              "occurredAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "eventId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "occurredAt",
+              "eventId"
+            ],
+            "nullable": true
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "population": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "known": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "unknown": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "quality": {
+                    "type": "string",
+                    "enum": [
+                      "complete",
+                      "partial",
+                      "unknown"
+                    ]
+                  }
+                },
+                "required": [
+                  "total",
+                  "known",
+                  "unknown",
+                  "quality"
+                ]
+              },
+              "activity": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "known": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "unknown": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "quality": {
+                    "type": "string",
+                    "enum": [
+                      "complete",
+                      "partial",
+                      "unknown"
+                    ]
+                  }
+                },
+                "required": [
+                  "total",
+                  "known",
+                  "unknown",
+                  "quality"
+                ]
+              },
+              "recommendation": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "known": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "unknown": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "quality": {
+                    "type": "string",
+                    "enum": [
+                      "complete",
+                      "partial",
+                      "unknown"
+                    ]
+                  }
+                },
+                "required": [
+                  "total",
+                  "known",
+                  "unknown",
+                  "quality"
+                ]
+              },
+              "sla": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "known": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "unknown": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "quality": {
+                    "type": "string",
+                    "enum": [
+                      "complete",
+                      "partial",
+                      "unknown"
+                    ]
+                  }
+                },
+                "required": [
+                  "total",
+                  "known",
+                  "unknown",
+                  "quality"
+                ]
+              },
+              "autonomy": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "known": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "unknown": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "quality": {
+                    "type": "string",
+                    "enum": [
+                      "complete",
+                      "partial",
+                      "unknown"
+                    ]
+                  }
+                },
+                "required": [
+                  "total",
+                  "known",
+                  "unknown",
+                  "quality"
+                ]
+              }
+            },
+            "required": [
+              "population",
+              "activity",
+              "recommendation",
+              "sla",
+              "autonomy"
+            ]
+          },
+          "population": {
+            "type": "object",
+            "properties": {
+              "applications": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "byStatus": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "share": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "draft",
+                        "in_review",
+                        "needs_client",
+                        "approved",
+                        "counter_offer",
+                        "accepted",
+                        "signing",
+                        "funded",
+                        "rejected",
+                        "cancelled"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "count",
+                    "share",
+                    "status"
+                  ]
+                }
+              },
+              "byProduct": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "productId": {
+                      "type": "string",
+                      "enum": [
+                        "working_capital",
+                        "cash_gap",
+                        "equipment",
+                        "development"
+                      ]
+                    },
+                    "applications": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "active": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "closed": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "urgentOpen": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "overdue": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "productId",
+                    "applications",
+                    "active",
+                    "closed",
+                    "urgentOpen",
+                    "overdue"
+                  ]
+                }
+              },
+              "byStage": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "intake",
+                        "completeness",
+                        "enrichment",
+                        "scoring",
+                        "decision",
+                        "signing",
+                        "disbursement"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "share": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "stage",
+                    "count",
+                    "share"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "applications",
+              "byStatus",
+              "byProduct",
+              "byStage"
+            ]
+          },
+          "activity": {
+            "type": "object",
+            "properties": {
+              "events": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "applications": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "byActor": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "actorKind": {
+                      "type": "string",
+                      "enum": [
+                        "employee",
+                        "system",
+                        "client"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "actorKind",
+                    "count"
+                  ]
+                }
+              },
+              "byStage": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "intake",
+                        "completeness",
+                        "enrichment",
+                        "scoring",
+                        "decision",
+                        "signing",
+                        "disbursement"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "share": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "stage",
+                    "count",
+                    "share"
+                  ]
+                }
+              },
+              "byStatus": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "share": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "draft",
+                        "in_review",
+                        "needs_client",
+                        "approved",
+                        "counter_offer",
+                        "accepted",
+                        "signing",
+                        "funded",
+                        "rejected",
+                        "cancelled"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "count",
+                    "share",
+                    "status"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "events",
+              "applications",
+              "byActor",
+              "byStage",
+              "byStatus"
+            ]
+          },
+          "decisions": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "approve": {
+                "type": "object",
+                "properties": {
+                  "count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "share": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "medianMinutes": {
+                    "type": "number",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "p90Minutes": {
+                    "type": "number",
+                    "minimum": 0,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "count",
+                  "share",
+                  "medianMinutes",
+                  "p90Minutes"
+                ]
+              },
+              "counterOffer": {
+                "type": "object",
+                "properties": {
+                  "count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "share": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "medianMinutes": {
+                    "type": "number",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "p90Minutes": {
+                    "type": "number",
+                    "minimum": 0,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "count",
+                  "share",
+                  "medianMinutes",
+                  "p90Minutes"
+                ]
+              },
+              "reject": {
+                "type": "object",
+                "properties": {
+                  "count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "share": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "medianMinutes": {
+                    "type": "number",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "p90Minutes": {
+                    "type": "number",
+                    "minimum": 0,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "count",
+                  "share",
+                  "medianMinutes",
+                  "p90Minutes"
+                ]
+              },
+              "requestInfo": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "byProduct": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "productId": {
+                      "type": "string",
+                      "enum": [
+                        "working_capital",
+                        "cash_gap",
+                        "equipment",
+                        "development"
+                      ]
+                    },
+                    "decisions": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "approve": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "counterOffer": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "reject": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "requestInfo": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "productId",
+                    "decisions",
+                    "approve",
+                    "counterOffer",
+                    "reject",
+                    "requestInfo"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "total",
+              "approve",
+              "counterOffer",
+              "reject",
+              "requestInfo",
+              "byProduct"
+            ]
+          },
+          "recommendation": {
+            "type": "object",
+            "properties": {
+              "matched": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "overridden": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "unknown": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "overrideRate": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "nullable": true
+              },
+              "matrix": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "recommendation": {
+                      "type": "string",
+                      "enum": [
+                        "approve",
+                        "counter_offer",
+                        "request_info",
+                        "manual_review",
+                        "reject",
+                        "unknown"
+                      ]
+                    },
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "approve",
+                        "counter_offer",
+                        "request_info",
+                        "manual_review",
+                        "reject",
+                        "unknown"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "recommendation",
+                    "decision",
+                    "count"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "matched",
+              "overridden",
+              "unknown",
+              "overrideRate",
+              "matrix"
+            ]
+          },
+          "sla": {
+            "type": "object",
+            "properties": {
+              "policyVersion": {
+                "type": "string"
+              },
+              "targets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "intake",
+                        "completeness",
+                        "enrichment",
+                        "scoring",
+                        "decision",
+                        "signing",
+                        "disbursement"
+                      ]
+                    },
+                    "targetMinutes": {
+                      "type": "integer",
+                      "exclusiveMinimum": true,
+                      "maximum": 9007199254740991,
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "stage",
+                    "targetMinutes"
+                  ]
+                }
+              },
+              "byState": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "on_track",
+                        "at_risk",
+                        "overdue",
+                        "paused",
+                        "unknown"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "share": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "count",
+                    "share"
+                  ]
+                }
+              },
+              "series": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "bucketStart": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "eligible": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "met": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "overdue": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "paused": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "unknown": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "bucketStart",
+                    "eligible",
+                    "met",
+                    "overdue",
+                    "paused",
+                    "unknown"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "policyVersion",
+              "targets",
+              "byState",
+              "series"
+            ]
+          },
+          "autonomy": {
+            "type": "object",
+            "properties": {
+              "byMode": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "shadow",
+                        "assist",
+                        "controlled"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "share": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "mode",
+                    "count",
+                    "share"
+                  ]
+                }
+              },
+              "byDisposition": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "disposition": {
+                      "type": "string",
+                      "enum": [
+                        "manual_required",
+                        "auto_offer_sent",
+                        "confirmed",
+                        "intercepted",
+                        "expired",
+                        "declined"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "share": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "disposition",
+                    "count",
+                    "share"
+                  ]
+                }
+              },
+              "series": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "bucketStart": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "candidates": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "autoOffers": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "confirmed": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "intercepted": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "expired": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "declined": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "overrides": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "bucketStart",
+                    "candidates",
+                    "autoOffers",
+                    "confirmed",
+                    "intercepted",
+                    "expired",
+                    "declined",
+                    "overrides"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "byMode",
+              "byDisposition",
+              "series"
+            ]
+          },
+          "timeseries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bucketStart": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "applications": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "events": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "decisions": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "overdue": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "bucketStart",
+                "applications",
+                "events",
+                "decisions",
+                "overdue"
+              ]
+            }
+          },
+          "journal": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "applicationId": {
+                      "type": "string"
+                    },
+                    "applicationNumber": {
+                      "type": "string"
+                    },
+                    "occurredAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "actor": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "employee",
+                            "system",
+                            "client"
+                          ]
+                        },
+                        "id": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "id",
+                        "name"
+                      ]
+                    },
+                    "productId": {
+                      "type": "string",
+                      "enum": [
+                        "working_capital",
+                        "cash_gap",
+                        "equipment",
+                        "development"
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "draft",
+                        "in_review",
+                        "needs_client",
+                        "approved",
+                        "counter_offer",
+                        "accepted",
+                        "signing",
+                        "funded",
+                        "rejected",
+                        "cancelled",
+                        null
+                      ],
+                      "nullable": true
+                    },
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "intake",
+                        "completeness",
+                        "enrichment",
+                        "scoring",
+                        "decision",
+                        "signing",
+                        "disbursement",
+                        null
+                      ],
+                      "nullable": true
+                    },
+                    "assigneeId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "recommendation": {
+                      "type": "string",
+                      "enum": [
+                        "approve",
+                        "counter_offer",
+                        "request_info",
+                        "manual_review",
+                        "reject",
+                        "unknown"
+                      ]
+                    },
+                    "autonomyMode": {
+                      "type": "string",
+                      "enum": [
+                        "shadow",
+                        "assist",
+                        "controlled",
+                        null
+                      ],
+                      "nullable": true
+                    },
+                    "autonomyDisposition": {
+                      "type": "string",
+                      "enum": [
+                        "manual_required",
+                        "auto_offer_sent",
+                        "confirmed",
+                        "intercepted",
+                        "expired",
+                        "declined",
+                        null
+                      ],
+                      "nullable": true
+                    },
+                    "slaState": {
+                      "type": "string",
+                      "enum": [
+                        "on_track",
+                        "at_risk",
+                        "overdue",
+                        "paused",
+                        "unknown"
+                      ]
+                    },
+                    "metadataQuality": {
+                      "type": "string",
+                      "enum": [
+                        "complete",
+                        "partial",
+                        "unknown"
+                      ]
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "comment": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "applicationId",
+                    "applicationNumber",
+                    "occurredAt",
+                    "kind",
+                    "actor",
+                    "productId",
+                    "status",
+                    "stage",
+                    "assigneeId",
+                    "recommendation",
+                    "autonomyMode",
+                    "autonomyDisposition",
+                    "slaState",
+                    "metadataQuality",
+                    "title",
+                    "comment"
+                  ]
+                }
+              },
+              "nextCursor": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "hasMore": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "items",
+              "nextCursor",
+              "hasMore"
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "query",
+          "eventWatermark",
+          "coverage",
+          "population",
+          "activity",
+          "decisions",
+          "recommendation",
+          "sla",
+          "autonomy",
+          "timeseries",
+          "journal"
+        ]
       }
     }
   }

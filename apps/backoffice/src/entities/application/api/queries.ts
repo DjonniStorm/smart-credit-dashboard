@@ -78,6 +78,17 @@ export function useAutonomyAudit(productId: string) {
   });
 }
 
+export function useManagerReport(
+  view: "overview" | "journal",
+  query?: { cursor?: string; actor?: string; limit?: number },
+) {
+  return useQuery({
+    queryKey: [...armKeys.managerReport(view), query],
+    queryFn: () => armApi.getManagerReport({ view, ...query }),
+    staleTime: 30_000,
+  });
+}
+
 function useApplicationUpdate<V>(fn: (vars: V) => Promise<Application>) {
   const qc = useQueryClient();
   return useMutation({

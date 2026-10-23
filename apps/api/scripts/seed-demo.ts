@@ -112,6 +112,7 @@ async function seedApplications(
       termMonths: 12,
       purpose: "working_capital",
       jobId: "seed-job-bakery",
+      status: "approved",
     },
     {
       id: "seed-app-workshop",
@@ -122,6 +123,7 @@ async function seedApplications(
       termMonths: 24,
       purpose: "equipment",
       jobId: "seed-job-workshop",
+      status: "needs_client",
     },
     {
       id: "seed-app-logistics",
@@ -132,14 +134,15 @@ async function seedApplications(
       termMonths: 6,
       purpose: "cash_gap",
       jobId: "seed-job-logistics",
+      status: "rejected",
     },
   ];
   for (const application of applications) {
-    const now = new Date().toISOString();
+    const now = new Date("2026-10-24T00:00:00.000Z").toISOString();
     await client.query(
       `insert into applications(id,number,inn,product_id,amount,term_months,purpose,status,check_job_id,scoring,decision,created_at,updated_at)
-       values($1,$2,$3,$4,$5,$6,$7,'in_review',$8,null,null,$9,$9)
-       on conflict(id) do update set product_id=excluded.product_id, amount=excluded.amount,
+       values($1,$2,$3,$4,$5,$6,$7,$8,$9,null,null,$10,$10)
+       on conflict(id) do update set status=excluded.status, product_id=excluded.product_id, amount=excluded.amount,
        term_months=excluded.term_months, purpose=excluded.purpose, check_job_id=excluded.check_job_id,
        scoring=null, decision=null`,
       [
@@ -150,6 +153,7 @@ async function seedApplications(
         application.amount,
         application.termMonths,
         application.purpose,
+        application.status,
         application.jobId,
         now,
       ],
@@ -159,6 +163,186 @@ async function seedApplications(
        values($1,$2,'queued',$3,$4,0)
        on conflict(id) do update set status='queued', error=null, finished_at=null`,
       [application.jobId, application.id, `seed-${application.id}`, now],
+    );
+  }
+  await seedReportEvents(client);
+}
+
+async function seedReportEvents(
+  client: import("pg").PoolClient,
+): Promise<void> {
+  const events = [
+    {
+      key: "bakery-created",
+      applicationId: "seed-app-bakery",
+      kind: "application_created",
+      at: "2026-10-04T10:00:00.000Z",
+      payload: {
+        title: "Заявка создана",
+        reportContext: {
+          version: 1,
+          productId: "working_capital",
+          status: "in_review",
+          stage: "intake",
+          actorKind: "system",
+          actorName: "Кредитный конвейер",
+          slaState: "on_track",
+        },
+      },
+    },
+    {
+      key: "bakery-scored",
+      applicationId: "seed-app-bakery",
+      kind: "scoring_succeeded",
+      at: "2026-10-05T12:00:00.000Z",
+      payload: {
+        title: "Скоринг завершён",
+        recommendation: "approve",
+        autonomyMode: "controlled",
+        autonomyDisposition: "auto_offer_sent",
+        reportContext: {
+          version: 1,
+          productId: "working_capital",
+          status: "approved",
+          stage: "decision",
+          actorKind: "system",
+          actorName: "Кредитный конвейер",
+          recommendation: "approve",
+          autonomyMode: "controlled",
+          autonomyDisposition: "auto_offer_sent",
+          slaState: "on_track",
+        },
+      },
+    },
+    {
+      key: "bakery-approved",
+      applicationId: "seed-app-bakery",
+      kind: "status_changed",
+      at: "2026-10-06T09:30:00.000Z",
+      payload: {
+        actionType: "approve",
+        title: "Заявка одобрена",
+        actorKind: "employee",
+        actorId: "employee-analyst",
+        actorName: "Анна Аналитик",
+        reportContext: {
+          version: 1,
+          productId: "working_capital",
+          status: "approved",
+          stage: "decision",
+          actorKind: "employee",
+          actorId: "employee-analyst",
+          actorName: "Анна Аналитик",
+          recommendation: "approve",
+          autonomyMode: "controlled",
+          autonomyDisposition: "confirmed",
+          slaState: "on_track",
+        },
+      },
+    },
+    {
+      key: "workshop-created",
+      applicationId: "seed-app-workshop",
+      kind: "application_created",
+      at: "2026-10-12T08:00:00.000Z",
+      payload: {
+        title: "Заявка создана",
+        reportContext: {
+          version: 1,
+          productId: "equipment",
+          status: "in_review",
+          stage: "intake",
+          actorKind: "system",
+          actorName: "Кредитный конвейер",
+          slaState: "at_risk",
+        },
+      },
+    },
+    {
+      key: "workshop-counter",
+      applicationId: "seed-app-workshop",
+      kind: "status_changed",
+      at: "2026-10-15T16:00:00.000Z",
+      payload: {
+        actionType: "counter_offer",
+        title: "Встречное предложение",
+        actorKind: "employee",
+        actorId: "employee-lead",
+        actorName: "Олег Руководитель",
+        reportContext: {
+          version: 1,
+          productId: "equipment",
+          status: "counter_offer",
+          stage: "decision",
+          actorKind: "employee",
+          actorId: "employee-lead",
+          actorName: "Олег Руководитель",
+          recommendation: "approve",
+          autonomyMode: "assist",
+          autonomyDisposition: "manual_required",
+          slaState: "overdue",
+        },
+      },
+    },
+    {
+      key: "logistics-created",
+      applicationId: "seed-app-logistics",
+      kind: "application_created",
+      at: "2026-10-18T11:00:00.000Z",
+      payload: {
+        title: "Заявка создана",
+        reportContext: {
+          version: 1,
+          productId: "cash_gap",
+          status: "in_review",
+          stage: "intake",
+          actorKind: "system",
+          actorName: "Кредитный конвейер",
+          slaState: "overdue",
+        },
+      },
+    },
+    {
+      key: "logistics-reject",
+      applicationId: "seed-app-logistics",
+      kind: "status_changed",
+      at: "2026-10-20T14:00:00.000Z",
+      payload: {
+        actionType: "reject",
+        title: "Отказ по заявке",
+        actorKind: "employee",
+        actorId: "employee-analyst",
+        actorName: "Анна Аналитик",
+        reportContext: {
+          version: 1,
+          productId: "cash_gap",
+          status: "rejected",
+          stage: "decision",
+          actorKind: "employee",
+          actorId: "employee-analyst",
+          actorName: "Анна Аналитик",
+          recommendation: "approve",
+          autonomyMode: "assist",
+          autonomyDisposition: "manual_required",
+          slaState: "overdue",
+        },
+      },
+    },
+  ];
+  for (const event of events) {
+    await client.query(
+      `insert into application_events(application_id, kind, payload, created_at)
+       select $1, $2, $3, $4
+        where not exists (
+          select 1 from application_events where payload->>'seedKey'=$5
+        )`,
+      [
+        event.applicationId,
+        event.kind,
+        { ...event.payload, seedKey: event.key },
+        event.at,
+        event.key,
+      ],
     );
   }
 }
