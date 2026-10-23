@@ -2,8 +2,6 @@
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
     "noEmit": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true
   },
   "include": ["src"]
