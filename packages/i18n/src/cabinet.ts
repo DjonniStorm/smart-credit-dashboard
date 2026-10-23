@@ -1,3 +1,4 @@
+import { negotiationRu } from "./cabinet-negotiation";
 import { Locale } from "./locale";
 
 // Тексты кабинета клиента. Отдельный словарь, чтобы страницы кабинета
@@ -310,6 +311,7 @@ const ru = {
       "Подписать можно после того, как вы примете условия банка. Вернитесь к заявке.",
     toApplication: "К заявке",
   },
+  negotiation: negotiationRu,
   notFound: {
     title: "Такой страницы нет",
     text: "Ссылка устарела или в адресе опечатка.",
