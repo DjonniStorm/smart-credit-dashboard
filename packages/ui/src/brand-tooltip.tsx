@@ -3,7 +3,7 @@
 import { Tooltip } from "@mantine/core";
 import type { ReactElement } from "react";
 
-/** Подсказка у логотипа банка. Открывается при наведении, фокусе и касании. */
+/** Подсказка у логотипа банка. Касание логотипа ведёт на главную, поэтому только наведение и фокус. */
 export function BrandTooltip({
   label,
   children,
@@ -18,7 +18,7 @@ export function BrandTooltip({
       w={260}
       withArrow
       position="bottom-start"
-      events={{ hover: true, focus: true, touch: true }}
+      events={{ hover: true, focus: true, touch: false }}
     >
       {children}
     </Tooltip>

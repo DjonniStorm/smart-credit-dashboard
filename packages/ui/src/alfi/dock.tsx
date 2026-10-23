@@ -3,7 +3,7 @@
 import { ActionIcon, Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { IconX } from "@tabler/icons-react";
-import { type JSX, useState } from "react";
+import type { JSX } from "react";
 
 import { Alfi } from "../alfi-character";
 import type { AlfiState } from "../alfi-state";
@@ -54,7 +54,11 @@ export function AlfiDock({
     getInitialValueInEffect: true,
   });
   // Подсказка, которую пользователь видел перед тем, как скрыть Альфи.
-  const [seenTitle, setSeenTitle] = useState<string | null>(null);
+  const [seenTitle, setSeenTitle] = useLocalStorage<string | null>({
+    key: `${storageKey}:seen`,
+    defaultValue: null,
+    getInitialValueInEffect: true,
+  });
   const fresh = hidden && seenTitle !== null && seenTitle !== hint.title;
 
   const hide = () => {

@@ -1,10 +1,6 @@
 import type { Application } from "@repo/contracts/application";
-import {
-  type AlfiDockHint,
-  type AlfiGuidanceContext,
-  AlfiState,
-  getAlfiGuidance,
-} from "@repo/ui/alfi";
+import type { AlfiDockHint } from "@repo/ui/alfi";
+import type { AlfiGuidance, AlfiGuidanceContext } from "@repo/ui/alfi-guidance";
 
 import { ax } from "./text";
 
@@ -20,23 +16,39 @@ const guidedRecommendations = new Set<string>([
   "reject",
 ]);
 
+/** Подсказка, когда очередь не загрузилась: честно про ошибку. */
+export function loadErrorHint(reason: string): AlfiDockHint {
+  return {
+    state: "attention",
+    title: ax.loadError.title,
+    message: ax.loadError.message(reason),
+  };
+}
+
+/** Тексты по заявке, в приложении это getAlfiGuidance из модуля Альфи. */
+export type GuidanceSource = (context: AlfiGuidanceContext) => AlfiGuidance;
+
 /** Подсказка Альфи для сотрудника по адресу страницы и очереди. */
 export function armHint(
   pathname: string,
   applications: readonly Application[],
   employeeId: string,
+  guide: GuidanceSource,
 ): AlfiDockHint {
   const opened = /^\/applications\/([^/]+)$/.exec(pathname);
   const app = opened && applications.find((item) => item.id === opened[1]);
   if (app) {
-    return applicationHint(app);
+    return applicationHint(app, guide);
   }
   return queueHint(applications, employeeId);
 }
 
-function applicationHint(app: Application): AlfiDockHint {
+function applicationHint(
+  app: Application,
+  guide: GuidanceSource,
+): AlfiDockHint {
   const recommendation = app.scoring?.recommendation;
-  const guidance = getAlfiGuidance({
+  const guidance = guide({
     role: "employee",
     status: app.status,
     stage: app.stage,
@@ -76,12 +88,12 @@ function queueHint(
   const oldest = waiting[0];
   if (!oldest) {
     return {
-      state: AlfiState.Idle,
+      state: "idle",
       ...t.queueEmpty,
     };
   }
   return {
-    state: AlfiState.Explain,
+    state: "explain",
     title: t.queue.title(waiting.length),
     message: t.queue.message(oldest.number),
     action: {
