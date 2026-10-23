@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import { applicationStatusSchema, innSchema } from "@repo/contracts";
+import { apiScoringSchema } from "./api.js";
 
 /** Зачем нужны деньги. С цели начинается подбор продукта. */
 export const creditPurposeSchema = z.enum([
@@ -178,6 +179,7 @@ export const applicationSchema = applicationInputSchema.extend({
   company: companyProfileSchema,
   /** Сколько этапов автоматической проверки уже пройдено (0..3). */
   checksPassed: z.number().int().min(0).max(3),
+  scoring: apiScoringSchema.nullable().optional(),
   requests: z.array(clientRequestSchema),
   decision: decisionSchema.nullable(),
   deal: z

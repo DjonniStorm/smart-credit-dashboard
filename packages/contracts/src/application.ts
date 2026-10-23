@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import { applicationStatusSchema, innSchema } from "@repo/contracts";
+import { apiAutonomySnapshotSchema } from "./api.js";
 
 export const legalFormSchema = z.enum(["ip", "ooo"]);
 export type LegalForm = z.infer<typeof legalFormSchema>;
@@ -136,9 +137,20 @@ export type RiskBand = z.infer<typeof riskBandSchema>;
 /** Скоринг: оценка риска, ещё не решение. */
 export const scoringResultSchema = z.object({
   model: z.string(),
+  modelVersion: z.string().optional(),
   base: z.number(),
   score: z.number(),
   band: riskBandSchema,
+  grade: z.enum(["A", "B", "C", "D"]).optional(),
+  pd: z.number().min(0).max(1).optional(),
+  healthIndex: z.number().min(0).max(100).optional(),
+  readinessIndex: z.number().min(0).max(100).optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  recommendation: z
+    .enum(["approve", "counter_offer", "request_info", "manual_review", "reject"])
+    .optional(),
+  reasons: z.array(z.string()).optional(),
+  nextActions: z.array(z.string()).optional(),
   factors: z.array(scoreFactorSchema),
   computedAt: z.string(),
 });
@@ -167,6 +179,7 @@ export const recommendationSchema = z.enum([
   "approve",
   "counter_offer",
   "request_info",
+  "manual_review",
   "reject",
 ]);
 export type Recommendation = z.infer<typeof recommendationSchema>;
@@ -332,6 +345,7 @@ export const applicationSchema = z.object({
   hold: applicationHoldSchema.nullable().default(null),
   urgent: z.boolean().default(false),
   urgentReason: z.string().nullable().default(null),
+  autonomy: apiAutonomySnapshotSchema.optional(),
   comments: z.array(applicationCommentSchema).default([]),
   handoff: applicationHandoffSchema.nullable().default(null),
   /** Что мешает решению, одной фразой. */
