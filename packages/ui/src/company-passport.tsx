@@ -17,7 +17,6 @@ import {
   IconAlertTriangle,
   IconCheck,
   IconClock,
-  IconRefresh,
 } from "@tabler/icons-react";
 import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
 
@@ -27,7 +26,6 @@ import { AlfiState } from "./alfi-state";
 type PassportMode = "client" | "backoffice";
 type PassportDensity = "compact" | "full";
 type Source = CompanyProfileResponse["sources"][number];
-type RetryableSource = Exclude<Source["source"], "bank_turnover">;
 
 export type CompanyPassportProps = {
   profile?: CompanyProfileResponse;
@@ -39,19 +37,17 @@ export type CompanyPassportProps = {
   consentPending?: boolean;
   consentError?: string | null;
   onGrantBkiConsent?: () => void;
-  onRetrySource?: (source: RetryableSource) => void;
-  retryingSource?: RetryableSource | null;
   financials?: Array<{ label: string; value: string }>;
 };
 
-const sourceLabels: Record<Source["source"], string> = {
+export const companySourceLabels: Record<Source["source"], string> = {
   egrul: "ЕГРЮЛ/ЕГРИП",
   fns: "ФНС",
   bki: "БКИ",
   bank_turnover: "Обороты по счёту",
 };
 
-const stateLabels: Record<Source["state"], string> = {
+export const companySourceStateLabels: Record<Source["state"], string> = {
   confirmed: "Подтверждено",
   pending: "Ожидает действия",
   discrepancy: "Есть расхождение",
@@ -69,8 +65,6 @@ export function CompanyPassport({
   consentPending = false,
   consentError = null,
   onGrantBkiConsent,
-  onRetrySource,
-  retryingSource = null,
   financials = [],
 }: CompanyPassportProps) {
   if (loading) {
@@ -104,7 +98,7 @@ export function CompanyPassport({
             <Text size="sm" c="dimmed">ИНН {profile.profile.inn}</Text>
           </div>
           <Badge leftSection={<IconForState state={passportState} size={14} />}>
-            {passportState === "confirmed" ? "Профиль подтверждён" : stateLabels[passportState]}
+            {passportState === "confirmed" ? "Профиль подтверждён" : companySourceStateLabels[passportState]}
           </Badge>
         </Group>
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="xs" mt="md">
@@ -113,7 +107,7 @@ export function CompanyPassport({
           <Fact label="Руководитель" value={profile.profile.director} />
           <Fact label="ОКВЭД" value={profile.profile.okved} />
           <Fact label="Регион" value={profile.profile.region} />
-          <Fact label="Дата регистрации" value={profile.profile.registeredAt} />
+          <Fact label="Дата регистрации" value={formatDate(profile.profile.registeredAt)} />
           {density === "full" && <Fact label="Адрес" value={profile.profile.address} />}
         </SimpleGrid>
       </Card>
@@ -126,8 +120,8 @@ export function CompanyPassport({
             <Accordion.Item key={source.source} value={source.source}>
               <Accordion.Control icon={<IconForState state={source.state} size={16} />}>
                 <Group justify="space-between" wrap="nowrap" pr="sm">
-                  <Text size="sm" fw={600}>{sourceLabels[source.source]}</Text>
-                  <Text size="xs" c="dimmed">{stateLabels[source.state]}</Text>
+                  <Text size="sm" fw={600}>{companySourceLabels[source.source]}</Text>
+                  <Text size="xs" c="dimmed">{companySourceStateLabels[source.state]}</Text>
                 </Group>
               </Accordion.Control>
               <Accordion.Panel>
@@ -145,21 +139,10 @@ export function CompanyPassport({
                   {source.discrepancies.map((item) => {
                     return (
                     <Alert key={item.key} color="yellow" title={item.label}>
-                      {item.firstSource}: {item.firstValue}; {item.secondSource}: {item.secondValue}. {item.nextStep}
+                      {companySourceLabels[item.firstSource]}: {item.firstValue}; {companySourceLabels[item.secondSource]}: {item.secondValue}. {item.nextStep}
                     </Alert>
                     );
                   })}
-                  {source.action === "retry_source" && source.source !== "bank_turnover" && onRetrySource && (
-                    <Button
-                      size="xs"
-                      variant="default"
-                      leftSection={<IconRefresh size={14} />}
-                      loading={retryingSource === source.source}
-                      onClick={() => onRetrySource(source.source as RetryableSource)}
-                    >
-                      Повторить проверку
-                    </Button>
-                  )}
                 </Stack>
               </Accordion.Panel>
             </Accordion.Item>

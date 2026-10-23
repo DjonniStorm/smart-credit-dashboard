@@ -46,7 +46,10 @@ export class CompanyProfileService {
     const sources = [
       this.egrulSnapshot(egrul, scenario.unavailableSources.includes("egrul"), scenario.discrepancies),
       this.fnsSnapshot(fns, scenario.unavailableSources.includes("fns"), scenario.discrepancies),
-      this.turnoverSnapshot(turnoverCheckedAt),
+      this.turnoverSnapshot(
+        turnoverCheckedAt,
+        scenario.unavailableSources.includes("bank_turnover"),
+      ),
     ];
 
     if (grantedAt) {
@@ -171,7 +174,22 @@ export class CompanyProfileService {
     return this.snapshot("bki", result, facts, "Данные БКИ получены", unavailable, discrepancies);
   }
 
-  private turnoverSnapshot(checkedAt: string): CompanySourceSnapshot {
+  private turnoverSnapshot(
+    checkedAt: string,
+    unavailable: boolean,
+  ): CompanySourceSnapshot {
+    if (unavailable) {
+      return {
+        source: "bank_turnover",
+        state: "manual_check",
+        summary: "Источник недоступен, нужна ручная проверка",
+        facts: [],
+        discrepancies: [],
+        action: "manual_review",
+        reason: "Источник не ответил, проверьте данные вручную",
+        checkedAt,
+      };
+    }
     return {
       source: "bank_turnover",
       state: "confirmed",
@@ -220,8 +238,10 @@ export class CompanyProfileService {
         summary: "Источник недоступен, нужна ручная проверка",
         facts: [],
         discrepancies: sourceDiscrepancies,
-        action: unavailable ? "retry_source" : "manual_review",
-        reason: unavailable ? "Источник не ответил, можно повторить проверку" : "Источник требует ручного подтверждения",
+        action: "manual_review",
+        reason: unavailable
+          ? "Источник не ответил, проверьте данные вручную"
+          : "Источник требует ручного подтверждения",
         checkedAt: result.checkedAt,
       };
     }
@@ -238,24 +258,10 @@ export class CompanyProfileService {
   }
 
   private async checkedAt(inn: string, source: CompanySource): Promise<string> {
-    await this.db.query(`
-      create table if not exists company_source_checks (
-        inn varchar(12) not null,
-        source text not null,
-        checked_at timestamptz not null,
-        primary key (inn, source)
-      )
-    `);
-    const rows = (await this.db.query(
-      "select checked_at from company_source_checks where inn=$1 and source=$2",
-      [inn, source],
-    )) as Array<{ checked_at: Date | string }>;
-    if (rows[0]?.checked_at) {
-      return new Date(rows[0].checked_at).toISOString();
-    }
     const checkedAt = new Date().toISOString();
     await this.db.query(
-      "insert into company_source_checks(inn,source,checked_at) values($1,$2,$3) on conflict (inn,source) do nothing",
+      `insert into company_source_checks(inn,source,checked_at) values($1,$2,$3)
+       on conflict (inn,source) do update set checked_at=excluded.checked_at`,
       [inn, source, checkedAt],
     );
     return checkedAt;

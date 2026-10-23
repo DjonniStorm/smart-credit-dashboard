@@ -1,5 +1,6 @@
 "use client";
 
+import { Card, Group, Stack, Text, Title } from "@mantine/core";
 import { CompanyPassport } from "@repo/ui/company-passport";
 import { formatRub } from "@repo/ui/money";
 import type { DemoAccount } from "@repo/contracts/cabinet";
@@ -32,17 +33,26 @@ function CompanyProfileContent({
   ];
 
   return (
-    <CompanyPassport
-      profile={query.data}
-      mode="client"
-      density="full"
-      loading={query.isPending}
-      error={query.isError ? query.error.message : null}
-      retry={() => void query.refetch()}
-      consentPending={consent.isPending}
-      consentError={consent.isError ? consent.error.message : null}
-      onGrantBkiConsent={() => consent.mutate()}
-      financials={financials}
-    />
+    <Stack gap="md">
+      <CompanyPassport
+        profile={query.data}
+        mode="client"
+        density="full"
+        loading={query.isPending}
+        error={query.isError ? query.error.message : null}
+        retry={() => void query.refetch()}
+        consentPending={consent.isPending}
+        consentError={consent.isError ? consent.error.message : null}
+        onGrantBkiConsent={() => consent.mutate()}
+        financials={financials}
+      />
+      <Card component="section">
+        <Title order={3}>Контактное лицо</Title>
+        <Group gap="xs" mt="sm">
+          <Text size="sm" fw={600}>{account.person}</Text>
+          <Text size="sm" c="dimmed">{account.role}</Text>
+        </Group>
+      </Card>
+    </Stack>
   );
 }

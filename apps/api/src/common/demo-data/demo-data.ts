@@ -173,7 +173,7 @@ export const demoSources: Record<string, DemoSourceRecord> = {
       overdueDays: 47,
     },
     fns: {
-      inn: "9903000033",
+      inn: "9903000034",
       taxDebtRub: 0,
       employees: 9,
       massRegistrationAddress: false,
@@ -183,16 +183,16 @@ export const demoSources: Record<string, DemoSourceRecord> = {
 
 export const demoCompanyProfileScenarios: Record<string, DemoCompanyProfileScenario> = {
   "9903000033": {
-    unavailableSources: ["fns"],
+    unavailableSources: ["bank_turnover"],
     discrepancies: [
       {
-        key: "director",
-        label: "Руководитель",
-        firstValue: "Путев Сергей Андреевич",
-        secondValue: "Путева Ольга Сергеевна",
+        key: "inn",
+        label: "ИНН источника",
+        firstValue: "9903000033",
+        secondValue: "9903000034",
         firstSource: "egrul",
         secondSource: "fns",
-        nextStep: "Подтвердите актуальные сведения о руководителе",
+        nextStep: "Подтвердите ИНН по регистрационным документам",
       },
     ],
   },

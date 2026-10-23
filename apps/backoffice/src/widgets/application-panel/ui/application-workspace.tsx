@@ -25,10 +25,10 @@ import {
   FactGrid,
   ScoreBreakdown,
   StatusTag,
+  formatDate,
   formatDateTimeFull,
   productLabel,
   useApplication,
-  useApplicationAction,
   useProducts,
   useCompanyProfile,
 } from "@/entities/application";
@@ -114,8 +114,6 @@ function Workspace({
   products: NonNullable<ReturnType<typeof useProducts>["data"]>;
 }) {
   const employees = useEmployees();
-  const rerunCheck = useApplicationAction(app.id, employee.id);
-  const [retryingSource, setRetryingSource] = useState<Exclude<Application["checks"][number]["source"], "bank_turnover"> | null>(null);
   const [tab, setTab] = useState<Tab>(() => defaultTab(app));
   const assignee = employees.data?.find((e) => e.id === app.assigneeId);
   const product = products.find((p) => p.id === app.request.productId);
@@ -186,6 +184,28 @@ function Workspace({
                       />
                     </Stack>
                   </Card>
+                  <Card>
+                    <Stack gap="md">
+                      <Title order={3}>Заявитель и данные из заявки</Title>
+                      <FactGrid
+                        cols={3}
+                        facts={[
+                          { label: "Заявитель", value: applicant.name },
+                          { label: "ОГРН/ОГРНИП", value: applicant.ogrn },
+                          { label: "Руководитель", value: applicant.director },
+                          { label: "Регион", value: applicant.region },
+                          {
+                            label: "Выручка за 12 мес., со слов клиента",
+                            value: formatRub(applicant.annualRevenue),
+                          },
+                          {
+                            label: "Дата регистрации",
+                            value: formatDate(applicant.registeredAt),
+                          },
+                        ]}
+                      />
+                    </Stack>
+                  </Card>
                   <CompanyPassport
                     profile={companyProfile.data}
                     mode="backoffice"
@@ -193,14 +213,6 @@ function Workspace({
                     loading={companyProfile.isPending}
                     error={companyProfile.isError ? companyProfile.error.message : null}
                     retry={() => void companyProfile.refetch()}
-                    retryingSource={retryingSource}
-                    onRetrySource={(source) => {
-                      setRetryingSource(source);
-                      rerunCheck.mutate(
-                        { type: "rerun_check", source },
-                        { onSettled: () => setRetryingSource(null) },
-                      );
-                    }}
                   />
                 </Stack>
               </Tabs.Panel>
