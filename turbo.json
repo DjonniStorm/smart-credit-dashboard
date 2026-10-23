@@ -5,46 +5,27 @@
     "tags": {
       "app": {
         "dependents": {
-          "deny": [
-            "app",
-            "package"
-          ]
+          "deny": ["app", "package"]
         }
       },
       "package": {
         "dependencies": {
-          "allow": [
-            "package"
-          ]
+          "allow": ["package"]
         }
       }
     }
   },
   "tasks": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".env*"
-      ],
-      "outputs": [
-        ".next/**",
-        "!.next/cache/**",
-        "!.next/dev/**",
-        "dist/**"
-      ]
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "dist/**"]
     },
     "lint": {
-      "dependsOn": [
-        "^lint"
-      ]
+      "dependsOn": ["^lint"]
     },
     "check-types": {
-      "dependsOn": [
-        "^check-types"
-      ]
+      "dependsOn": ["^check-types"]
     },
     "generate": {
       "dependsOn": ["^generate"],
@@ -58,7 +39,8 @@
         "HOST",
         "DATABASE_URL",
         "API_URL",
-        "SCORING_URL"
+        "SCORING_URL",
+        "KEY_RATE_PERCENT"
       ]
     }
   }

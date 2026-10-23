@@ -1,19 +1,23 @@
-import { Injectable, ServiceUnavailableException } from "@nestjs/common";
-import type { ApiProductCatalog } from "@repo/contracts/api";
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
-import { DemoDataStore } from "../../common/demo-data/demo-data.store.ts";
+import type { ApiProductCatalog } from "@repo/contracts/api";
+import {
+  CREDIT_PRODUCTS,
+  DEFAULT_KEY_RATE,
+} from "@repo/contracts/product-catalog";
+
+import type { Env } from "../../common/config/env.schema.ts";
 
 @Injectable()
 export class CatalogService {
-  constructor(private readonly data: DemoDataStore) {}
+  constructor(private readonly config: ConfigService<Env, true>) {}
 
-  async getCatalog(): Promise<ApiProductCatalog> {
-    const catalog = await this.data.getCatalog();
-    if (catalog.products.length === 0) {
-      throw new ServiceUnavailableException(
-        "Демо-данные не загружены. Выполните pnpm --filter api db:seed",
-      );
-    }
-    return catalog;
+  getCatalog(): ApiProductCatalog {
+    return {
+      keyRate: this.config.getOrThrow("KEY_RATE_PERCENT", { infer: true }),
+      keyRateDate: DEFAULT_KEY_RATE.date,
+      products: CREDIT_PRODUCTS.map((product) => ({ ...product })),
+    };
   }
 }

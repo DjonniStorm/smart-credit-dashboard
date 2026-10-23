@@ -415,11 +415,12 @@ export function CounterDialog({
   products: ArmProduct[];
   onSubmit: (action: EmployeeAction) => void;
 }) {
+  const requestedProduct = products.find((p) => p.id === app.request.productId);
   const base = app.decision?.terms ?? {
     productId: app.request.productId,
     amount: app.request.amount,
     termMonths: app.request.termMonths,
-    ratePct: products.find((p) => p.id === app.request.productId)?.ratePct ?? 0,
+    ratePct: requestedProduct?.ratePct ?? "",
   };
   const [productId, setProductId] = useState<CreditProductId>(base.productId);
   const [amount, setAmount] = useState<number | string>(base.amount);
@@ -432,6 +433,8 @@ export function CounterDialog({
   const amountInvalid = product
     ? amountError(amount, product.minAmount, product.maxAmount)
     : null;
+  const rateNum = Number(rate);
+  const rateInvalid = !(rateNum > 0);
   const termNum = Number(term);
   const termInvalid =
     product &&
@@ -450,14 +453,22 @@ export function CounterDialog({
         onSubmit={(e) => {
           e.preventDefault();
           setTouched(true);
-          if (amountInvalid || termInvalid || !comment.trim()) return;
+          if (
+            !product ||
+            amountInvalid ||
+            termInvalid ||
+            rateInvalid ||
+            !comment.trim()
+          ) {
+            return;
+          }
           onSubmit({
             type: "counter_offer",
             terms: {
               productId,
               amount: Number(amount),
               termMonths: termNum,
-              ratePct: Number(rate),
+              ratePct: rateNum,
             },
             comment: comment.trim(),
           });
@@ -508,6 +519,9 @@ export function CounterDialog({
               onChange={setRate}
               min={1}
               max={60}
+              error={
+                touched && rateInvalid ? "Укажите ставку больше нуля" : null
+              }
             />
           </Group>
           <Textarea
@@ -524,7 +538,7 @@ export function CounterDialog({
             <Button variant="default" onClick={onClose}>
               Отмена
             </Button>
-            <Button type="submit" loading={pending}>
+            <Button type="submit" loading={pending} disabled={!product}>
               Отправить клиенту
             </Button>
           </Group>

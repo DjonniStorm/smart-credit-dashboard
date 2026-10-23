@@ -1,6 +1,6 @@
 import { Controller, Get } from "@nestjs/common";
 import { ApiOkResponse, ApiOperation } from "@nestjs/swagger";
-import { createZodDto, ZodSerializerDto } from "nestjs-zod";
+import { ZodSerializerDto, createZodDto } from "nestjs-zod";
 
 import { apiProductCatalogSchema } from "@repo/contracts/api";
 
@@ -16,7 +16,7 @@ export class CatalogController {
   @ApiOperation({ operationId: "CatalogController_get" })
   @ApiOkResponse({ type: ProductCatalogDto })
   @ZodSerializerDto(ProductCatalogDto)
-  get(): Promise<ProductCatalogDto> {
+  get(): ProductCatalogDto {
     return this.catalog.getCatalog();
   }
 }

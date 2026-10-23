@@ -2,13 +2,13 @@ import { Pool } from "pg";
 
 import {
   demoAccounts,
-  demoCatalog,
   demoAutonomyPolicies,
   demoEmployees,
   demoSources,
 } from "../src/common/demo-data/demo-data.ts";
 
-const databaseUrl = process.env.DATABASE_URL ?? "postgres://alfa:alfa@localhost:5432/alfa";
+const databaseUrl =
+  process.env.DATABASE_URL ?? "postgres://alfa:alfa@localhost:5432/alfa";
 const pool = new Pool({ connectionString: databaseUrl });
 
 async function seed(): Promise<void> {
@@ -17,10 +17,6 @@ async function seed(): Promise<void> {
     await client.query("begin");
     await client.query(`
       create table if not exists demo_accounts (
-        id text primary key,
-        payload jsonb not null
-      );
-      create table if not exists demo_catalog (
         id text primary key,
         payload jsonb not null
       );
@@ -68,11 +64,6 @@ async function seed(): Promise<void> {
         [account.id, account],
       );
     }
-    await client.query(
-      `insert into demo_catalog(id,payload) values('default',$1)
-       on conflict(id) do update set payload=excluded.payload`,
-      [demoCatalog],
-    );
     for (const employee of demoEmployees) {
       await client.query(
         `insert into demo_employees(id,payload) values($1,$2)
@@ -96,7 +87,9 @@ async function seed(): Promise<void> {
     }
     await seedApplications(client);
     await client.query("commit");
-    console.log(`Seeded ${demoAccounts.length} accounts, ${demoEmployees.length} employees and ${demoCatalog.products.length} products`);
+    console.log(
+      `Seeded ${demoAccounts.length} accounts, ${demoEmployees.length} employees`,
+    );
   } catch (error) {
     await client.query("rollback");
     throw error;
@@ -106,7 +99,9 @@ async function seed(): Promise<void> {
   }
 }
 
-async function seedApplications(client: import("pg").PoolClient): Promise<void> {
+async function seedApplications(
+  client: import("pg").PoolClient,
+): Promise<void> {
   const applications = [
     {
       id: "seed-app-bakery",
