@@ -1,11 +1,10 @@
-import { Message } from "../message.js";
+import { Message } from "../message.ts";
 
 export const ru = {
   [Message.CabinetTitle]: "Кабинет предпринимателя",
   [Message.CabinetDescription]:
     "Проверка компании по ИНН: выписка ЕГРЮЛ, данные БКИ и ФНС, оценка скоринга.",
-  [Message.CabinetLead]:
-    "Каркас. Сквозная ручка: client → api → scoring.",
+  [Message.CabinetLead]: "Каркас. Сквозная ручка: client → api → scoring.",
   [Message.CabinetCheckTitle]: "Проверка компании",
   [Message.CabinetCheckDescription]:
     "Введите ИНН, чтобы получить данные ЕГРЮЛ, БКИ, ФНС и оценку скоринга.",
