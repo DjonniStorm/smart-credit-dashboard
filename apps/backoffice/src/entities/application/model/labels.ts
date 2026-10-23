@@ -121,6 +121,7 @@ export const recommendationLabel: Record<Recommendation, string> = {
   approve: "Одобрить на условиях клиента",
   counter_offer: "Одобрить на других условиях",
   request_info: "Запросить документы",
+  manual_review: "Оставить на ручной проверке",
   reject: "Отказать",
 };
 

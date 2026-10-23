@@ -11,8 +11,6 @@ import {
 
 import type { Application } from "@repo/contracts/cabinet";
 
-import { stageOf, stages } from "../model/stage";
-
 type IndexTone = "success" | "action" | "warning" | "danger";
 
 const toneColor: Record<IndexTone, string> = {
@@ -22,39 +20,8 @@ const toneColor: Record<IndexTone, string> = {
   danger: "red",
 };
 
-function clamp(value: number) {
-  return Math.max(0, Math.min(100, Math.round(value)));
-}
-
-function financialHealth(app: Application) {
-  const { avgMonthlyTurnover, monthlyDebtPayments, revenueLastYear } =
-    app.financials;
-  if (avgMonthlyTurnover <= 0 || revenueLastYear <= 0) return 0;
-
-  const debtLoad = monthlyDebtPayments / avgMonthlyTurnover;
-  const turnoverConsistency = (avgMonthlyTurnover * 12) / revenueLastYear;
-  return clamp(100 - debtLoad * 100 - Math.abs(1 - turnoverConsistency) * 35);
-}
-
 function isTerminal(app: Application) {
   return app.status === "rejected" || app.status === "disbursed";
-}
-
-function readiness(app: Application) {
-  if (isTerminal(app)) return null;
-  const { current } = stageOf(app);
-  return clamp(((current + 1) / stages.length) * 100);
-}
-
-function confidence(app: Application) {
-  const factors = app.decision?.factors ?? [];
-  const positive = factors.filter(
-    (factor) => factor.effect === "positive",
-  ).length;
-  const negative = factors.filter(
-    (factor) => factor.effect === "negative",
-  ).length;
-  return clamp(55 + app.checksPassed * 10 + positive * 8 - negative * 10);
 }
 
 function tone(value: number): IndexTone {
@@ -68,10 +35,12 @@ function Index({
   label,
   value,
   hint,
+  emptyLabel = "Ожидает расчёта",
 }: {
   label: string;
   value: number | null;
   hint: string;
+  emptyLabel?: string;
 }) {
   const currentTone = value === null ? null : tone(value);
   return (
@@ -84,7 +53,7 @@ function Index({
       </Group>
       {value === null ? (
         <Text size="sm" c="dimmed">
-          Завершено
+          {emptyLabel}
         </Text>
       ) : (
         <Progress
@@ -103,11 +72,9 @@ function Index({
 
 /** Объяснимые индексы для клиента: не заменяют решение банка, а показывают готовность данных. */
 export function HealthIndices({ app }: { app: Application }) {
-  const health = financialHealth(app);
-  const ready = readiness(app);
-  const trust = confidence(app);
-  const stage = stageOf(app);
-  const currentStage = Math.min(stage.current + 1, stages.length);
+  const health = app.scoring?.healthIndex ?? null;
+  const ready = app.scoring?.readinessIndex ?? null;
+  const trust = app.scoring ? Math.round(app.scoring.confidence * 100) : null;
   const terminal = isTerminal(app);
   const terminalHint =
     app.status === "rejected"
@@ -126,8 +93,11 @@ export function HealthIndices({ app }: { app: Application }) {
               Сигналы для подготовки заявки и разговора с банком.
             </Text>
           </div>
-          <Badge variant="light" color={toneColor[tone(trust)]}>
-            Уверенность {trust}/100
+          <Badge
+            variant="light"
+            color={trust === null ? "gray" : tone(trust)}
+          >
+            Уверенность {trust === null ? "—" : `${trust}/100`}
           </Badge>
         </Group>
         <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="lg">
@@ -135,6 +105,7 @@ export function HealthIndices({ app }: { app: Application }) {
             label="Финансовое здоровье"
             value={health}
             hint="Обороты и долговая нагрузка"
+            emptyLabel={terminal ? terminalHint : undefined}
           />
           <Index
             label="Готовность заявки"
@@ -142,25 +113,29 @@ export function HealthIndices({ app }: { app: Application }) {
             hint={
               terminal
                 ? terminalHint
-                : `Текущий этап ${currentStage} из ${stages.length}`
+                : "Показывается после ответа scoring"
             }
+            emptyLabel={terminal ? terminalHint : undefined}
           />
           <Index
             label="Уверенность"
             value={trust}
             hint="Проверки и факторы решения"
+            emptyLabel={terminal ? terminalHint : undefined}
           />
         </SimpleGrid>
         <Text size="sm" c="dimmed">
           {terminal
             ? `Итог заявки: ${terminalHint.toLowerCase()}.`
-            : `Компас уверенности: ${
-                trust >= 75
-                  ? "можно переходить к условиям"
-                  : trust >= 55
-                    ? "сверьте факторы и документы"
-                    : "сначала закройте замечания"
-              }.`}
+            : trust === null
+              ? "Компас уверенности появится после завершения проверки."
+              : `Компас уверенности: ${
+                  trust >= 75
+                    ? "можно переходить к условиям"
+                    : trust >= 55
+                      ? "сверьте факторы и документы"
+                      : "сначала закройте замечания"
+                }.`}
         </Text>
       </Stack>
     </Card>

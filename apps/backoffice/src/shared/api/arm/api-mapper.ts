@@ -1,5 +1,7 @@
 import type {
   ApiApplication,
+  ApiApplicationContext,
+  ApiCheckSnapshot,
   ApiProductCatalog,
 } from "@repo/contracts/api";
 import type {
@@ -27,7 +29,21 @@ function statusOf(status: ApiApplication["status"]): Application["status"] {
 }
 
 export function toArmApplication(application: ApiApplication): Application {
+  return mapApplication(application);
+}
+
+export function toArmApplicationContext(
+  context: ApiApplicationContext,
+): Application {
+  return mapApplication(context.application, context);
+}
+
+function mapApplication(
+  application: ApiApplication,
+  context?: ApiApplicationContext,
+): Application {
   const scoring = application.scoring;
+  const profile = context?.companyProfile.profile;
   return {
     id: application.id,
     number: application.number,
@@ -39,19 +55,20 @@ export function toArmApplication(application: ApiApplication): Application {
     hold: null,
     urgent: false,
     urgentReason: null,
+    autonomy: context?.autonomy,
     comments: [],
     handoff: null,
     blocker: scoring?.reasons[0] ?? "Проверка заявки выполняется",
     assigneeId: null,
     applicant: {
       inn: application.inn,
-      ogrn: "Не загружен",
-      name: "Компания из профиля",
-      legalForm: "ooo",
-      okved: "Не загружен",
-      region: "Не указан",
-      registeredAt: "Не загружена",
-      director: "Не указан",
+      ogrn: profile?.ogrn ?? "Не загружен",
+      name: profile?.name ?? "Компания из профиля",
+      legalForm: profile?.legalForm ?? "ooo",
+      okved: profile?.okved ?? "Не загружен",
+      region: profile?.region ?? "Не указан",
+      registeredAt: profile?.registeredAt ?? "Не загружена",
+      director: profile?.director ?? "Не указан",
       annualRevenue: 0,
     },
     request: {
@@ -60,28 +77,112 @@ export function toArmApplication(application: ApiApplication): Application {
       termMonths: application.termMonths,
       purpose: application.purpose,
     },
-    checks: [],
+    checks: context
+      ? context.checks.map(toCheck).filter((check): check is Application["checks"][number] => {
+          return check !== null;
+        })
+      : [],
     scoring: scoring
       ? {
           model: scoring.model,
+          modelVersion: scoring.modelVersion,
           base: scoring.score,
           score: scoring.score,
           band: scoring.riskBand,
-          factors: scoring.factors.map((factor) => ({
-            id: factor.id,
-            label: factor.label,
-            input: factor.value,
-            points: factor.impact,
-            source: "application" as const,
-          })),
+          grade: scoring.grade,
+          pd: scoring.pd,
+          healthIndex: scoring.healthIndex,
+          readinessIndex: scoring.readinessIndex,
+          confidence: scoring.confidence,
+          recommendation: scoring.recommendation,
+          reasons: scoring.reasons,
+          nextActions: scoring.nextActions,
+          factors: scoring.factors.map((factor) => {
+            return {
+              id: factor.id,
+              label: factor.label,
+              input: factor.value,
+              points: factor.impact,
+              source: factorSource(factor.source),
+            };
+          }),
           computedAt: application.updatedAt,
         }
       : null,
-    decision: null,
+    decision: context?.decision
+      ? {
+          recommendation: context.decision.recommendation,
+          rules: context.decision.rules.map((rule) => {
+            return {
+              id: rule.id,
+              label: rule.id,
+              outcome: rule.outcome,
+              detail: rule.detail,
+            };
+          }),
+          terms: null,
+          explanation:
+            context.decision.reasons[0] ?? "Рекомендация сформирована scoring",
+          computedAt: application.updatedAt,
+        }
+      : null,
     offer: null,
     requestedInfo: [],
     rejectReason: null,
-    events: [],
+    events:
+      context?.audit.map((event) => {
+        return {
+          id: event.id,
+          applicationId: event.applicationId,
+          at: event.at,
+          actor: { kind: "system" as const, name: "Система" },
+          title: event.kind,
+          comment: null,
+          fromStatus: null,
+          toStatus: null,
+          kind: "action" as const,
+          metadata: Object.fromEntries(
+            Object.entries(event.metadata).map(([key, value]) => {
+              return [key, String(value)];
+            }),
+          ),
+        };
+      }) ?? [],
+  };
+}
+
+function factorSource(source?: string): "egrul" | "fns" | "bki" | "application" {
+  if (source === "egrul" || source === "fns" || source === "bki") {
+    return source;
+  }
+  return "application";
+}
+
+function toCheck(snapshot: ApiCheckSnapshot): Application["checks"][number] | null {
+  if (snapshot.source === "bank_turnover") {
+    return null;
+  }
+  const state =
+    snapshot.state === "confirmed"
+      ? "passed"
+      : snapshot.state === "discrepancy"
+        ? "warning"
+        : snapshot.state === "manual_check" || snapshot.state === "unavailable"
+          ? "unavailable"
+          : "pending";
+  return {
+    source: snapshot.source,
+    state,
+    summary: snapshot.summary,
+    facts: snapshot.facts.map((fact) => {
+      return {
+        label: fact.label,
+        value: fact.value,
+      };
+    }),
+    requestedAt: snapshot.checkedAt ?? new Date().toISOString(),
+    respondedAt: snapshot.checkedAt,
+    responseMs: null,
   };
 }
 

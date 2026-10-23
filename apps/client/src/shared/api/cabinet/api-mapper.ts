@@ -50,13 +50,15 @@ function decisionOf(application: ApiApplication): Application["decision"] {
           ratePercent: 0,
           monthlyPayment: 0,
         },
-    factors: scoring.factors.map((factor) => ({
-      label: factor.label,
-      value: factor.value,
-      source: factor.source ?? "scoring",
-      effect: factor.impact >= 0 ? "positive" : "negative",
-      note: "Фактор baseline scoring",
-    })),
+    factors: scoring.factors.map((factor) => {
+      return {
+        label: factor.label,
+        value: factor.value,
+        source: factor.source ?? "scoring",
+        effect: factor.impact >= 0 ? "positive" : "negative",
+        note: "Фактор baseline scoring",
+      };
+    }),
     advice: scoring.nextActions[0] ?? null,
   };
 }
@@ -101,6 +103,7 @@ export function toCabinetApplication(
     updatedAt: application.updatedAt,
     company,
     checksPassed: application.scoring ? 3 : 0,
+    scoring: application.scoring,
     requests: [],
     decision: decisionOf(application),
     deal: null,

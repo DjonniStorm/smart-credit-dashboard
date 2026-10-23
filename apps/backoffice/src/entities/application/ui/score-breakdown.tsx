@@ -20,14 +20,14 @@ export function ScoreBreakdown({ scoring }: { scoring: ScoringResult }) {
       <Group justify="space-between" align="flex-end" gap="sm">
         <Stack gap={0}>
           <Text size="sm" c="dimmed">
-            {scoring.model}
+            {scoring.model}{scoring.modelVersion ? ` · ${scoring.modelVersion}` : ""}
           </Text>
           <Group gap="xs" align="baseline">
             <Title order={2} className={classes.num}>
               {scoring.score}
             </Title>
             <Text c="dimmed">
-              из 100, {riskLabel[scoring.band].toLowerCase()}
+              из 100, {riskLabel[scoring.band].toLowerCase()}{scoring.grade ? ` · класс ${scoring.grade}` : ""}
             </Text>
           </Group>
         </Stack>
@@ -36,9 +36,13 @@ export function ScoreBreakdown({ scoring }: { scoring: ScoringResult }) {
         </Text>
       </Group>
       <Text size="sm" c="dimmed">
-        База {scoring.base}. Плюс снижает риск, минус повышает. От 70 риск
-        низкий, от 50 до 69 умеренный, ниже 50 высокий.
+        Плюс снижает риск, минус повышает. Значения и границы рассчитаны API.
       </Text>
+      <Group gap="lg">
+        <Text size="sm">Здоровье: <b>{scoring.healthIndex ?? "—"}</b></Text>
+        <Text size="sm">Готовность: <b>{scoring.readinessIndex ?? "—"}</b></Text>
+        <Text size="sm">Уверенность: <b>{scoring.confidence == null ? "—" : `${Math.round(scoring.confidence * 100)}%`}</b></Text>
+      </Group>
       <div role="table" aria-label="Факторы скоринга">
         <div className={classes.row} role="row">
           <Text size="xs" c="dimmed" role="columnheader">

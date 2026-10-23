@@ -2,8 +2,10 @@
 
 import {
   apiApplicationSchema,
+  apiApplicationContextSchema,
   apiProductCatalogSchema,
   type ApiApplication,
+  type ApiApplicationContext,
   type ApiProductCatalog,
 } from "@repo/contracts/api";
 import {
@@ -16,7 +18,12 @@ import {
 } from "@repo/contracts/company-profile";
 
 import type { ArmApi } from "./types";
-import { toArmApplication, toArmProducts, toEmployees } from "./api-mapper";
+import {
+  toArmApplication,
+  toArmApplicationContext,
+  toArmProducts,
+  toEmployees,
+} from "./api-mapper";
 
 // Пути ручек согласовать с api. /api проксируется в Nest (next.config.js).
 const BASE = "/api/v1";
@@ -50,11 +57,11 @@ export const httpArmApi: ArmApi = {
     return applications.map((application) => toArmApplication(application));
   },
   getApplication: async (id) => {
-    const application = await request<ApiApplication>(
-      `/applications/${id}`,
-      apiApplicationSchema,
+    const context = await request<ApiApplicationContext>(
+      `/applications/${id}/context`,
+      apiApplicationContextSchema,
     );
-    return toArmApplication(application);
+    return toArmApplicationContext(context);
   },
   getCompanyProfile: (inn) =>
     request<CompanyProfileResponse>(
