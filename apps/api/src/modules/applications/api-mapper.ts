@@ -1,23 +1,62 @@
 import type {
   ApiApplication,
+  ApiApplicationManagement,
   ApiDecision,
   ApiJob,
   ApiScoring,
   PublicApplicationStatus,
 } from "@repo/contracts/api";
+import type { ApplicationComment } from "@repo/contracts/application";
 import type { ApplicationWorkflow, ScoringJob } from "@repo/contracts/workflow";
 
-const statusMap: Record<ApplicationWorkflow["status"], PublicApplicationStatus> = {
+import { deriveFlow } from "./application-flow.ts";
+
+const statusMap: Record<
+  ApplicationWorkflow["status"],
+  PublicApplicationStatus
+> = {
   draft: "DRAFT",
   in_review: "UNDER_REVIEW",
   needs_client: "NEEDS_INFO",
   approved: "OFFERED",
+  counter_offer: "OFFERED",
   rejected: "REJECTED",
   cancelled: "CANCELLED",
-  blocked: "BLOCKED",
 };
 
-export function toApiApplication(application: ApplicationWorkflow): ApiApplication {
+function publicStatus(
+  application: ApplicationWorkflow,
+): PublicApplicationStatus {
+  return application.hold?.state === "blocked"
+    ? "BLOCKED"
+    : statusMap[application.status];
+}
+
+function offerKind(
+  application: ApplicationWorkflow,
+): ApiApplication["offerKind"] {
+  if (application.status === "approved") return "initial";
+  return application.status === "counter_offer" ? "counter" : null;
+}
+
+/** Строки, записанные до исправления, хранят source: null у факторов. */
+function readScoring(details: ApiScoring | undefined): ApiScoring | null {
+  if (!details) {
+    return null;
+  }
+  return {
+    ...details,
+    factors: details.factors.map((factor) => ({
+      ...factor,
+      source: factor.source ?? undefined,
+    })),
+  };
+}
+
+export function toApiApplication(
+  application: ApplicationWorkflow,
+  clientComments: ApplicationComment[] = [],
+): ApiApplication {
   return {
     id: application.id,
     number: application.number,
@@ -26,21 +65,33 @@ export function toApiApplication(application: ApplicationWorkflow): ApiApplicati
     amount: application.amount,
     termMonths: application.termMonths,
     purpose: application.purpose,
-    status: statusMap[application.status],
-    offerKind: application.offerKind,
+    status: publicStatus(application),
+    offerKind: offerKind(application),
+    checkJobId: application.checkJobId,
+    scoring: readScoring(application.scoring?.details),
     offer: application.offer,
     requestedInfo: application.requestedInfo,
     rejectReason: application.rejectReason,
-    assigneeId: application.assigneeId,
-    urgent: application.urgent,
-    urgentReason: application.urgentReason,
-    comments: application.comments,
-    hold: application.hold,
-    handoff: application.handoff,
-    checkJobId: application.checkJobId,
-    scoring: application.scoring?.details ?? null,
+    clientComments,
     createdAt: application.createdAt,
     updatedAt: application.updatedAt,
+  };
+}
+
+export function toApiManagement(
+  application: ApplicationWorkflow,
+  comments: ApplicationComment[],
+): ApiApplicationManagement {
+  const flow = deriveFlow(application);
+  return {
+    ...flow,
+    businessStatus: application.status,
+    hold: application.hold,
+    urgent: application.urgent,
+    urgentReason: application.urgentReason,
+    assigneeId: application.assigneeId,
+    handoff: application.handoff,
+    comments,
   };
 }
 
@@ -68,7 +119,7 @@ export function toApiJob(job: ScoringJob): ApiJob {
     finishedAt: job.finishedAt,
     error: job.error,
     attempts: job.attempts,
-    result: job.result?.details ?? null,
+    result: readScoring(job.result?.details),
   };
 }
 
@@ -98,7 +149,11 @@ export function toApiScoring(response: {
     readinessIndex: response.readiness_index ?? 0,
     confidence: response.confidence ?? 0,
     recommendation: response.recommendation ?? "manual_review",
-    factors: response.factors ?? [],
+    // Scoring возвращает source: null для факторов без источника, контракт ждёт строку или отсутствие поля.
+    factors: (response.factors ?? []).map((factor) => ({
+      ...factor,
+      source: factor.source ?? undefined,
+    })),
     reasons: response.reasons ?? [],
     nextActions: response.next_actions ?? [],
   };
