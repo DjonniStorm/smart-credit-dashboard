@@ -19,7 +19,6 @@ import type {
 } from "@repo/contracts/application";
 
 import { useApplicationAction } from "@/entities/application";
-import { useEmployees } from "@/entities/employee";
 import type { ArmProduct } from "@/shared/api/arm";
 import { formatRub } from "@/shared/lib/money";
 
@@ -46,7 +45,6 @@ export function ActionBar({
 }) {
   const [dialog, setDialog] = useState<DialogKind | null>(null);
   const mutation = useApplicationAction(app.id, employee.id);
-  const employees = useEmployees().data ?? [];
 
   function run(action: EmployeeAction, done: string) {
     mutation.mutate(action, {
