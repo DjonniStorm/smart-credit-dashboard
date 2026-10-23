@@ -1,12 +1,18 @@
 import type { AutonomyConfig, AutonomyMetrics } from "@repo/contracts";
 import type { BkiReport, EgrulRecord, FnsProfile } from "@repo/contracts";
 import type { ApiProductId, DemoAccountApi } from "@repo/contracts/api";
+import type { CompanyDiscrepancy, CompanySource } from "@repo/contracts/company-profile";
 import type { Employee } from "@repo/contracts/application";
 
 export interface DemoSourceRecord {
   egrul: EgrulRecord;
   bki: BkiReport;
   fns: FnsProfile;
+}
+
+export interface DemoCompanyProfileScenario {
+  unavailableSources: CompanySource[];
+  discrepancies: CompanyDiscrepancy[];
 }
 
 export interface DemoAutonomyPolicy {
@@ -172,6 +178,23 @@ export const demoSources: Record<string, DemoSourceRecord> = {
       employees: 9,
       massRegistrationAddress: false,
     },
+  },
+};
+
+export const demoCompanyProfileScenarios: Record<string, DemoCompanyProfileScenario> = {
+  "9903000033": {
+    unavailableSources: ["fns"],
+    discrepancies: [
+      {
+        key: "director",
+        label: "Руководитель",
+        firstValue: "Путев Сергей Андреевич",
+        secondValue: "Путева Ольга Сергеевна",
+        firstSource: "egrul",
+        secondSource: "fns",
+        nextStep: "Подтвердите актуальные сведения о руководителе",
+      },
+    ],
   },
 };
 

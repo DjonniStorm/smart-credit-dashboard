@@ -7,7 +7,9 @@ import type { Employee } from "@repo/contracts/application";
 
 import {
   type DemoSourceRecord,
+  type DemoCompanyProfileScenario,
   demoAccounts,
+  demoCompanyProfileScenarios,
   demoEmployees,
   demoSources,
 } from "./demo-data.ts";
@@ -87,6 +89,13 @@ export class DemoDataStore implements OnModuleInit {
       [inn],
     );
     return rows[0]?.payload ?? null;
+  }
+
+  getCompanyProfileScenario(inn: string): DemoCompanyProfileScenario {
+    return demoCompanyProfileScenarios[inn] ?? {
+      unavailableSources: [],
+      discrepancies: [],
+    };
   }
 
   async createSession(

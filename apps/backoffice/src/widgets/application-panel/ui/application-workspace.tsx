@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import type { Application, Employee } from "@repo/contracts/application";
+import { CompanyPassport } from "@repo/ui/company-passport";
 import { StateBlock } from "@repo/ui/state-block";
 
 import {
@@ -27,7 +28,9 @@ import {
   formatDateTimeFull,
   productLabel,
   useApplication,
+  useApplicationAction,
   useProducts,
+  useCompanyProfile,
 } from "@/entities/application";
 import { useEmployees, useSignedInEmployee } from "@/entities/employee";
 import { ActionBar, RerunCheckButton } from "@/features/application-actions";
@@ -111,10 +114,13 @@ function Workspace({
   products: NonNullable<ReturnType<typeof useProducts>["data"]>;
 }) {
   const employees = useEmployees();
+  const rerunCheck = useApplicationAction(app.id, employee.id);
+  const [retryingSource, setRetryingSource] = useState<Exclude<Application["checks"][number]["source"], "bank_turnover"> | null>(null);
   const [tab, setTab] = useState<Tab>(() => defaultTab(app));
   const assignee = employees.data?.find((e) => e.id === app.assigneeId);
   const product = products.find((p) => p.id === app.request.productId);
   const { applicant, request } = app;
+  const companyProfile = useCompanyProfile(applicant.inn);
 
   return (
     <div className={classes.page}>
@@ -180,42 +186,22 @@ function Workspace({
                       />
                     </Stack>
                   </Card>
-                  <Card>
-                    <Stack gap="md">
-                      <Title order={3}>Клиент</Title>
-                      <FactGrid
-                        cols={3}
-                        facts={[
-                          {
-                            label: "Форма",
-                            value:
-                              applicant.legalForm === "ip"
-                                ? "Индивидуальный предприниматель"
-                                : "ООО",
-                          },
-                          { label: "ИНН", value: applicant.inn },
-                          {
-                            label:
-                              applicant.legalForm === "ip" ? "ОГРНИП" : "ОГРН",
-                            value: applicant.ogrn,
-                          },
-                          { label: "Руководитель", value: applicant.director },
-                          { label: "ОКВЭД", value: applicant.okved },
-                          { label: "Регион", value: applicant.region },
-                          {
-                            label: "Дата регистрации",
-                            value: new Date(
-                              applicant.registeredAt,
-                            ).toLocaleDateString("ru-RU"),
-                          },
-                          {
-                            label: "Выручка за 12 мес.",
-                            value: `${formatRub(applicant.annualRevenue)}, со слов клиента`,
-                          },
-                        ]}
-                      />
-                    </Stack>
-                  </Card>
+                  <CompanyPassport
+                    profile={companyProfile.data}
+                    mode="backoffice"
+                    density="full"
+                    loading={companyProfile.isPending}
+                    error={companyProfile.isError ? companyProfile.error.message : null}
+                    retry={() => void companyProfile.refetch()}
+                    retryingSource={retryingSource}
+                    onRetrySource={(source) => {
+                      setRetryingSource(source);
+                      rerunCheck.mutate(
+                        { type: "rerun_check", source },
+                        { onSettled: () => setRetryingSource(null) },
+                      );
+                    }}
+                  />
                 </Stack>
               </Tabs.Panel>
 

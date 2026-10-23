@@ -23,7 +23,7 @@ export class CompanyConsentStore {
     await this.dataSource.query(
       `insert into company_bki_consents (inn, granted_at)
        values ($1, $2)
-       on conflict (inn) do update set granted_at = excluded.granted_at`,
+       on conflict (inn) do nothing`,
       [inn, grantedAt],
     );
   }

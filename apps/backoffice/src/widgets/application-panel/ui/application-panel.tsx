@@ -12,6 +12,7 @@ import {
 import { IconArrowUpRight } from "@tabler/icons-react";
 import Link from "next/link";
 import { type Ref, useState } from "react";
+import type { CompanySource } from "@repo/contracts/company-profile";
 
 import { StateBlock } from "@repo/ui/state-block";
 
@@ -21,6 +22,7 @@ import {
   formatDateTimeFull,
   useCompanyProfile,
   useApplication,
+  useApplicationAction,
   useProducts,
 } from "@/entities/application";
 import { useEmployees, useSignedInEmployee } from "@/entities/employee";
@@ -44,6 +46,8 @@ export function ApplicationPanel({
 }) {
   const employee = useSignedInEmployee();
   const query = useApplication(id);
+  const rerunCheck = useApplicationAction(id, employee.id);
+  const [retryingSource, setRetryingSource] = useState<Exclude<CompanySource, "bank_turnover"> | null>(null);
   const products = useProducts();
   const employees = useEmployees();
   const [tab, setTab] = useState<Tab>("checks");
@@ -113,7 +117,17 @@ export function ApplicationPanel({
           <>
             <Summary app={query.data} />
             {companyProfile.data && (
-              <CompanyProfileContext profile={companyProfile.data} />
+              <CompanyProfileContext
+                profile={companyProfile.data}
+                retryingSource={retryingSource}
+                onRetrySource={(source) => {
+                  setRetryingSource(source);
+                  rerunCheck.mutate(
+                    { type: "rerun_check", source },
+                    { onSettled: () => setRetryingSource(null) },
+                  );
+                }}
+              />
             )}
             <Tabs
               value={tab}

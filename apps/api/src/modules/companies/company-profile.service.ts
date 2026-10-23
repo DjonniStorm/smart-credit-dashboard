@@ -1,4 +1,6 @@
 import { Injectable } from "@nestjs/common";
+import { InjectDataSource } from "@nestjs/typeorm";
+import type { DataSource } from "typeorm";
 
 import type {
   BkiReport,
@@ -21,30 +23,44 @@ export class CompanyProfileService {
   constructor(
     private readonly data: DemoDataStore,
     private readonly consents: CompanyConsentStore,
+    @InjectDataSource() private readonly db: DataSource,
   ) {}
 
   async getProfile(inn: string): Promise<CompanyProfileResponse> {
     const grantedAt = await this.consents.grantedAt(inn);
     const sourcesData = await this.data.getSources(inn);
-    const checkedAt = new Date().toISOString();
-    const egrul = { value: sourcesData?.egrul ?? null, checkedAt };
-    const fns = { value: sourcesData?.fns ?? null, checkedAt };
-    const profile = this.buildProfile(inn, egrul.value);
+    const scenario = this.data.getCompanyProfileScenario(inn);
+    const account = (await this.data.listAccounts()).find(
+      (candidate) => candidate.company.inn === inn,
+    );
+    const [egrulCheckedAt, fnsCheckedAt, turnoverCheckedAt, bkiCheckedAt] =
+      await Promise.all([
+        this.checkedAt(inn, "egrul"),
+        this.checkedAt(inn, "fns"),
+        this.checkedAt(inn, "bank_turnover"),
+        grantedAt ? this.checkedAt(inn, "bki") : Promise.resolve(null),
+      ]);
+    const egrul = { value: sourcesData?.egrul ?? null, checkedAt: egrulCheckedAt };
+    const fns = { value: sourcesData?.fns ?? null, checkedAt: fnsCheckedAt };
+    const profile = this.buildProfile(inn, egrul.value, account);
     const sources = [
-      this.egrulSnapshot(egrul),
-      this.fnsSnapshot(fns),
-      this.turnoverSnapshot(),
+      this.egrulSnapshot(egrul, scenario.unavailableSources.includes("egrul"), scenario.discrepancies),
+      this.fnsSnapshot(fns, scenario.unavailableSources.includes("fns"), scenario.discrepancies),
+      this.turnoverSnapshot(turnoverCheckedAt),
     ];
 
     if (grantedAt) {
-      const bki = { value: sourcesData?.bki ?? null, checkedAt };
-      sources.push(this.bkiSnapshot(bki));
+      const bki = { value: sourcesData?.bki ?? null, checkedAt: bkiCheckedAt };
+      sources.push(this.bkiSnapshot(bki, scenario.unavailableSources.includes("bki"), scenario.discrepancies));
     } else {
       sources.push({
         source: "bki",
         state: "pending",
         summary: "Нужно согласие на запрос данных БКИ",
         facts: [],
+        discrepancies: [],
+        action: "grant_bki_consent",
+        reason: "Данные БКИ доступны только после согласия клиента",
         checkedAt: null,
       });
     }
@@ -64,22 +80,28 @@ export class CompanyProfileService {
     return this.getProfile(inn);
   }
 
-  private buildProfile(inn: string, source: EgrulRecord | null): CompanyProfile {
+  private buildProfile(
+    inn: string,
+    source: EgrulRecord | null,
+    account: Awaited<ReturnType<DemoDataStore["getAccount"]>> | undefined,
+  ): CompanyProfile {
     return {
       inn,
       ogrn: source?.ogrn ?? "Не получен",
       name: source?.name ?? "Компания не подтверждена",
-      legalForm: "ooo",
-      registeredAt: source?.registeredAt ?? "Не получена",
-      okved: source?.okved ?? "Не получен",
-      region: "Москва",
-      address: "Адрес будет подтверждён при проверке источника",
-      director: "Руководитель будет подтверждён при проверке источника",
+      legalForm: account?.company.form ?? "ooo",
+      registeredAt: source?.registeredAt ?? account?.company.registeredAt ?? "Не получена",
+      okved: source?.okved ?? account?.company.okved ?? "Не получен",
+      region: account?.company.address.split(",")[0] ?? "Москва",
+      address: account?.company.address ?? "Адрес будет подтверждён при проверке источника",
+      director: account?.company.head ?? "Руководитель будет подтверждён при проверке источника",
     };
   }
 
   private egrulSnapshot(
     result: { value: EgrulRecord | null; checkedAt: string },
+    unavailable: boolean,
+    discrepancies: CompanyProfileResponse["sources"][number]["discrepancies"],
   ): CompanySourceSnapshot {
     const facts: CompanyFact[] = result.value
       ? [
@@ -92,11 +114,15 @@ export class CompanyProfileService {
       result,
       facts,
       "Данные ЕГРЮЛ/ЕГРИП подтверждены",
+      unavailable,
+      discrepancies,
     );
   }
 
   private fnsSnapshot(
     result: { value: FnsProfile | null; checkedAt: string },
+    unavailable: boolean,
+    discrepancies: CompanyProfileResponse["sources"][number]["discrepancies"],
   ): CompanySourceSnapshot {
     const facts: CompanyFact[] = result.value
       ? [
@@ -116,11 +142,13 @@ export class CompanyProfileService {
           ),
         ]
       : [];
-    return this.snapshot("fns", result, facts, "Данные ФНС получены");
+    return this.snapshot("fns", result, facts, "Данные ФНС получены", unavailable, discrepancies);
   }
 
   private bkiSnapshot(
-    result: { value: BkiReport | null; checkedAt: string },
+    result: { value: BkiReport | null; checkedAt: string | null },
+    unavailable: boolean,
+    discrepancies: CompanyProfileResponse["sources"][number]["discrepancies"],
   ): CompanySourceSnapshot {
     const facts: CompanyFact[] = result.value
       ? [
@@ -140,11 +168,10 @@ export class CompanyProfileService {
           ),
         ]
       : [];
-    return this.snapshot("bki", result, facts, "Данные БКИ получены");
+    return this.snapshot("bki", result, facts, "Данные БКИ получены", unavailable, discrepancies);
   }
 
-  private turnoverSnapshot(): CompanySourceSnapshot {
-    const checkedAt = new Date().toISOString();
+  private turnoverSnapshot(checkedAt: string): CompanySourceSnapshot {
     return {
       source: "bank_turnover",
       state: "confirmed",
@@ -158,6 +185,9 @@ export class CompanyProfileService {
           checkedAt,
         ),
       ],
+      discrepancies: [],
+      action: "none",
+      reason: null,
       checkedAt,
     };
   }
@@ -167,26 +197,67 @@ export class CompanyProfileService {
     label: string,
     value: string,
     source: CompanySource,
-    checkedAt: string,
+    checkedAt: string | null,
   ): CompanyFact {
     return { key, label, value, source, state: "confirmed", checkedAt };
   }
 
   private snapshot<T>(
     source: CompanySource,
-    result: { value: T | null; checkedAt: string },
+    result: { value: T | null; checkedAt: string | null },
     facts: CompanyFact[],
     summary: string,
+    unavailable: boolean,
+    discrepancies: CompanyProfileResponse["sources"][number]["discrepancies"],
   ): CompanySourceSnapshot {
-    if (!result.value) {
+    const sourceDiscrepancies = discrepancies.filter(
+      (item) => item.firstSource === source || item.secondSource === source,
+    );
+    if (unavailable || !result.value) {
       return {
         source,
         state: "manual_check",
         summary: "Источник недоступен, нужна ручная проверка",
         facts: [],
+        discrepancies: sourceDiscrepancies,
+        action: unavailable ? "retry_source" : "manual_review",
+        reason: unavailable ? "Источник не ответил, можно повторить проверку" : "Источник требует ручного подтверждения",
         checkedAt: result.checkedAt,
       };
     }
-    return { source, state: "confirmed", summary, facts, checkedAt: result.checkedAt };
+    return {
+      source,
+      state: sourceDiscrepancies.length > 0 ? "discrepancy" : "confirmed",
+      summary: sourceDiscrepancies.length > 0 ? "Найдены расхождения в источниках" : summary,
+      facts,
+      discrepancies: sourceDiscrepancies,
+      action: sourceDiscrepancies.length > 0 ? "manual_review" : "none",
+      reason: sourceDiscrepancies[0]?.nextStep ?? null,
+      checkedAt: result.checkedAt,
+    };
+  }
+
+  private async checkedAt(inn: string, source: CompanySource): Promise<string> {
+    await this.db.query(`
+      create table if not exists company_source_checks (
+        inn varchar(12) not null,
+        source text not null,
+        checked_at timestamptz not null,
+        primary key (inn, source)
+      )
+    `);
+    const rows = (await this.db.query(
+      "select checked_at from company_source_checks where inn=$1 and source=$2",
+      [inn, source],
+    )) as Array<{ checked_at: Date | string }>;
+    if (rows[0]?.checked_at) {
+      return new Date(rows[0].checked_at).toISOString();
+    }
+    const checkedAt = new Date().toISOString();
+    await this.db.query(
+      "insert into company_source_checks(inn,source,checked_at) values($1,$2,$3) on conflict (inn,source) do nothing",
+      [inn, source, checkedAt],
+    );
+    return checkedAt;
   }
 }
