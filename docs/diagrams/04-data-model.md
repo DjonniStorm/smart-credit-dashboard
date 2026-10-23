@@ -1,6 +1,6 @@
 # Модель данных PostgreSQL
 
-Схема взята из `apps/api/src/common/database/migrations/001_workflow.sql`. Таблица `company_bki_consents` в миграцию не входит: её создаёт `CompanyConsentStore` при первом обращении.
+Схема взята из `apps/api/src/common/database/migrations/001_workflow.sql`. Таблицы `demo_*` и `company_bki_consents` в миграцию не входят: первые создаёт `DemoDataStore` при старте api и `pnpm db:seed`, вторую `CompanyConsentStore` при первом обращении.
 
 ```mermaid
 erDiagram
@@ -66,14 +66,44 @@ erDiagram
     varchar inn PK
     timestamptz granted_at
   }
+
+  demo_accounts ||--o{ demo_sessions : "account_id"
+
+  demo_accounts {
+    text id PK
+    jsonb payload
+  }
+
+  demo_sessions {
+    text token PK
+    text account_id FK
+    text role
+    timestamptz created_at
+  }
+
+  demo_employees {
+    text id PK
+    jsonb payload
+  }
+
+  demo_catalog {
+    text id PK "всегда default"
+    jsonb payload "список продуктов"
+  }
+
+  demo_sources {
+    text inn PK
+    jsonb payload "ЕГРЮЛ, ФНС, БКИ"
+  }
 ```
 
 SVG: [04-data-model.svg](04-data-model.svg)
 
 ## Связи, которых в схеме нет
 
-- `applications.inn` и `company_bki_consents.inn` связаны по значению, внешнего ключа нет. Таблицы компаний нет, профиль собирается из источников на лету.
+- `applications.inn`, `company_bki_consents.inn` и `demo_sources.inn` связаны по значению, внешнего ключа нет. Таблицы компаний нет, профиль собирается из `demo_sources`.
 - `idempotency_keys.resource_id` указывает на задачу или заявку в зависимости от `scope` (`create` или `check:{applicationId}`).
 - Индекс очереди: `scoring_jobs_queue_idx (status, next_attempt_at, created_at)`.
-- Таблиц сотрудников, документов, продуктов и согласий по заявке нет. Продукты, сотрудники и демо-учётки живут в моках приложений и в `packages/contracts`.
+- Сотрудники, продукты и демо-учётки хранятся как jsonb-документы в `demo_*`, а не нормализованными таблицами. Таблиц документов и согласий по заявке нет.
+- Копия DDL для `applications`, `scoring_jobs` и `application_events` есть ещё в `WorkflowStore.onModuleInit` и в `apps/api/scripts/seed-demo.ts`, поэтому схема объявлена в трёх местах.
 - В `source_checks` код ничего не пишет и не читает: таблица создана, но ответы источников хранятся только в `application_events` и `scoring_jobs.result`.

@@ -12,7 +12,6 @@ sequenceDiagram
   participant A as api
   participant DB as PostgreSQL
   participant Q as QueueWorkerService
-  participant M as mocks
   participant S as scoring
 
   C->>W: подаёт заявку
@@ -23,19 +22,15 @@ sequenceDiagram
     A->>DB: scoring_jobs (status queued)
     A->>DB: idempotency_keys, application_events application_created
   end
-  A-->>W: application и checkJob
+  A-->>W: application (UNDER_REVIEW) и checkJob
   W-->>C: заявка принята
 
   loop каждые WORKER_POLL_MS
     Q->>DB: claim: queued - running, FOR UPDATE SKIP LOCKED
   end
   Q->>A: processJob(job)
-  par три источника, таймаут 5 с
-    A->>M: GET /egrul/{inn}
-    A->>M: GET /fns/{inn}
-    A->>M: GET /bki/{inn}
-  end
-  A->>S: POST /v1/score (inn, egrul, bki, fns)
+  A->>DB: demo_sources: ЕГРЮЛ, ФНС, БКИ по ИНН
+  A->>S: POST /v1/score (inn, egrul, bki, fns, сумма, срок)
   S-->>A: score, risk_band, readiness_index, confidence, recommendation
   A->>A: decide(): правила поверх рекомендации модели
   alt успех
@@ -51,43 +46,28 @@ sequenceDiagram
 
 SVG: [03-sequence-api.svg](03-sequence-api.svg)
 
-Рекомендации `decide()`: `reject`, `request_info`, `counter_offer`, `approve` (только при confidence не ниже 0,8 и сумме до 5 000 000), иначе `manual_review`. Режим автономности в текущем коде `shadow` или `assist`. Рекомендация записывается в событие, статус заявки она не меняет.
+Рекомендации `decide()`: `reject`, `request_info`, `counter_offer`, `approve` (только при confidence не ниже 0,8 и сумме до 5 000 000), иначе `manual_review`. Режим автономности в текущем коде `shadow` или `assist`. Рекомендация попадает в событие и в `scoring`, статус заявки она не меняет: после скоринга заявка остаётся `in_review`.
 
-## Как это продолжается в АРМ
+## АРМ: что есть и чего нет
 
-Менеджер видит заявку и принимает решение в интерфейсе `apps/backoffice`. Его HTTP-адаптер ходит на `/api/arm/*`, и этих ручек в `apps/api` нет, поэтому ниже поток по контракту `packages/contracts/src/application.ts`, как его выполняет мок-движок `apps/backoffice/src/shared/api/arm/mock`.
+АРМ читает очередь через `GET /v1/applications` и показывает заявку на этапе решения, когда скоринг готов. Команды сотрудника в api не реализованы: `act` и `simulateClient` в `apps/backoffice/src/shared/api/arm/http-api.ts` выбрасывают ошибку «появятся после подключения команд API». Пунктирные стрелки ниже это путь по `plan.md`, его в коде нет.
 
 ```mermaid
 sequenceDiagram
   autonumber
   actor E as Сотрудник
   participant B as backoffice
-  participant A as api (/arm, нет в коде)
+  participant A as api
   actor C as Клиент
 
-  B->>A: GET /arm/applications
-  A-->>B: очередь: stage decision, waitingOn employee
+  B->>A: GET /v1/applications
+  A-->>B: заявки, scoring в поле scoring
+  Note over B: stage decision, waitingOn employee выводятся из наличия scoring
   E->>B: открывает карточку, смотрит рекомендацию и правила
-  alt approve
-    E->>B: одобрить
-    B->>A: EmployeeAction approve
-    Note over A: статус approved, этап signing
-    C->>A: подписывает договор
-    Note over A: статус disbursed, выдача смоделирована
-  else counter_offer
-    B->>A: EmployeeAction counter_offer
-    Note over A: статус counter_offer
-    C->>A: принимает условия
-    Note over A: статус approved
-  else request_info
-    B->>A: EmployeeAction request_info
-    Note over A: статус needs_client
-    C->>A: присылает документы
-    Note over A: in_review, источники запрашиваются заново
-  else reject
-    B->>A: EmployeeAction reject (причина)
-    Note over A: статус rejected
-  end
+  E-->>B: approve, counter_offer, request_info или reject
+  B--xA: команда сотрудника (в api нет)
+  A--xC: оффер, запрос документов или отказ (в api нет)
+  C--xA: принять, ответить, подписать (в api нет)
 ```
 
 SVG: [03-sequence-backoffice.svg](03-sequence-backoffice.svg)

@@ -20,19 +20,19 @@ flowchart LR
     direction TB
     applications["ApplicationsModule<br/>/v1/applications, /v1/jobs"]
     companies["CompaniesModule<br/>/v1/companies"]
+    auth["AuthModule<br/>/v1/auth, демо-сессии"]
+    catalog["CatalogModule<br/>/v1/products, /v1/employees"]
     health["HealthModule<br/>/health"]
     worker["QueueWorkerService<br/>опрос раз в WORKER_POLL_MS"]
     decision["decide()<br/>детерминированные правила"]
     store["WorkflowStore"]
+    demo["DemoDataStore<br/>синтетические данные"]
     storage["StorageService<br/>файлы на диске"]
   end
 
-  subgraph ext["Источники и модель"]
-    mocks["apps/mocks :4100<br/>ЕГРЮЛ, ФНС, БКИ"]
-    scoring["apps/scoring (Python) :8000<br/>POST /v1/score"]
-  end
-
+  scoring["apps/scoring (Python) :8000<br/>POST /v1/score"]
   db[("PostgreSQL 18")]
+  disk[("STORAGE_ROOT")]
 
   user --> caddy
   employee --> caddy
@@ -43,34 +43,37 @@ flowchart LR
   backoffice -->|"rewrite /api/*"| apiBox
 
   applications --> store
-  worker -->|"claim job"| store
-  worker --> applications
   applications --> decision
   applications --> companies
-  companies -->|"GET /egrul, /fns, /bki"| mocks
+  worker -->|"claim job"| store
+  worker --> applications
+  auth --> demo
+  catalog --> demo
+  companies --> demo
   companies -->|"POST /v1/score"| scoring
   store --> db
+  demo -->|"demo_*"| db
   companies -.->|"company_bki_consents"| db
-  storage -.-> disk[("STORAGE_ROOT")]
+  storage -.-> disk
 ```
 
 SVG: [01-architecture.svg](01-architecture.svg)
 
 ## Зависимости
 
-| Откуда                             | Куда          | Как                                                        |
-| ---------------------------------- | ------------- | ---------------------------------------------------------- |
-| client, backoffice                 | api           | HTTP, `/api/*` проксируется Next.js на `API_URL`           |
-| api                                | mocks         | HTTP, таймаут 5 с, три источника запрашиваются параллельно |
-| api                                | scoring       | HTTP, `POST /v1/score`                                     |
-| api                                | PostgreSQL    | TypeORM, очередь через `FOR UPDATE SKIP LOCKED`            |
-| client, backoffice, mocks, scoring | друг с другом | напрямую не общаются                                       |
+| Откуда                      | Куда          | Как                                              |
+| --------------------------- | ------------- | ------------------------------------------------ |
+| client, backoffice          | api           | HTTP, `/api/*` проксируется Next.js на `API_URL` |
+| api                         | scoring       | HTTP, `POST /v1/score`, таймаут 5 с              |
+| api                         | PostgreSQL    | TypeORM, очередь через `FOR UPDATE SKIP LOCKED`  |
+| client, backoffice, scoring | друг с другом | напрямую не общаются                             |
 
 Типы запросов и ответов лежат в `packages/contracts`, клиент API сгенерирован в `packages/sdk`.
 
 ## Что не нарисовано, потому что в коде этого нет
 
+- ЕГРЮЛ, ФНС и БКИ не отдельный сервис: `apps/mocks` удалён, `CompaniesService` читает ответы источников из таблицы `demo_sources`, которую заполняет `pnpm db:seed`.
 - Отдельного процесса worker нет: `QueueWorkerService` работает внутри процесса api.
-- Object storage в compose нет: `StorageService` пишет в локальную папку, MinIO или S3 только заявлены в комментарии.
+- Object storage в compose нет: `StorageService` пишет в локальную папку.
 - Событийного слоя (SSE, шины) нет: изменения состояния попадают в таблицу `application_events`.
 - Alfi в `apps/*` нет.
