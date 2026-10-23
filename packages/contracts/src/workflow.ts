@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import { apiDecisionSchema, apiScoringSchema } from "./api.ts";
+import {
+  apiCreateApplicationSchema,
+  apiDecisionSchema,
+  apiScoringSchema,
+} from "./api.ts";
 import {
   applicationHandoffSchema,
   applicationHoldSchema,
@@ -12,31 +16,14 @@ import {
   employeeActionSchema,
   rejectReasonSchema,
 } from "./application.ts";
-import {
-  creditPurposeSchema,
-  isPurposeAllowed,
-  purposeNotInProductMessage,
-} from "./product-catalog.ts";
 
 export {
   workflowStatusSchema,
   type WorkflowStatus,
 } from "./application-parts.ts";
 
-/** Команда создания заявки из кабинета клиента. */
-export const createApplicationRequestSchema = z
-  .object({
-    inn: z.string().regex(/^\d{10,12}$/),
-    productId: creditProductIdSchema,
-    amount: z.number().positive(),
-    termMonths: z.number().int().positive(),
-    purpose: creditPurposeSchema,
-    idempotencyKey: z.string().min(8).max(128),
-  })
-  .refine((input) => isPurposeAllowed(input.productId, input.purpose), {
-    message: purposeNotInProductMessage,
-    path: ["purpose"],
-  });
+/** Команда создания заявки из кабинета клиента: та же схема, что у API. */
+export const createApplicationRequestSchema = apiCreateApplicationSchema;
 export type CreateApplicationRequest = z.infer<
   typeof createApplicationRequestSchema
 >;
