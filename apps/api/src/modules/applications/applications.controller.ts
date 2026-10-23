@@ -2,38 +2,46 @@ import { Body, Controller, Get, HttpCode, Param, Post } from "@nestjs/common";
 import { ApiOkResponse, ApiOperation } from "@nestjs/swagger";
 import { ZodSerializerDto, createZodDto } from "nestjs-zod";
 import {
-  applicationCheckRequestSchema,
-  applicationWorkflowSchema,
-  createApplicationRequestSchema,
-  createApplicationResponseSchema,
-  scoringJobSchema,
-} from "@repo/contracts/workflow";
+  apiApplicationResponseSchema,
+  apiApplicationSchema,
+  apiCheckRequestSchema,
+  apiCreateApplicationSchema,
+  apiJobSchema,
+} from "@repo/contracts/api";
 
 import { ApplicationsService } from "./applications.service.ts";
 
-class CreateApplicationDto extends createZodDto(createApplicationRequestSchema) {}
-class CreateApplicationResponseDto extends createZodDto(createApplicationResponseSchema) {}
-class ApplicationCheckDto extends createZodDto(applicationCheckRequestSchema) {}
-class ApplicationDto extends createZodDto(applicationWorkflowSchema) {}
-class JobDto extends createZodDto(scoringJobSchema) {}
+class CreateApplicationDto extends createZodDto(apiCreateApplicationSchema) {}
+class CreateApplicationResponseDto extends createZodDto(apiApplicationResponseSchema) {}
+class ApplicationCheckDto extends createZodDto(apiCheckRequestSchema) {}
+class ApplicationDto extends createZodDto(apiApplicationSchema) {}
+class ApplicationListDto extends createZodDto(apiApplicationSchema.array()) {}
+class JobDto extends createZodDto(apiJobSchema) {}
 
 @Controller("v1/applications")
 export class ApplicationsController {
   constructor(private readonly applications: ApplicationsService) {}
+
+  @Get()
+  @ApiOkResponse({ type: ApplicationDto, isArray: true })
+  @ZodSerializerDto(ApplicationListDto)
+  list(): Promise<ApplicationDto[]> {
+    return this.applications.listApiApplications();
+  }
 
   @Post()
   @ApiOperation({ operationId: "ApplicationsController_create" })
   @ApiOkResponse({ type: CreateApplicationResponseDto })
   @ZodSerializerDto(CreateApplicationResponseDto)
   async create(@Body() body: CreateApplicationDto): Promise<CreateApplicationResponseDto> {
-    return this.applications.create(body);
+    return this.applications.createApiApplication(body);
   }
 
   @Get(":id")
   @ApiOkResponse({ type: ApplicationDto })
   @ZodSerializerDto(ApplicationDto)
   async get(@Param("id") id: string): Promise<ApplicationDto> {
-    return this.applications.getApplication(id);
+    return this.applications.getApiApplication(id);
   }
 
   @Post(":id/checks")
@@ -42,7 +50,7 @@ export class ApplicationsController {
   @ApiOkResponse({ type: JobDto })
   @ZodSerializerDto(JobDto)
   async check(@Param("id") id: string, @Body() body: ApplicationCheckDto): Promise<JobDto> {
-    return this.applications.startCheck(id, body);
+    return this.applications.startApiCheck(id, body);
   }
 }
 
@@ -54,6 +62,6 @@ export class JobsController {
   @ApiOkResponse({ type: JobDto })
   @ZodSerializerDto(JobDto)
   async get(@Param("id") id: string): Promise<JobDto> {
-    return this.applications.getJob(id);
+    return this.applications.getApiJob(id);
   }
 }

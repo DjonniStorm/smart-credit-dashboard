@@ -58,8 +58,7 @@
         "HOST",
         "DATABASE_URL",
         "API_URL",
-        "SCORING_URL",
-        "MOCKS_URL"
+        "SCORING_URL"
       ]
     }
   }

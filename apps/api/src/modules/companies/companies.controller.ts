@@ -29,7 +29,7 @@ export class CompaniesController {
     private readonly commands: CommandBus,
   ) {}
 
-  /** Сквозная проверка: данные из mocks (ЕГРЮЛ, БКИ, ФНС) и оценка scoring. */
+  /** Сквозная проверка синтетических источников и baseline scoring. */
   @Get(":inn/check")
   @ApiParam({ name: "inn", required: true })
   @ApiOkResponse({ type: CompanyCheckDto })

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { randomUUID } from "node:crypto";
 import type {
   ApplicationCheckRequest,
   ApplicationWorkflow,
@@ -7,15 +8,15 @@ import type {
   ScoringJob,
 } from "@repo/contracts/workflow";
 import type { ScoreResponse } from "@repo/contracts";
+import type { ApiApplication, ApiApplicationResponse, ApiJob } from "@repo/contracts/api";
 
 import { CompaniesService } from "../companies/companies.service.ts";
 import { WorkflowStore } from "./workflow-store.ts";
 import { decide } from "./decision-engine.ts";
+import { toApiApplication, toApiJob, toApiScoring } from "./api-mapper.ts";
 
 @Injectable()
 export class ApplicationsService {
-  private sequence = 1000;
-
   constructor(private readonly companies: CompaniesService, private readonly store: WorkflowStore) {}
 
   async create(input: CreateApplicationRequest): Promise<CreateApplicationResponse> {
@@ -27,12 +28,11 @@ export class ApplicationsService {
     }
 
     const now = new Date().toISOString();
-    const applicationId = `app-${this.sequence}`;
-    const jobId = `job-${this.sequence}`;
-    this.sequence += 1;
+    const applicationId = `app-${randomUUID()}`;
+    const jobId = `job-${randomUUID()}`;
     const application: ApplicationWorkflow = {
       id: applicationId,
-      number: String(this.sequence),
+      number: `SC-${Date.now()}-${randomUUID().slice(0, 6)}`,
       inn: input.inn,
       productId: input.productId,
       amount: input.amount,
@@ -52,6 +52,23 @@ export class ApplicationsService {
     return { application, checkJob: { id: job.id, status: job.status } };
   }
 
+  async listApiApplications(): Promise<ApiApplication[]> {
+    const applications = await this.store.listApplications();
+    return applications.map(toApiApplication);
+  }
+
+  async getApiApplication(id: string): Promise<ApiApplication> {
+    return toApiApplication(await this.getApplication(id));
+  }
+
+  async createApiApplication(input: CreateApplicationRequest): Promise<ApiApplicationResponse> {
+    const response = await this.create(input);
+    return {
+      application: toApiApplication(response.application),
+      checkJob: { id: response.checkJob.id, status: response.checkJob.status },
+    };
+  }
+
   async getApplication(id: string): Promise<ApplicationWorkflow> {
     const application = await this.store.getApplication(id);
     if (!application) throw new NotFoundException("Заявка не найдена");
@@ -62,7 +79,7 @@ export class ApplicationsService {
     await this.getApplication(id);
     const existing = await this.store.findIdempotent(`check:${id}`, input.idempotencyKey);
     if (existing) return this.getJob(existing);
-    const job = this.createJob(id, `job-${this.sequence++}`, input.idempotencyKey);
+    const job = this.createJob(id, `job-${randomUUID()}`, input.idempotencyKey);
     await this.store.saveJob(job);
     await this.store.remember(`check:${id}`, input.idempotencyKey, job.id);
     return job;
@@ -72,6 +89,14 @@ export class ApplicationsService {
     const job = await this.store.getJob(id);
     if (!job) throw new NotFoundException("Задача не найдена");
     return job;
+  }
+
+  async startApiCheck(id: string, input: ApplicationCheckRequest): Promise<ApiJob> {
+    return toApiJob(await this.startCheck(id, input));
+  }
+
+  async getApiJob(id: string): Promise<ApiJob> {
+    return toApiJob(await this.getJob(id));
   }
 
   private createJob(applicationId: string, id: string, idempotencyKey: string): ScoringJob {
@@ -100,12 +125,14 @@ export class ApplicationsService {
   private async executeJob(job: ScoringJob, application: ApplicationWorkflow): Promise<void> {
     // The worker claims the job and persists running/attempts atomically.
     try {
-      const result = await this.companies.check(application.inn);
+      const result = await this.companies.check(application.inn, application);
       const decision = decide(application, result.scoring as ScoreResponse);
+      const scoring = toApiScoring(result.scoring);
       job.result = {
         score: result.scoring.score,
         model: result.scoring.model,
         recommendation: decision.recommendation,
+        details: scoring,
       };
       job.status = "succeeded";
       application.scoring = job.result;

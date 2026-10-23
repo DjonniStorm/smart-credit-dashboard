@@ -25,17 +25,6 @@ services:
       timeout: 3s
       retries: 30
 
-  mocks:
-    build:
-      context: ../..
-      dockerfile: apps/mocks/Dockerfile
-    restart: unless-stopped
-    environment:
-      HOST: 0.0.0.0
-    healthcheck:
-      <<: *node-healthcheck
-      test: ["CMD", "node", "-e", "fetch('http://localhost:4100/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
-
   scoring:
     build:
       context: ../..
@@ -53,11 +42,8 @@ services:
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-alfa}:${POSTGRES_PASSWORD:-alfa}@postgres:5432/${POSTGRES_DB:-alfa}
       SCORING_URL: http://scoring:8000
-      MOCKS_URL: http://mocks:4100
     depends_on:
       postgres:
-        condition: service_healthy
-      mocks:
         condition: service_healthy
       scoring:
         condition: service_healthy

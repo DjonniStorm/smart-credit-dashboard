@@ -53,6 +53,13 @@ export class WorkflowStore implements OnModuleInit {
     return rows[0] ? this.application(rows[0]) : null;
   }
 
+  async listApplications(): Promise<ApplicationWorkflow[]> {
+    const rows = await this.db.query(
+      "select * from applications order by created_at desc",
+    );
+    return rows.map((row: Record<string, unknown>) => this.application(row));
+  }
+
   async saveJob(job: ScoringJob, attempts = job.attempts): Promise<void> {
     await this.db.query(
       `insert into scoring_jobs(id,application_id,status,idempotency_key,created_at,started_at,finished_at,error,result,attempts,next_attempt_at)

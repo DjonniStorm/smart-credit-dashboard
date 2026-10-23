@@ -1,5 +1,4 @@
 import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 
 import type {
   BkiReport,
@@ -14,25 +13,22 @@ import type {
   CompanySourceSnapshot,
 } from "@repo/contracts/company-profile";
 
-import type { Env } from "../../common/config/env.schema.ts";
+import { DemoDataStore } from "../../common/demo-data/demo-data.store.ts";
 import { CompanyConsentStore } from "./company-consent.store.ts";
-
-interface SourceRequestResult<T> {
-  value: T | null;
-  checkedAt: string;
-}
 
 @Injectable()
 export class CompanyProfileService {
   constructor(
-    private readonly config: ConfigService<Env, true>,
+    private readonly data: DemoDataStore,
     private readonly consents: CompanyConsentStore,
   ) {}
 
   async getProfile(inn: string): Promise<CompanyProfileResponse> {
     const grantedAt = await this.consents.grantedAt(inn);
-    const egrul = await this.requestSource<EgrulRecord>("egrul", inn);
-    const fns = await this.requestSource<FnsProfile>("fns", inn);
+    const sourcesData = await this.data.getSources(inn);
+    const checkedAt = new Date().toISOString();
+    const egrul = { value: sourcesData?.egrul ?? null, checkedAt };
+    const fns = { value: sourcesData?.fns ?? null, checkedAt };
     const profile = this.buildProfile(inn, egrul.value);
     const sources = [
       this.egrulSnapshot(egrul),
@@ -41,7 +37,7 @@ export class CompanyProfileService {
     ];
 
     if (grantedAt) {
-      const bki = await this.requestSource<BkiReport>("bki", inn);
+      const bki = { value: sourcesData?.bki ?? null, checkedAt };
       sources.push(this.bkiSnapshot(bki));
     } else {
       sources.push({
@@ -68,26 +64,6 @@ export class CompanyProfileService {
     return this.getProfile(inn);
   }
 
-  private async requestSource<T>(
-    source: CompanySource,
-    inn: string,
-  ): Promise<SourceRequestResult<T>> {
-    const mocksUrl = this.config.getOrThrow("MOCKS_URL", { infer: true });
-    const checkedAt = new Date().toISOString();
-
-    try {
-      const response = await fetch(`${mocksUrl}/${source}/${inn}`, {
-        signal: AbortSignal.timeout(5_000),
-      });
-      if (!response.ok) {
-        return { value: null, checkedAt };
-      }
-      return { value: (await response.json()) as T, checkedAt };
-    } catch {
-      return { value: null, checkedAt };
-    }
-  }
-
   private buildProfile(inn: string, source: EgrulRecord | null): CompanyProfile {
     return {
       inn,
@@ -103,7 +79,7 @@ export class CompanyProfileService {
   }
 
   private egrulSnapshot(
-    result: SourceRequestResult<EgrulRecord>,
+    result: { value: EgrulRecord | null; checkedAt: string },
   ): CompanySourceSnapshot {
     const facts: CompanyFact[] = result.value
       ? [
@@ -120,7 +96,7 @@ export class CompanyProfileService {
   }
 
   private fnsSnapshot(
-    result: SourceRequestResult<FnsProfile>,
+    result: { value: FnsProfile | null; checkedAt: string },
   ): CompanySourceSnapshot {
     const facts: CompanyFact[] = result.value
       ? [
@@ -144,7 +120,7 @@ export class CompanyProfileService {
   }
 
   private bkiSnapshot(
-    result: SourceRequestResult<BkiReport>,
+    result: { value: BkiReport | null; checkedAt: string },
   ): CompanySourceSnapshot {
     const facts: CompanyFact[] = result.value
       ? [
@@ -198,7 +174,7 @@ export class CompanyProfileService {
 
   private snapshot<T>(
     source: CompanySource,
-    result: SourceRequestResult<T>,
+    result: { value: T | null; checkedAt: string },
     facts: CompanyFact[],
     summary: string,
   ): CompanySourceSnapshot {
