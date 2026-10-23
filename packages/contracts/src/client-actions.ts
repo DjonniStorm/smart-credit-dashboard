@@ -11,6 +11,12 @@ export const clientActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("decline_offer") }),
   z.object({ type: z.literal("request_sign_code") }),
   z.object({ type: z.literal("sign"), code: signRequestSchema.shape.code }),
+  /** Запрос срочного режима (enabled=true) или его отзыв (enabled=false, пока запрос ждёт решения). */
+  z.object({
+    type: z.literal("set_urgent"),
+    enabled: z.boolean(),
+    reason: z.string().max(500).default(""),
+  }),
 ]);
 export type ClientAction = z.infer<typeof clientActionSchema>;
 

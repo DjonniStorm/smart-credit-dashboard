@@ -12,6 +12,8 @@ import {
   applicationHoldSchema,
   clientReplySchema,
   offerTermsSchema,
+  urgentRequestSchema,
+  urgentSourceSchema,
   workflowStatusSchema,
 } from "./application-parts.ts";
 import {
@@ -48,6 +50,8 @@ export const applicationWorkflowSchema = z.object({
   hold: applicationHoldSchema.nullable().default(null),
   urgent: z.boolean().default(false),
   urgentReason: z.string().nullable().default(null),
+  urgentSource: urgentSourceSchema.nullable().default(null),
+  urgentRequest: urgentRequestSchema.nullable().default(null),
   assigneeId: z.string().nullable().default(null),
   handoff: applicationHandoffSchema.nullable().default(null),
   clientReply: clientReplySchema.nullable().default(null),

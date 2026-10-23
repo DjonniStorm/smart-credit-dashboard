@@ -3,6 +3,7 @@ import type {
   Employee,
   EmployeeAction,
 } from "@repo/contracts/application";
+import { backofficeText, i18n } from "@repo/i18n";
 
 export type DialogKind =
   | "approve"
@@ -14,7 +15,8 @@ export type DialogKind =
   | "comment"
   | "handoff"
   | "cancel"
-  | "intercept";
+  | "intercept"
+  | "declineUrgent";
 
 export interface ActionItem {
   key: string;
@@ -37,6 +39,7 @@ export const dialogLabel: Record<DialogKind, string> = {
   handoff: "Передать с резюме",
   cancel: "Отменить заявку",
   intercept: "Перехватить автоодобрение",
+  declineUrgent: backofficeText(i18n.defaultLocale).urgent.declineTitle,
 };
 
 const recommendedDialog = {
@@ -182,23 +185,7 @@ export function buildActionLayout(input: BuildInput): ActionLayout {
             label: dialogLabel.cancel,
             run: () => open("cancel"),
           },
-          {
-            key: "urgent",
-            label: app.urgent
-              ? "Снять срочный режим"
-              : "Включить срочный режим",
-            run: () =>
-              run(
-                {
-                  type: "set_urgent",
-                  enabled: !app.urgent,
-                  reason: app.urgent ? "" : "Приоритетная обработка",
-                },
-                app.urgent
-                  ? "Срочный режим снят"
-                  : "Заявка отмечена как срочная",
-              ),
-          },
+          ...urgentActions(app, open, run),
         ];
 
   // Красная только у рекомендованного решения и никогда у отказа.
@@ -238,6 +225,53 @@ export function buildActionLayout(input: BuildInput): ActionLayout {
     menu: rest.filter((i) => i !== secondary),
     hint: hintFor(app, canDecide),
   };
+}
+
+/**
+ * Срочность: запрос клиента решает менеджер (принять включением или отклонить),
+ * без запроса менеджер просто включает или снимает режим.
+ */
+function urgentActions(
+  app: Application,
+  open: (dialog: DialogKind) => void,
+  run: BuildInput["run"],
+): ActionItem[] {
+  const copy = backofficeText(i18n.defaultLocale).urgent;
+  const request = app.urgentRequest;
+  if (request?.state === "pending") {
+    return [
+      {
+        key: "urgent-accept",
+        label: copy.accept,
+        run: () =>
+          run(
+            { type: "set_urgent", enabled: true, reason: request.reason },
+            copy.acceptDone,
+          ),
+      },
+      {
+        key: "urgent-decline",
+        label: copy.decline,
+        destructive: true,
+        run: () => open("declineUrgent"),
+      },
+    ];
+  }
+  return [
+    {
+      key: "urgent",
+      label: app.urgent ? copy.disable : copy.enable,
+      run: () =>
+        run(
+          {
+            type: "set_urgent",
+            enabled: !app.urgent,
+            reason: app.urgent ? "" : "Приоритетная обработка",
+          },
+          app.urgent ? copy.disableDone : copy.enableDone,
+        ),
+    },
+  ];
 }
 
 function hintFor(app: Application, canDecide: boolean): string | null {

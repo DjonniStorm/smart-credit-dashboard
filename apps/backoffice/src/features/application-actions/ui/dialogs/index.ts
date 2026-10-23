@@ -2,6 +2,7 @@ export { ApproveDialog } from "./approve-dialog";
 export { CancelDialog } from "./cancel-dialog";
 export { CommentDialog } from "./comment-dialog";
 export { CounterDialog } from "./counter-dialog";
+export { DeclineUrgentDialog } from "./decline-urgent-dialog";
 export { HandoffDialog } from "./handoff-dialog";
 export { HoldDialog } from "./hold-dialog";
 export { InterceptDialog } from "./intercept-dialog";

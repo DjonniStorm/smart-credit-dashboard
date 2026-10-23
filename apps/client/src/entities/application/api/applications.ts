@@ -114,6 +114,20 @@ export function useRequestSignCode(app: ActionTarget) {
   });
 }
 
+export function useSetUrgent(app: ActionTarget) {
+  const update = useUpdate();
+  return useMutation({
+    mutationFn: (v: { enabled: boolean; reason: string }) =>
+      cabinetApi.setUrgent(
+        app.id,
+        v.enabled,
+        v.reason,
+        actionKey(app, "set_urgent"),
+      ),
+    onSuccess: update,
+  });
+}
+
 export function useSign(app: ActionTarget) {
   const update = useUpdate();
   return useMutation({

@@ -39,20 +39,24 @@ Pause/block не меняют эти три поля. Они записываю�
 
 ## Матрица действий
 
-| Действие        | Условие                                                          | Результат                                                                |
-| --------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `assign`        | активная заявка, не закрыта                                      | меняет ответственного, пишет аудит                                       |
-| `rerun_check`   | недоступный источник                                             | переводит источник в `pending`, `waitingOn=system`                       |
-| `approve`       | `stage=decision`, `waitingOn=employee`, лимит сотрудника         | `status=approved`, `stage=signing`, ждём клиента                         |
-| `counter_offer` | `stage=decision`, `waitingOn=employee`, проходит лимиты продукта | `status=counter_offer`, ждём клиента                                     |
-| `request_info`  | `stage=decision`, `waitingOn=employee`                           | `status=needs_client`, `stage=completeness`, ждём клиента                |
-| `reject`        | `stage=decision`, `waitingOn=employee`                           | `status=rejected`, `waitingOn=nobody`                                    |
-| `pause`         | активная незакрытая заявка                                       | создаёт hold, бизнес-статус не меняется                                  |
-| `block`         | активная незакрытая заявка                                       | создаёт hold с ручной блокировкой                                        |
-| `resume`        | есть hold                                                        | очищает hold и восстанавливает сохранённые `waitingOn`/`blocker`         |
-| `comment`       | активная заявка                                                  | добавляет комментарий с видимостью `client`/`internal`/`handoff`         |
-| `handoff`       | активная незакрытая заявка                                       | сохраняет handoff-пакет, назначает сотрудника, пишет комментарий handoff |
-| `cancel`        | незакрытая заявка                                                | переводит в закрытый отказ с причиной и аудитом                          |
+| Действие         | Условие                                                          | Результат                                                                                                                                                |
+| ---------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `assign`         | активная заявка, не закрыта                                      | меняет ответственного, пишет аудит                                                                                                                       |
+| `rerun_check`    | недоступный источник                                             | переводит источник в `pending`, `waitingOn=system`                                                                                                       |
+| `approve`        | `stage=decision`, `waitingOn=employee`, лимит сотрудника         | `status=approved`, `stage=signing`, ждём клиента                                                                                                         |
+| `counter_offer`  | `stage=decision`, `waitingOn=employee`, проходит лимиты продукта | `status=counter_offer`, ждём клиента                                                                                                                     |
+| `request_info`   | `stage=decision`, `waitingOn=employee`                           | `status=needs_client`, `stage=completeness`, ждём клиента                                                                                                |
+| `reject`         | `stage=decision`, `waitingOn=employee`                           | `status=rejected`, `waitingOn=nobody`                                                                                                                    |
+| `pause`          | активная незакрытая заявка                                       | создаёт hold, бизнес-статус не меняется                                                                                                                  |
+| `block`          | активная незакрытая заявка                                       | создаёт hold с ручной блокировкой                                                                                                                        |
+| `resume`         | есть hold                                                        | очищает hold и восстанавливает сохранённые `waitingOn`/`blocker`                                                                                         |
+| `comment`        | активная заявка                                                  | добавляет комментарий с видимостью `client`/`internal`/`handoff`                                                                                         |
+| `handoff`        | активная незакрытая заявка                                       | сохраняет handoff-пакет, назначает сотрудника, пишет комментарий handoff                                                                                 |
+| `cancel`         | незакрытая заявка                                                | переводит в закрытый отказ с причиной и аудитом                                                                                                          |
+| `set_urgent`     | незакрытая заявка                                                | включает или снимает действующий режим; при ожидающем запросе клиента принимает его (`urgentRequest.state=accepted`), `urgent` и `urgentSource=employee` |
+| `decline_urgent` | `urgentRequest.state=pending`, причина обязательна (422 без неё) | `urgentRequest.state=declined`, причина и автор в запросе, `urgent` не меняется; вне `pending` дает 409                                                  |
+
+Срочность: клиент только запрашивает режим (`urgentRequest`, `state=pending`), `urgent` сам не меняет. Один запрос на заявку: после `accepted` или `declined` клиент повторно не запрашивает (409). Снятие режима сотрудником запрос не сбрасывает, поэтому клиент после него повторно не включит режим. Отзыв своего `pending` делает клиент, ответ 409 при других состояниях.
 
 При наличии hold разрешён только `resume`. Закрытые заявки (`rejected`, `disbursed`, `waitingOn=nobody`) нельзя поставить на паузу или заблокировать.
 

@@ -31,6 +31,7 @@ import {
 } from "react";
 
 import type { Application } from "@repo/contracts/application";
+import { backofficeText, i18n } from "@repo/i18n";
 import { StateBlock } from "@repo/ui/state-block";
 
 import {
@@ -61,6 +62,16 @@ import classes from "./queue-board.module.css";
 
 const tabs: QueueTab[] = ["all", ...queueGroupOrder];
 const pageSizes = ["10", "20", "50"];
+
+/** Срочность с источником: клиент или сотрудник банка. */
+function urgentLabel(app: Application): string {
+  const tx = backofficeText(i18n.defaultLocale).urgent;
+  if (!app.urgentSource) {
+    return tx.badge;
+  }
+  const source = app.urgentSource.by === "client" ? tx.byClient : tx.byEmployee;
+  return `${tx.badge}: ${source}`;
+}
 
 /** Очередь заявок: вкладки этапов, фильтры, таблица, пагинация. */
 export function QueueBoard({
@@ -336,10 +347,24 @@ export function QueueBoard({
                     <Table.Td className={classes.number}>
                       <Text size="sm">№ {app.number}</Text>
                       {app.urgent && (
-                        <Text size="xs" c="orange" fw={600}>
-                          Срочно
+                        <Text
+                          size="xs"
+                          c="orange"
+                          fw={600}
+                          title={app.urgentReason ?? undefined}
+                        >
+                          {urgentLabel(app)}
                         </Text>
                       )}
+                      {!app.urgent &&
+                        app.urgentRequest?.state === "pending" && (
+                          <Text size="xs" c="dimmed" fw={600}>
+                            {
+                              backofficeText(i18n.defaultLocale).urgent
+                                .requestBadge
+                            }
+                          </Text>
+                        )}
                     </Table.Td>
                     <Table.Td>
                       <Text size="sm" fw={500} className={classes.company}>

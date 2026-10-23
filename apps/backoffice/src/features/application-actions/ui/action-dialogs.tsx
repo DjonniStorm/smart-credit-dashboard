@@ -5,6 +5,7 @@ import type {
   Employee,
   EmployeeAction,
 } from "@repo/contracts/application";
+import { backofficeText, i18n } from "@repo/i18n";
 
 import type { ArmProduct } from "@/shared/api/arm";
 
@@ -14,6 +15,7 @@ import {
   CancelDialog,
   CommentDialog,
   CounterDialog,
+  DeclineUrgentDialog,
   HandoffDialog,
   HoldDialog,
   InterceptDialog,
@@ -134,6 +136,15 @@ export function ActionDialogs({
               { type: "intercept_autonomy", reason },
               "Автоодобрение перехвачено",
             )
+          }
+        />
+      );
+    case "declineUrgent":
+      return (
+        <DeclineUrgentDialog
+          {...common}
+          onSubmit={(action) =>
+            run(action, backofficeText(i18n.defaultLocale).urgent.declineDone)
           }
         />
       );

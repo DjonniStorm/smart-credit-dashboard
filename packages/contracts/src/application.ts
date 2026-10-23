@@ -14,6 +14,8 @@ import {
   employeeRoleSchema,
   offerTermsSchema,
   rejectReasonSchema,
+  urgentRequestSchema,
+  urgentSourceSchema,
   waitingOnSchema,
 } from "./application-parts.ts";
 import { autonomyCaseSchema } from "./autonomy.ts";
@@ -241,6 +243,11 @@ export const employeeActionSchema = z.discriminatedUnion("type", [
     type: z.literal("intercept_autonomy"),
     reason: z.string().min(1).max(500),
   }),
+  /** Отклонить запрос клиента на срочный режим; действующий режим не меняется. */
+  z.object({
+    type: z.literal("decline_urgent"),
+    reason: z.string().max(500),
+  }),
 ]);
 export type EmployeeAction = z.infer<typeof employeeActionSchema>;
 /** Команда АРМ: employeeActionSchema является версируемым command-контрактом. */
@@ -296,6 +303,8 @@ export const applicationSchema = z.object({
   hold: applicationHoldSchema.nullable().default(null),
   urgent: z.boolean().default(false),
   urgentReason: z.string().nullable().default(null),
+  urgentSource: urgentSourceSchema.nullable().default(null),
+  urgentRequest: urgentRequestSchema.nullable().default(null),
   autonomy: apiAutonomySnapshotSchema.optional(),
   comments: z.array(applicationCommentSchema).default([]),
   handoff: applicationHandoffSchema.nullable().default(null),

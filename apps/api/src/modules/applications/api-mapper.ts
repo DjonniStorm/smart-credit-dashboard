@@ -68,6 +68,22 @@ function readScoring(details: ApiScoring | undefined): ApiScoring | null {
   };
 }
 
+/** Клиенту показываем запрос без автора решения: это внутренняя запись АРМ. */
+function clientUrgentRequest(
+  request: ApplicationWorkflow["urgentRequest"],
+): ApiApplication["urgentRequest"] {
+  if (!request) {
+    return null;
+  }
+  return {
+    state: request.state,
+    reason: request.reason,
+    requestedAt: request.requestedAt,
+    resolvedAt: request.resolvedAt,
+    declineReason: request.declineReason,
+  };
+}
+
 export function toApiApplication(
   application: ApplicationWorkflow,
   clientComments: ApplicationComment[] = [],
@@ -91,6 +107,10 @@ export function toApiApplication(
     clientReply: application.clientReply,
     deal: dealStatuses.has(application.status) ? application.deal : null,
     cancelledBy: application.cancelledBy,
+    urgentRequest: clientUrgentRequest(application.urgentRequest),
+    urgentBy: application.urgent
+      ? (application.urgentSource?.by ?? null)
+      : null,
     clientComments,
     createdAt: application.createdAt,
     updatedAt: application.updatedAt,
@@ -108,6 +128,8 @@ export function toApiManagement(
     hold: application.hold,
     urgent: application.urgent,
     urgentReason: application.urgentReason,
+    urgentSource: application.urgentSource,
+    urgentRequest: application.urgentRequest,
     assigneeId: application.assigneeId,
     handoff: application.handoff,
     comments,
