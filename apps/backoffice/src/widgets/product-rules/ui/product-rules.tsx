@@ -85,7 +85,7 @@ export function ProductRules() {
                         {p.name}
                       </Text>
                       <Text size="xs" c="dimmed">
-                        {p.purpose}
+                        {p.description}
                       </Text>
                     </Table.Td>
                     <Table.Td>
@@ -94,7 +94,9 @@ export function ProductRules() {
                     <Table.Td>
                       {p.minTermMonths}–{p.maxTermMonths} мес.
                     </Table.Td>
-                    <Table.Td>от {p.ratePct} %</Table.Td>
+                    <Table.Td>
+                      от {p.ratePct} %
+                    </Table.Td>
                     <Table.Td>{p.minScore}</Table.Td>
                     <Table.Td>до {Math.round(p.maxDebtLoad * 100)} %</Table.Td>
                     <Table.Td>от {p.minBusinessAgeMonths} мес.</Table.Td>

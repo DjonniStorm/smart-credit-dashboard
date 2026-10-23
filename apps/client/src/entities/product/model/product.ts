@@ -1,17 +1,17 @@
-import type { CreditProduct, CreditPurpose } from "@repo/contracts/cabinet";
+import {
+  type CreditProduct,
+  type CreditPurpose,
+  creditPurposeSchema,
+} from "@repo/contracts/cabinet";
+import { productRate } from "@repo/contracts/product-catalog";
 
 import { monthlyPayment } from "./monthly-payment";
 
-export const purposes: CreditPurpose[] = [
-  "working_capital",
-  "cash_gap",
-  "equipment",
-  "development",
-];
+export const purposes: CreditPurpose[] = creditPurposeSchema.options;
 
 /** Базовая ставка продукта до проверки: ключевая + надбавка. */
 export function baseRate(product: CreditProduct, keyRate: number): number {
-  return keyRate + product.spreadPp;
+  return productRate(product, keyRate);
 }
 
 const clamp = (n: number, min: number, max: number) =>

@@ -5,41 +5,17 @@ import { z } from "zod";
 import { applicationStatusSchema, innSchema } from "@repo/contracts";
 import { apiAutonomySnapshotSchema } from "./api.js";
 
+import { creditProductIdSchema } from "./product-catalog.js";
+
 export const legalFormSchema = z.enum(["ip", "ooo"]);
 export type LegalForm = z.infer<typeof legalFormSchema>;
 
-export const creditProductIdSchema = z.enum([
-  "express",
-  "working_capital",
-  "credit_line",
-  "investment",
-  "cash_gap",
-  "equipment",
-  "development",
-]);
-export type CreditProductId = z.infer<typeof creditProductIdSchema>;
-
-/** Кредитный продукт и его правила. Значения синтетические. */
-export const creditProductSchema = z.object({
-  id: creditProductIdSchema,
-  name: z.string(),
-  purpose: z.string(),
-  minAmount: z.number(),
-  maxAmount: z.number(),
-  minTermMonths: z.number().int(),
-  maxTermMonths: z.number().int(),
-  /** Базовая ставка, % годовых. */
-  ratePct: z.number(),
-  /** Минимальный балл скоринга для одобрения без изменения условий. */
-  minScore: z.number(),
-  /** Предел долговой нагрузки: долг после выдачи к годовой выручке. */
-  maxDebtLoad: z.number(),
-  /** Минимальный срок жизни бизнеса, месяцев. */
-  minBusinessAgeMonths: z.number().int(),
-  /** Обеспечение по продукту; null — не требуется. */
-  collateral: z.string().nullable().optional(),
-});
-export type CreditProduct = z.infer<typeof creditProductSchema>;
+export {
+  creditProductIdSchema,
+  creditProductSchema,
+  type CreditProduct,
+  type CreditProductId,
+} from "./product-catalog.js";
 
 /** Внутренний этап конвейера. */
 export const applicationStageSchema = z.enum([
@@ -279,7 +255,11 @@ export const actorSchema = z.object({
 });
 export type Actor = z.infer<typeof actorSchema>;
 
-export const commentVisibilitySchema = z.enum(["client", "internal", "handoff"]);
+export const commentVisibilitySchema = z.enum([
+  "client",
+  "internal",
+  "handoff",
+]);
 export type CommentVisibility = z.infer<typeof commentVisibilitySchema>;
 
 export const applicationCommentSchema = z.object({

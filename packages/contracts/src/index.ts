@@ -9,6 +9,7 @@ export enum ServiceName {
 }
 
 export * from "./autonomy.js";
+export * from "./product-catalog.js";
 
 export enum HealthStatus {
   Ok = "ok",
@@ -103,7 +104,13 @@ export const scoreResponseSchema = z.object({
   readiness_index: z.number().min(0).max(100).optional(),
   confidence: z.number().min(0).max(1).optional(),
   recommendation: z
-    .enum(["approve", "counter_offer", "request_info", "manual_review", "reject"])
+    .enum([
+      "approve",
+      "counter_offer",
+      "request_info",
+      "manual_review",
+      "reject",
+    ])
     .optional(),
   reasons: z.array(z.string()).optional(),
   next_actions: z.array(z.string()).optional(),

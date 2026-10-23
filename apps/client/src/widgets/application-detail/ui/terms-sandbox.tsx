@@ -63,7 +63,7 @@ export function TermsSandbox({
     if (!value) return;
     const next = catalog.products.find((item) => item.id === value);
     if (!next) return;
-    setProductId(value);
+    setProductId(next.id);
     setAmount((current) => clamp(current, next.minAmount, next.maxAmount));
     setTermMonths((current) =>
       clamp(current, next.minTermMonths, next.maxTermMonths),

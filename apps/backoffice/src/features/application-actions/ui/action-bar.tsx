@@ -2,7 +2,9 @@
 
 import { Alert, Stack, Text } from "@mantine/core";
 
-import type { Application, CreditProduct, Employee } from "@repo/contracts/application";
+import type { Application, Employee } from "@repo/contracts/application";
+
+import type { ArmProduct } from "@/shared/api/arm";
 
 export function ActionBar({
   app,
@@ -11,7 +13,7 @@ export function ActionBar({
 }: {
   app: Application;
   employee: Employee;
-  products: CreditProduct[];
+  products: ArmProduct[];
 }) {
   void employee;
   void products;

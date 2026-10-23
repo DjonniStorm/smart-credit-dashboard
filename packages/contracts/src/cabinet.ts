@@ -5,36 +5,24 @@ import { z } from "zod";
 import { applicationStatusSchema, innSchema } from "@repo/contracts";
 import { apiScoringSchema } from "./api.js";
 
-/** Зачем нужны деньги. С цели начинается подбор продукта. */
-export const creditPurposeSchema = z.enum([
-  "working_capital",
-  "cash_gap",
-  "equipment",
-  "development",
-]);
-export type CreditPurpose = z.infer<typeof creditPurposeSchema>;
+import {
+  creditProductIdSchema,
+  creditProductSchema,
+  creditPurposeSchema,
+} from "./product-catalog.js";
+
+export {
+  creditProductSchema,
+  creditPurposeSchema,
+  type CreditProduct,
+  type CreditPurpose,
+} from "./product-catalog.js";
 
 export const legalFormSchema = z.enum(["ip", "ooo"]);
 export type LegalForm = z.infer<typeof legalFormSchema>;
 
-/** Кредитный продукт. Ставка = ключевая ставка ЦБ + надбавка продукта. */
-export const creditProductSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  purposes: z.array(creditPurposeSchema).min(1),
-  description: z.string(),
-  minAmount: z.number().int().positive(),
-  maxAmount: z.number().int().positive(),
-  minTermMonths: z.number().int().positive(),
-  maxTermMonths: z.number().int().positive(),
-  /** Надбавка к ключевой ставке, п. п. */
-  spreadPp: z.number(),
-  collateral: z.string().nullable(),
-});
-export type CreditProduct = z.infer<typeof creditProductSchema>;
-
 export const productCatalogSchema = z.object({
-  /** Ключевая ставка ЦБ, от которой считаются ставки, % годовых. */
+  /** Ключевая ставка ЦБ, от которой считаются ставки, % годовых. Берётся из конфигурации. */
   keyRate: z.number(),
   keyRateDate: z.string(),
   products: z.array(creditProductSchema),
@@ -95,7 +83,7 @@ export type Consents = z.infer<typeof consentsSchema>;
 /** Тело запроса на создание заявки. */
 export const applicationInputSchema = z.object({
   purpose: creditPurposeSchema,
-  productId: z.string(),
+  productId: creditProductIdSchema,
   amount: z.number().int().positive(),
   termMonths: z.number().int().positive(),
   comment: z.string().max(500),
