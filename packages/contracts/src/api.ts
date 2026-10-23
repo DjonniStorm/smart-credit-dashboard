@@ -22,6 +22,27 @@ const apiOfferTermsSchema = z.object({
   termMonths: z.number().int(),
   ratePct: z.number(),
 });
+const apiHoldSchema = z.object({
+  state: z.enum(["paused", "blocked"]),
+  previousStatus: z.string(),
+  reason: z.string(),
+  at: z.string(),
+  by: z.object({ kind: z.enum(["system", "employee", "client"]), name: z.string() }),
+  previousWaitingOn: z.enum(["employee", "client", "system", "nobody"]),
+  previousBlocker: z.string(),
+});
+const apiHandoffSchema = z.object({
+  id: z.string(),
+  applicationId: z.string(),
+  at: z.string(),
+  from: z.object({ kind: z.enum(["system", "employee", "client"]), name: z.string() }),
+  toEmployeeId: z.string(),
+  summary: z.string(),
+  verifiedFacts: z.array(z.string()),
+  openQuestions: z.array(z.string()),
+  requestedItems: z.array(z.string()),
+  nextStep: z.string(),
+});
 
 export const apiProductIdSchema = creditProductIdSchema;
 export type ApiProductId = CreditProductId;
@@ -161,6 +182,8 @@ export const apiApplicationSchema = z.object({
     visibility: z.enum(["client", "internal", "handoff"]),
     body: z.string(),
   })).default([]),
+  hold: apiHoldSchema.nullable().default(null),
+  handoff: apiHandoffSchema.nullable().default(null),
   checkJobId: z.string().nullable(),
   scoring: apiScoringSchema.nullable(),
   createdAt: z.string(),

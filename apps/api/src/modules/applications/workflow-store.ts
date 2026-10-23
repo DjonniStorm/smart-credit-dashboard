@@ -169,7 +169,7 @@ export class WorkflowStore {
       if (!current) {
         throw new Error(`Заявка ${applicationId} не найдена`);
       }
-      const next = this.actionResult(current, input.action);
+      const next = this.actionResult(current, input.action, input.employeeId);
       const state = {
         offer: next.offer,
         offerKind: next.offerKind,
@@ -177,6 +177,10 @@ export class WorkflowStore {
         rejectReason: next.rejectReason,
         assigneeId: next.assigneeId,
         comments: next.comments,
+        hold: next.hold,
+        urgent: next.urgent,
+        urgentReason: next.urgentReason,
+        handoff: next.handoff,
       };
       if (input.action.type === "rerun_check" && next.checkJobId) {
         await manager.query(
@@ -209,6 +213,7 @@ export class WorkflowStore {
   private actionResult(
     application: ApplicationWorkflow,
     action: EmployeeAction,
+    employeeId: string,
   ): ApplicationWorkflow {
     const state = {
       ...application,
@@ -218,7 +223,14 @@ export class WorkflowStore {
       offerKind: application.offerKind ?? null,
       rejectReason: application.rejectReason ?? null,
       assigneeId: application.assigneeId ?? null,
+      hold: application.hold ?? null,
+      urgent: application.urgent ?? false,
+      urgentReason: application.urgentReason ?? null,
+      handoff: application.handoff ?? null,
     };
+    if (application.status === "blocked" && action.type !== "resume") {
+      throw new Error("Заблокированную заявку можно только разблокировать");
+    }
     if (action.type === "assign") {
       return { ...state, assigneeId: action.assigneeId };
     }
@@ -243,6 +255,76 @@ export class WorkflowStore {
         throw new Error("Повторная проверка недоступна для завершённой заявки");
       }
       return { ...state, status: "in_review", checkJobId: `job-${randomUUID()}` };
+    }
+    if (action.type === "pause" || action.type === "block") {
+      if (application.status === "rejected" || application.status === "approved" || application.status === "cancelled") {
+        throw new Error("Завершённую заявку нельзя приостановить или заблокировать");
+      }
+      if (application.hold) {
+        throw new Error("Заявка уже приостановлена или заблокирована");
+      }
+      return {
+        ...state,
+        status: action.type === "block" ? "blocked" : application.status,
+        hold: {
+          state: action.type === "block" ? "blocked" : "paused",
+          previousStatus: application.status,
+          reason: action.reason,
+          at: new Date().toISOString(),
+          by: { kind: "employee" as const, name: employeeId },
+          previousWaitingOn: application.status === "needs_client" ? "client" : "employee",
+          previousBlocker:
+            application.scoring?.details?.reasons[0] ??
+            "Проверка заявки продолжается",
+        },
+      };
+    }
+    if (action.type === "resume") {
+      if (!application.hold) {
+        throw new Error("У заявки нет активной паузы или блокировки");
+      }
+      return {
+        ...state,
+        status: application.hold.previousStatus as ApplicationWorkflow["status"],
+        hold: null,
+      };
+    }
+    if (action.type === "cancel") {
+      if (application.status === "cancelled" || application.status === "rejected") {
+        throw new Error("Заявка уже закрыта");
+      }
+      return { ...state, status: "cancelled", hold: null };
+    }
+    if (action.type === "set_urgent") {
+      if (application.status === "rejected" || application.status === "cancelled") {
+        throw new Error("Для закрытой заявки нельзя менять приоритет");
+      }
+      return {
+        ...state,
+        urgent: action.enabled,
+        urgentReason: action.enabled ? action.reason || "Срочное рассмотрение" : null,
+      };
+    }
+    if (action.type === "handoff") {
+      if (application.status === "rejected" || application.status === "cancelled") {
+        throw new Error("Закрытую заявку нельзя передать");
+      }
+      return {
+        ...state,
+        assigneeId: action.assigneeId,
+        handoff: {
+          id: `handoff-${randomUUID()}`,
+          applicationId: application.id,
+          at: new Date().toISOString(),
+          from: { kind: "employee" as const, name: employeeId },
+          toEmployeeId: action.assigneeId,
+          summary: action.summary,
+          verifiedFacts: action.verifiedFacts,
+          openQuestions: action.openQuestions,
+          requestedItems: action.requestedItems,
+          nextStep: action.nextStep,
+        },
+      };
     }
     if (action.type === "request_info") {
       this.requireReview(application);
@@ -276,7 +358,7 @@ export class WorkflowStore {
       this.requireOverrideComment(action.comment, application.decision?.recommendation, "reject");
       return { ...state, status: "rejected", rejectReason: action.reason };
     }
-    throw new Error(`Действие ${action.type} пока не подключено`);
+    throw new Error("Действие пока не подключено");
   }
 
   private requireReview(application: ApplicationWorkflow): void {

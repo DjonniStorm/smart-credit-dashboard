@@ -153,6 +153,7 @@ export function ApplicationPanel({
           <ActionBar
             app={app}
             employee={employee}
+            employees={employees.data ?? []}
             products={products.data ?? []}
           />
         </div>

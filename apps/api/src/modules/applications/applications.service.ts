@@ -21,6 +21,7 @@ import {
   CompaniesService,
   SourceCheckError,
 } from "../companies/companies.service.ts";
+import { DemoDataStore } from "../../common/demo-data/demo-data.store.ts";
 import { CompanyProfileService } from "../companies/company-profile.service.ts";
 import {
   toApiApplication,
@@ -44,6 +45,7 @@ export class ApplicationsService {
     private readonly profiles: CompanyProfileService,
     private readonly autonomy: AutonomyStore,
     private readonly store: WorkflowStore,
+    private readonly demoData: DemoDataStore,
   ) {}
 
   async create(
@@ -83,6 +85,16 @@ export class ApplicationsService {
     input: ApplicationActionRequest,
   ): Promise<ApiApplicationContext> {
     await this.getApplication(id);
+    if (input.action.type === "resume") {
+      const employee = (await this.demoData.listEmployees()).find(
+        (candidate) => candidate.id === input.employeeId,
+      );
+      if (employee?.role !== "lead") {
+        throw new BadRequestException(
+          "Снять блокировку или паузу может только руководитель",
+        );
+      }
+    }
     try {
       await this.store.applyAction(id, input);
     } catch (error) {

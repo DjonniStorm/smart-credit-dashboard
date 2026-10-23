@@ -40,6 +40,7 @@ export const applicationStatus: Record<
     icon: IconCircleCheck,
   },
   rejected: { label: "Отказ", tone: "danger", icon: IconCircleX },
+  blocked: { label: "На ручной проверке", tone: "danger", icon: IconAlertCircle },
 };
 
 /** Бейдж статуса заявки. Смена статуса анимируется на месте. */
