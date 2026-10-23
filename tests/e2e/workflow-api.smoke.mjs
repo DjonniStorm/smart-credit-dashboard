@@ -12,7 +12,7 @@ test.describe("workflow API without mocks", () => {
       productId: "working_capital",
       amount: 1_800_000,
       termMonths: 18,
-      purpose: "Пополнение оборотных средств",
+      purpose: "working_capital",
       idempotencyKey,
     };
 
@@ -60,7 +60,7 @@ test.describe("workflow API without mocks", () => {
         productId: "working_capital",
         amount: 1_200_000,
         termMonths: 12,
-        purpose: "Проверка запроса менеджера",
+        purpose: "working_capital",
         idempotencyKey: `e2e-${Date.now()}-action-create`,
       },
     });

@@ -128,3 +128,16 @@ export const CREDIT_PRODUCTS: readonly CreditProduct[] = [
     minBusinessAgeMonths: 24,
   },
 ];
+
+/** Цель допустима, только если она входит в цели выбранного продукта каталога. */
+export function isPurposeAllowed(
+  productId: CreditProductId,
+  purpose: CreditPurpose,
+): boolean {
+  return CREDIT_PRODUCTS.some(
+    (product) => product.id === productId && product.purposes.includes(purpose),
+  );
+}
+
+export const purposeNotInProductMessage =
+  "Цель не входит в цели выбранного продукта";

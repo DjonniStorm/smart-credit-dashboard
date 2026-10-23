@@ -56,7 +56,7 @@ const input = (idempotencyKey: string, inn = "7701234567") =>
     productId: "working_capital",
     amount: 500_000,
     termMonths: 12,
-    purpose: "Оборотные средства",
+    purpose: "working_capital",
     idempotencyKey,
   }) as const;
 
