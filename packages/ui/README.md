@@ -87,17 +87,13 @@ WCAG 2.x. Текст: не ниже 4.5:1. Полосы и границы эле
 ## Альфи
 
 `Alfi` — общий компонент помощника для кабинета клиента и банковского АРМ.
-Пиксельные варианты находятся в `src/alfi/pixel-scout/`. Семь рабочих состояний
-имеют отдельные SVG в `src/alfi/pixel-scout/states/` и выбираются автоматически:
+Семь рабочих состояний имеют отдельные SVG в `src/alfi/states/` и выбираются
+автоматически:
 
 ```tsx
 import { Alfi, AlfiState } from "@repo/ui/alfi";
 
-<Alfi
-  state={AlfiState.Checking}
-  assetBasePath="/alfi/pixel-scout/states"
-  size={96}
-/>
+<Alfi state={AlfiState.Checking} assetBasePath="/alfi/states" size={96} />;
 ```
 
 Приложение может передать `src`, если ему нужен специальный SVG. Компонент
@@ -110,7 +106,7 @@ import { Alfi, AlfiState } from "@repo/ui/alfi";
 добавляет персонажа и состояние к каждому уведомлению:
 
 ```tsx
-import { alfi, AlfiOperation } from "@repo/ui/alfi";
+import { AlfiOperation, alfi } from "@repo/ui/alfi";
 
 const id = alfi.show({
   operation: AlfiOperation.NeedsInfo,
@@ -143,5 +139,5 @@ alfi.showAttention("Нужна ручная проверка", { withBorder: tru
 ```
 
 Для Next-приложений стандартные SVG должны быть опубликованы в
-`public/alfi/pixel-scout/states/`. В этом репозитории одинаковые наборы лежат в
+`public/alfi/states/`. В этом репозитории одинаковые наборы лежат в
 `apps/client/public` и `apps/backoffice/public`.
