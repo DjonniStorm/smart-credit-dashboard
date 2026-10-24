@@ -5,16 +5,17 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from "nestjs-zod";
 
 import { ConfigModule } from "./common/config/config.module.ts";
 import { DatabaseModule } from "./common/database/database.module.ts";
-import { CompaniesModule } from "./modules/companies/companies.module.ts";
-import { ApplicationsModule } from "./modules/applications/applications.module.ts";
-import { ExampleModule } from "./modules/example/example.module.ts";
-import { HealthModule } from "./modules/health/health.module.ts";
-import { StorageModule } from "./common/storage/storage.module.ts";
 import { DemoDataModule } from "./common/demo-data/demo-data.module.ts";
+import { StorageModule } from "./common/storage/storage.module.ts";
+import { ApplicationsModule } from "./modules/applications/applications.module.ts";
 import { AuthModule } from "./modules/auth/auth.module.ts";
 import { CatalogModule } from "./modules/catalog/catalog.module.ts";
-import { ReportsModule } from "./modules/reports/reports.module.ts";
 import { ClientReportsModule } from "./modules/client-reports/client-reports.module.ts";
+import { CompaniesModule } from "./modules/companies/companies.module.ts";
+import { ExampleModule } from "./modules/example/example.module.ts";
+import { HealthModule } from "./modules/health/health.module.ts";
+import { MetricsModule } from "./modules/metrics/metrics.module.ts";
+import { ReportsModule } from "./modules/reports/reports.module.ts";
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ClientReportsModule } from "./modules/client-reports/client-reports.mod
     ApplicationsModule,
     ReportsModule,
     ClientReportsModule,
+    MetricsModule,
     ExampleModule,
   ],
   providers: [
