@@ -5,6 +5,7 @@ import { after, before, describe, test } from "node:test";
 import { DataSource } from "typeorm";
 
 import { runMigrations } from "../src/common/database/migration-runner.ts";
+import { DemoDataStore } from "../src/common/demo-data/demo-data.store.ts";
 import { ApplicationsService } from "../src/modules/applications/applications.service.ts";
 import { QueueWorkerService } from "../src/modules/applications/queue-worker.service.ts";
 import {
@@ -102,6 +103,7 @@ describe(
         {} as never,
         {} as never,
         store,
+        new DemoDataStore(db),
       );
     const makeWorker = (
       store: WorkflowStore,
