@@ -1,6 +1,7 @@
 import hashlib
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Literal, Optional
 
 from fastapi import FastAPI
@@ -16,6 +17,7 @@ from .ml_pipeline import (
     synthetic_pd_dataset,
     temporal_split,
 )
+from training.train_public_proxy import load_artifact, predict as predict_public_proxy
 
 app = FastAPI(title="alfa-future scoring", version="0.1.0")
 
@@ -55,6 +57,14 @@ class ScoreRequest(BaseModel):
     documentsComplete: bool = False
     consentBki: bool = False
     collateralConfirmed: bool = False
+
+
+class PublicProxyScoreRequest(BaseModel):
+    revenue: float = Field(gt=0)
+    dti_n: float = Field(ge=0)
+    loan_amnt: float = Field(gt=0)
+    fico_n: float = Field(ge=300, le=850)
+    experience_c: float = Field(ge=0, le=1)
 
 
 class ScoreFactor(BaseModel):
@@ -422,10 +432,35 @@ def model_registry() -> dict[str, object]:
                 "version": "synthetic-evaluation",
                 "status": "shadow",
                 "calibration": "isotonic",
-            }
+            },
+            {
+                "name": "public-proxy-logistic-v1",
+                "version": "2026-10-24",
+                "status": "shadow",
+                "calibration": "not-calibrated-for-russian-sme",
+                "dataset_scope": "public_proxy:lendingclub_granting_model",
+                "production_eligible": False,
+            },
         ],
         "policy": "policy-baseline-v2",
         "fail_safe": "champion + manual_review on validation or dependency failure",
+    }
+
+
+@app.post("/v1/models/public-proxy/score")
+def public_proxy_score(payload: PublicProxyScoreRequest) -> dict[str, object]:
+    """Shadow-only inference against the trained public proxy artifact."""
+    artifact_path = Path(__file__).resolve().parent.parent / "artifacts" / "public-proxy-logistic.json"
+    artifact = load_artifact(artifact_path)
+    probability, contributions = predict_public_proxy(artifact, payload.model_dump())
+    return {
+        "model": artifact.model,
+        "model_version": artifact.version,
+        "dataset_scope": artifact.dataset_scope,
+        "production_eligible": artifact.production_eligible,
+        "pd": round(probability, 6),
+        "contributions": contributions,
+        "autonomy_mode": "shadow",
     }
 
 

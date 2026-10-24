@@ -33,6 +33,33 @@ class ProxyArtifact:
     positive_rate: float
 
 
+def load_artifact(path: Path) -> ProxyArtifact:
+    """Load and validate a previously trained proxy artifact."""
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    artifact = ProxyArtifact(**payload)
+    if artifact.production_eligible or artifact.dataset_scope.startswith("production"):
+        raise ValueError("public-proxy artifact cannot be production eligible")
+    if tuple(artifact.features) != FEATURES:
+        raise ValueError("несовместимая схема public-proxy features")
+    if len(artifact.weights) != len(artifact.features):
+        raise ValueError("некорректное число model weights")
+    return artifact
+
+
+def predict(artifact: ProxyArtifact, values: dict[str, float]) -> tuple[float, dict[str, float]]:
+    """Return PD and additive local contributions for a proxy artifact."""
+    missing = [feature for feature in artifact.features if feature not in values]
+    if missing:
+        raise ValueError(f"отсутствуют признаки: {', '.join(missing)}")
+    contributions = {
+        feature: artifact.weights[index] * ((float(values[feature]) - artifact.means[index]) / artifact.scales[index])
+        for index, feature in enumerate(artifact.features)
+    }
+    linear_score = artifact.bias + sum(contributions.values())
+    probability = _sigmoid(linear_score)
+    return max(0.0, min(1.0, probability)), contributions
+
+
 def _number(row: dict[str, str], key: str) -> float | None:
     try:
         value = float(row.get(key, ""))

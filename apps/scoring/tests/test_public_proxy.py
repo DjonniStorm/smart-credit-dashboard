@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from training.train_public_proxy import train
+from training.train_public_proxy import load_artifact, predict, train
 
 
 class PublicProxyTrainingTests(unittest.TestCase):
@@ -28,6 +28,16 @@ class PublicProxyTrainingTests(unittest.TestCase):
             self.assertFalse(artifact.production_eligible)
             self.assertEqual(artifact.dataset_scope, "public_proxy:lendingclub_granting_model")
             self.assertTrue(artifact_path.exists())
+
+    def test_artifact_inference_returns_pd_and_contributions(self) -> None:
+        artifact = load_artifact(Path("apps/scoring/artifacts/public-proxy-logistic.json"))
+        probability, contributions = predict(
+            artifact,
+            {"revenue": 100_000, "dti_n": 8, "loan_amnt": 5_000, "fico_n": 760, "experience_c": 1},
+        )
+        self.assertGreaterEqual(probability, 0)
+        self.assertLessEqual(probability, 1)
+        self.assertEqual(set(contributions), set(artifact.features))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,14 @@
+{
+  "model": "public-proxy-logistic-v1",
+  "version": "2026-10-24",
+  "dataset_scope": "public_proxy:lendingclub_granting_model",
+  "target": "Default (charged_off=1, fully_paid=0)",
+  "production_eligible": false,
+  "features": ["revenue", "dti_n", "loan_amnt", "fico_n", "experience_c"],
+  "means": [77206.81106687496, 18.326070000000044, 14400.965625, 698.144125, 1.0],
+  "scales": [63755.37553639488, 12.544981316949032, 8740.712495381136, 31.50097334582525, 1.0],
+  "weights": [-0.2637089461998756, 0.176579057008175, 0.3139933211717638, -0.40567091695485985, 0.0],
+  "bias": -1.459409959321021,
+  "train_count": 16000,
+  "positive_rate": 0.2001875
+}
