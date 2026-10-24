@@ -631,8 +631,8 @@ export class WorkflowStore {
     payload: unknown,
   ): Promise<void> {
     await manager.query(
-      "insert into application_events(application_id,kind,payload) values($1,$2,$3)",
-      [applicationId, kind, payload],
+      "insert into application_events(event_key,application_id,kind,payload) values($1,$2,$3,$4)",
+      [`event-${randomUUID()}`, applicationId, kind, payload],
     );
   }
 

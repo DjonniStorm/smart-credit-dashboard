@@ -12,7 +12,11 @@ import {
   populationRecord,
   toRecord,
 } from "./report-helpers.ts";
-import { parseManagerReportQuery } from "./report-query.ts";
+import {
+  decodeReportCursor,
+  parseManagerReportQuery,
+  reportQueryHash,
+} from "./report-query.ts";
 import { ReportSeriesCalculator } from "./report-series.ts";
 import { ReportsRepository } from "./reports.repository.ts";
 
@@ -28,17 +32,30 @@ export class ReportsService {
     rawQuery: Record<string, unknown>,
   ): Promise<ManagerReportResponse> {
     const query = parseManagerReportQuery(rawQuery);
-    const data = await this.repository.readConsistent(query.from, query.to);
+    const cursor = query.cursor
+      ? decodeReportCursor(query.cursor, reportQueryHash(query))
+      : null;
+    const data = await this.repository.readConsistent(
+      query,
+      cursor ? { occurredAt: cursor.occurredAt, eventId: cursor.eventId } : null,
+      cursor?.watermark ?? null,
+    );
     const population = data.applications
       .map(populationRecord)
       .filter((record) => matchesFilters(record, query));
-    const records = [
-      ...data.events.map(toRecord),
-      ...data.comments.map(toRecord),
-    ]
+    const records = data.records
+      .map(toRecord)
       .filter((record) => matchesFilters(record, query))
-      .sort((left, right) => left.occurredAt.localeCompare(right.occurredAt));
-    const latest = latestRecords(records);
+      .sort(
+        (left, right) =>
+          left.occurredAt.localeCompare(right.occurredAt) ||
+          Number(left.eventId) - Number(right.eventId),
+      );
+    // Population rows already contain the latest historical event snapshot at
+    // the report watermark; activity page rows must not replace that stock.
+    const summary = data.summary;
+    const fallbackPopulation = query.view === "overview" ? population : [];
+    const fallbackRecords = query.view === "overview" ? records : [];
     const response = {
       query: {
         from: query.from,
@@ -46,6 +63,7 @@ export class ReportsService {
         timezone: query.timezone,
         view: query.view,
         bucket: query.bucket,
+        search: query.search,
         filters: {
           productIds: query.productIds,
           statuses: query.statuses,
@@ -59,14 +77,22 @@ export class ReportsService {
         },
       },
       eventWatermark: data.watermark,
-      coverage: this.calculator.coverage(population, records),
-      population: this.calculator.population(population, latest),
-      activity: this.calculator.activity(records),
-      decisions: this.calculator.decisions(records),
-      recommendation: this.calculator.recommendation(records),
-      sla: this.series.sla(records, query),
-      autonomy: this.series.autonomy(records, query),
-      timeseries: this.series.timeseries(population, records, query),
+      coverage:
+        summary?.coverage ??
+        this.calculator.coverage(fallbackPopulation, fallbackRecords),
+      population:
+        summary?.population ??
+        this.calculator.population(fallbackPopulation, latestRecords(fallbackPopulation)),
+      activity: summary?.activity ?? this.calculator.activity(fallbackRecords),
+      decisions:
+        summary?.decisions ?? this.calculator.decisions(fallbackRecords),
+      recommendation:
+        summary?.recommendation ?? this.calculator.recommendation(fallbackRecords),
+      sla: summary?.sla ?? this.series.sla(fallbackRecords, query),
+      autonomy: summary?.autonomy ?? this.series.autonomy(fallbackRecords, query),
+      timeseries:
+        summary?.timeseries ??
+        this.series.timeseries(fallbackPopulation, fallbackRecords, query),
       journal:
         query.view === "journal"
           ? this.series.journal(records, query, data.watermark)

@@ -106,6 +106,7 @@ export function parseManagerReportQuery(
     view: firstValue(raw.view) ?? "overview",
     bucket: firstValue(raw.bucket) ?? "day",
     cursor: firstValue(raw.cursor),
+    search: firstValue(raw.search) ?? "",
     limit: parseLimit(raw.limit),
     productIds: splitValues(queryValue(raw, QUERY_FILTER_KEYS[0])),
     statuses: splitValues(queryValue(raw, QUERY_FILTER_KEYS[1])),
@@ -136,7 +137,11 @@ export type ReportCursor = {
   occurredAt: string;
   eventId: string;
   queryHash: string;
-  watermark: string;
+  watermark: {
+    snapshotSeq: string;
+    occurredAt: string | null;
+    eventId: string | null;
+  };
 };
 
 export function encodeReportCursor(cursor: ReportCursor): string {
@@ -155,7 +160,17 @@ export function decodeReportCursor(
       typeof parsed.occurredAt !== "string" ||
       typeof parsed.eventId !== "string" ||
       typeof parsed.queryHash !== "string" ||
-      typeof parsed.watermark !== "string" ||
+      !parsed.watermark ||
+      typeof parsed.watermark !== "object" ||
+      typeof parsed.watermark.snapshotSeq !== "string" ||
+      !/^\d+$/.test(parsed.watermark.snapshotSeq) ||
+      (parsed.watermark.occurredAt !== null &&
+        typeof parsed.watermark.occurredAt !== "string") ||
+      (parsed.watermark.eventId !== null &&
+        typeof parsed.watermark.eventId !== "string") ||
+      (parsed.watermark.eventId !== null &&
+        !/^\d+$/.test(parsed.watermark.eventId)) ||
+      !/^\d+$/.test(parsed.eventId) ||
       parsed.queryHash !== queryHash
     ) {
       throw new Error("invalid cursor");

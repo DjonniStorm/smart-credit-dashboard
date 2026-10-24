@@ -15,8 +15,17 @@ export const reportStageSchema = z.enum([
 ]);
 export type ReportStage = z.infer<typeof reportStageSchema>;
 
-export const reportActorKindSchema = z.enum(["employee", "system", "client"]);
+export const reportActorKindSchema = z.enum([
+  "employee",
+  "system",
+  "client",
+  "unknown",
+]);
 export type ReportActorKind = z.infer<typeof reportActorKindSchema>;
+export const reportStatusSchema = z.union([
+  workflowStatusSchema,
+  z.literal("unknown"),
+]);
 export const reportRecommendationSchema = z.enum([
   "approve",
   "counter_offer",
@@ -48,9 +57,10 @@ export const managerReportQuerySchema = z.object({
   view: reportViewSchema.default("overview"),
   bucket: reportBucketSchema.default("day"),
   cursor: z.string().min(1).optional(),
+  search: z.string().max(200).default(""),
   limit: z.number().int().min(1).max(100).default(50),
   productIds: z.array(creditProductIdSchema).default([]),
-  statuses: z.array(workflowStatusSchema).default([]),
+  statuses: z.array(reportStatusSchema).default([]),
   assigneeIds: z.array(z.string().min(1)).default([]),
   stages: z.array(reportStageSchema).default([]),
   actorKinds: z.array(reportActorKindSchema).default([]),
@@ -63,7 +73,7 @@ export type ManagerReportQuery = z.infer<typeof managerReportQuerySchema>;
 
 const managerReportFiltersSchema = z.object({
   productIds: z.array(creditProductIdSchema).default([]),
-  statuses: z.array(workflowStatusSchema).default([]),
+  statuses: z.array(reportStatusSchema).default([]),
   assigneeIds: z.array(z.string().min(1)).default([]),
   stages: z.array(reportStageSchema).default([]),
   actorKinds: z.array(reportActorKindSchema).default([]),
@@ -86,7 +96,7 @@ const countShareSchema = z.object({
 });
 
 const statusAggregateSchema = countShareSchema.extend({
-  status: workflowStatusSchema,
+  status: reportStatusSchema,
 });
 
 const productAggregateSchema = z.object({
@@ -192,7 +202,7 @@ const journalItemSchema = z.object({
     name: z.string(),
   }),
   productId: creditProductIdSchema,
-  status: workflowStatusSchema.nullable(),
+  status: reportStatusSchema.nullable(),
   stage: reportStageSchema.nullable(),
   assigneeId: z.string().nullable(),
   recommendation: reportRecommendationSchema,
@@ -211,12 +221,14 @@ export const managerReportResponseSchema = z.object({
     timezone: z.string(),
     view: reportViewSchema,
     bucket: reportBucketSchema,
+    search: z.string(),
     filters: managerReportFiltersSchema,
   }),
   eventWatermark: z
     .object({
-      occurredAt: z.string().datetime({ offset: true }),
-      eventId: z.string(),
+      snapshotSeq: z.string(),
+      occurredAt: z.string().datetime({ offset: true }).nullable(),
+      eventId: z.string().nullable(),
     })
     .nullable(),
   coverage: z.object({

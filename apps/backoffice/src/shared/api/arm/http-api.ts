@@ -18,7 +18,10 @@ import {
   type CompanyProfileResponse,
   companyProfileResponseSchema,
 } from "@repo/contracts/company-profile";
-import { managerReportResponseSchema } from "@repo/contracts/reports";
+import {
+  managerReportResponseSchema,
+  type ManagerReportQuery,
+} from "@repo/contracts/reports";
 
 import {
   toArmApplication,
@@ -148,19 +151,35 @@ export const httpArmApi: ArmApi = {
       },
     );
   },
-  getManagerReport: (query) => {
+  getManagerReport: (query?: Partial<ManagerReportQuery>) => {
     const params = new URLSearchParams();
-    if (query?.view) {
-      params.set("view", query.view);
+    const scalarKeys = [
+      "from",
+      "to",
+      "timezone",
+      "view",
+      "bucket",
+      "cursor",
+      "search",
+      "limit",
+    ] as const;
+    for (const key of scalarKeys) {
+      const value = query?.[key];
+      if (value !== undefined) params.set(key, String(value));
     }
-    if (query?.cursor) {
-      params.set("cursor", query.cursor);
-    }
-    if (query?.actor) {
-      params.set("actor", query.actor);
-    }
-    if (query?.limit) {
-      params.set("limit", String(query.limit));
+    const arrayKeys = [
+      ["product", query?.productIds],
+      ["status", query?.statuses],
+      ["assignee", query?.assigneeIds],
+      ["stage", query?.stages],
+      ["actor", query?.actorKinds],
+      ["recommendation", query?.recommendations],
+      ["autonomy", query?.autonomyModes],
+      ["autonomyDisposition", query?.autonomyDispositions],
+      ["sla", query?.slaStates],
+    ] as const;
+    for (const [key, values] of arrayKeys) {
+      if (values && values.length > 0) params.set(key, values.join(","));
     }
     const suffix = params.toString() ? `?${params.toString()}` : "";
     return request<import("@repo/contracts/reports").ManagerReportResponse>(

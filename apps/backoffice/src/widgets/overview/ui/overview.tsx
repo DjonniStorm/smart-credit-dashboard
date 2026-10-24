@@ -1,6 +1,7 @@
 "use client";
 
-import { Button, Progress, Text } from "@mantine/core";
+import { Anchor, Button, Group, Progress, Text } from "@mantine/core";
+import Link from "next/link";
 
 import { StateBlock } from "@repo/ui/state-block";
 
@@ -25,16 +26,18 @@ const reportStatusLabel: Record<string, string> = {
   signing: "Подписание",
   funded: "Выдан",
   cancelled: "Отменена",
+  unknown: "Неизвестно",
 };
 
 function formatShare(value: number): string {
   return `${Math.round(value * 100)}%`;
 }
 
-function formatDate(value: string): string {
+function formatDate(value: string, timezone?: string): string {
   return new Intl.DateTimeFormat("ru-RU", {
     day: "2-digit",
     month: "short",
+    timeZone: timezone,
   }).format(new Date(value));
 }
 
@@ -67,9 +70,28 @@ export function Overview() {
     ...data.population.byStage.map((item) => item.count),
   );
   const latestBucket = data.timeseries.at(-1);
+  const journalParams = new URLSearchParams({
+    from: data.query.from,
+    to: data.query.to,
+    timezone: data.query.timezone,
+    view: "journal",
+    bucket: data.query.bucket,
+  });
+  if (data.query.search) {
+    journalParams.set("search", data.query.search);
+  }
+  const journalHref = `/journal?${journalParams.toString()}`;
 
   return (
     <div className={classes.grid}>
+      <Group justify="space-between" align="center" wrap="wrap">
+        <Text size="sm" c="dimmed">
+          Отчёт за период {formatDate(data.query.from, data.query.timezone)} — {formatDate(data.query.to, data.query.timezone)}.
+        </Text>
+        <Anchor component={Link} href={journalHref} underline="always">
+          Открыть журнал событий
+        </Anchor>
+      </Group>
       <section
         className={classes.tiles}
         aria-label="Ключевые показатели отчёта"
@@ -82,7 +104,7 @@ export function Overview() {
         </article>
         <article className={classes.tile}>
           <span className={classes.tileValue}>{data.activity.events}</span>
-          <span className={classes.tileLabel}>Событий конвейера</span>
+          <span className={classes.tileLabel}>Событий активности</span>
         </article>
         <article className={classes.tile}>
           <span className={classes.tileValue}>{data.decisions.total}</span>
@@ -93,7 +115,7 @@ export function Overview() {
             {data.sla.byState.find((item) => item.state === "overdue")?.count ??
               0}
           </span>
-          <span className={classes.tileLabel}>Просроченных событий SLA</span>
+          <span className={classes.tileLabel}>Просроченных SLA-срезов</span>
         </article>
       </section>
 
@@ -124,8 +146,8 @@ export function Overview() {
           Решения и расхождения
         </h2>
         <Text size="sm" c="dimmed" mb="md">
-          Доля считается по решениям из событий, рекомендация — из snapshot
-          скоринга.
+          Решения считаются по событиям. Рекомендация берётся из события
+          скоринга или помечается как неизвестная, если исторического контекста нет.
         </Text>
         <div className={classes.metricList}>
           {decisionLabels.map(([key, label]) => {
@@ -161,6 +183,15 @@ export function Overview() {
                       data.recommendation.overridden,
                   ),
               )}
+            </span>
+          </div>
+          <div className={classes.metricRow}>
+            <span>Без исторической рекомендации</span>
+            <strong>{data.recommendation.unknown}</strong>
+            <span className={classes.metricShare}>
+              {data.coverage.recommendation.quality === "complete"
+                ? "—"
+                : "неполно"}
             </span>
           </div>
         </div>
@@ -209,7 +240,7 @@ export function Overview() {
         </div>
         {latestBucket && (
           <Text size="xs" c="dimmed" mt="md">
-            Последний бакет: {formatDate(latestBucket.bucketStart)} ·{" "}
+            Последний бакет: {formatDate(latestBucket.bucketStart, data.query.timezone)} ·{" "}
             {latestBucket.events} событий
           </Text>
         )}
@@ -242,7 +273,7 @@ export function Overview() {
         <div className={classes.metricList}>
           {data.population.byStatus.map((item) => (
             <div key={item.status} className={classes.metricRow}>
-              <span>{reportStatusLabel[item.status]}</span>
+            <span>{reportStatusLabel[item.status] ?? "Неизвестно"}</span>
               <strong>{item.count}</strong>
               <span className={classes.metricShare}>
                 {formatShare(item.share)}

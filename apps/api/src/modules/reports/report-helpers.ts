@@ -9,7 +9,6 @@ import {
 
 import type {
   ReportApplicationRow,
-  ReportCommentRow,
   ReportEventRow,
 } from "./reports.repository.ts";
 
@@ -24,6 +23,18 @@ export type ReportRecord = {
   status: string;
   amount: number;
   assigneeId: string | null;
+  stage?: string | null;
+  actorKind?: string | null;
+  actorId?: string | null;
+  actorName?: string | null;
+  recommendation?: string;
+  autonomyMode?: string | null;
+  autonomyDisposition?: string | null;
+  slaState?: string;
+  holdState?: string | null;
+  stageStartedAt?: string | null;
+  slaTargetMinutes?: number | null;
+  source?: "event" | "comment" | "population";
 };
 
 export type ReportContext = Record<string, unknown>;
@@ -78,7 +89,12 @@ export function latestRecords(
   const latest = new Map<string, ReportRecord>();
   for (const record of records) {
     const previous = latest.get(record.applicationId);
-    if (!previous || previous.occurredAt <= record.occurredAt) {
+    if (
+      !previous ||
+      previous.occurredAt < record.occurredAt ||
+      (previous.occurredAt === record.occurredAt &&
+        Number(previous.eventId) <= Number(record.eventId))
+    ) {
       latest.set(record.applicationId, record);
     }
   }
@@ -98,9 +114,8 @@ export function countShares<T extends string>(values: T[], total: number) {
 }
 
 export function decisionDuration(record: ReportRecord): number | null {
-  const context = record.payload.reportContext;
-  if (!context || typeof context !== "object") return null;
-  const startedAt = (context as Record<string, unknown>).stageStartedAt;
+  const startedAt =
+    record.stageStartedAt ?? contextString(record.payload, "stageStartedAt");
   if (typeof startedAt !== "string") return null;
   const duration =
     (new Date(record.occurredAt).getTime() - new Date(startedAt).getTime()) /
@@ -135,37 +150,32 @@ export function contextString(
 }
 
 export function stageOf(record: ReportRecord): string | null {
-  const explicit = contextString(record.payload, "stage");
+  const explicit = record.stage ?? contextString(record.payload, "stage");
   if (explicit && reportStageSchema.safeParse(explicit).success) {
     return explicit;
   }
-  if (["draft"].includes(record.status)) return "intake";
-  if (["needs_client"].includes(record.status)) return "completeness";
-  if (["in_review"].includes(record.status)) return "decision";
-  if (["approved", "counter_offer", "accepted"].includes(record.status)) {
-    return "signing";
-  }
-  if (["signing"].includes(record.status)) return "signing";
-  if (["funded"].includes(record.status)) return "disbursement";
-  return "decision";
+  return null;
 }
 
 export function recommendationOf(record: ReportRecord): string {
-  const value = contextString(record.payload, "recommendation");
+  const value =
+    record.recommendation ?? contextString(record.payload, "recommendation");
   return value && reportRecommendationSchema.safeParse(value).success
     ? value
     : "unknown";
 }
 
 export function autonomyModeOf(record: ReportRecord): string | null {
-  const value = contextString(record.payload, "autonomyMode");
+  const value = record.autonomyMode ?? contextString(record.payload, "autonomyMode");
   return value === "shadow" || value === "assist" || value === "controlled"
     ? value
     : null;
 }
 
 export function autonomyDispositionOf(record: ReportRecord): string | null {
-  const value = contextString(record.payload, "autonomyDisposition");
+  const value =
+    record.autonomyDisposition ??
+    contextString(record.payload, "autonomyDisposition");
   return value &&
     [
       "manual_required",
@@ -180,24 +190,25 @@ export function autonomyDispositionOf(record: ReportRecord): string | null {
 }
 
 export function slaStateOf(record: ReportRecord): string {
-  const value = contextString(record.payload, "slaState");
+  const value = record.slaState ?? contextString(record.payload, "slaState");
   return value && reportSlaStateSchema.safeParse(value).success
     ? value
     : "unknown";
 }
 
 export function actorOf(record: ReportRecord): {
-  kind: "employee" | "system" | "client";
+  kind: "employee" | "system" | "client" | "unknown";
   id: string | null;
   name: string;
 } {
-  const kind = contextString(record.payload, "actorKind");
+  const kind = record.actorKind ?? contextString(record.payload, "actorKind");
   const safeKind =
-    kind && reportActorKindSchema.safeParse(kind).success ? kind : "system";
+    kind && reportActorKindSchema.safeParse(kind).success ? kind : "unknown";
   return {
-    kind: safeKind as "employee" | "system" | "client",
-    id: contextString(record.payload, "actorId"),
-    name: contextString(record.payload, "actorName") ?? "Система",
+    kind: safeKind as "employee" | "system" | "client" | "unknown",
+    id: record.actorId ?? contextString(record.payload, "actorId"),
+    name:
+      record.actorName ?? contextString(record.payload, "actorName") ?? "Неизвестно",
   };
 }
 
@@ -236,7 +247,7 @@ export function matchesFilters(
     (query.statuses.length === 0 ||
       query.statuses.includes(record.status as never)) &&
     (query.assigneeIds.length === 0 ||
-      query.assigneeIds.includes(record.assigneeId ?? "")) &&
+      query.assigneeIds.includes(record.assigneeId ?? "unassigned")) &&
     (query.stages.length === 0 || query.stages.includes(stage as never)) &&
     (query.actorKinds.length === 0 || query.actorKinds.includes(actor.kind)) &&
     (query.recommendations.length === 0 ||
@@ -249,15 +260,8 @@ export function matchesFilters(
   );
 }
 
-export function toRecord(row: ReportEventRow | ReportCommentRow): ReportRecord {
-  if ("kind" in row && "amount" in row) {
-    return row;
-  }
-  return {
-    ...row,
-    kind: "comment_added",
-    amount: 0,
-  };
+export function toRecord(row: ReportEventRow): ReportRecord {
+  return row;
 }
 
 export function populationRecord(row: ReportApplicationRow): ReportRecord {
@@ -270,15 +274,15 @@ export function populationRecord(row: ReportApplicationRow): ReportRecord {
     payload: {
       actorKind: "system",
       actorName: "Кредитный конвейер",
-      stage: "intake",
+      stage: row.stage ?? "unknown",
       status: row.status,
       assigneeId: row.assigneeId,
       urgent: row.urgent,
-      hold: row.hold,
     },
     productId: row.productId,
     status: row.status,
     amount: row.amount,
     assigneeId: row.assigneeId,
+    source: "population",
   };
 }

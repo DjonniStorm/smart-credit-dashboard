@@ -77,6 +77,7 @@ export class ClientActionsService {
           autonomyMode: outcome.application.autonomyCase?.mode ?? null,
           autonomyDisposition:
             outcome.application.autonomyCase?.disposition ?? null,
+          holdState: outcome.application.hold ? "active" : "none",
         },
       });
       await tx.remember(scope, request.idempotencyKey, eventId);
@@ -114,6 +115,7 @@ export class ClientActionsService {
             stage: deriveFlow(outcome.application).stage,
             actorKind: "system",
             actorName: "Кредитный конвейер",
+            holdState: outcome.application.hold ? "active" : "none",
           },
         });
       }

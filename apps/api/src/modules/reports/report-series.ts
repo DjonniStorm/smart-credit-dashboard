@@ -15,62 +15,17 @@ import {
   slaStateOf,
   stageOf,
 } from "./report-helpers.ts";
+import { calculateSla } from "./report-sla.ts";
 import {
   decodeReportCursor,
   encodeReportCursor,
   reportQueryHash,
 } from "./report-query.ts";
 
-const SLA_TARGETS = [
-  ["intake", 240],
-  ["completeness", 480],
-  ["enrichment", 240],
-  ["scoring", 60],
-  ["decision", 240],
-  ["signing", 1440],
-  ["disbursement", 1440],
-] as const;
-
 @Injectable()
 export class ReportSeriesCalculator {
   sla(records: ReportRecord[], query: ManagerReportQuery) {
-    const states = records.map(slaStateOf);
-    return {
-      policyVersion: "demo-v1",
-      targets: SLA_TARGETS.map(([stage, targetMinutes]) => ({
-        stage,
-        targetMinutes,
-      })),
-      byState: countShares(states, records.length).map(
-        ({ value, count, share: itemShare }) => ({
-          state: value,
-          count,
-          share: itemShare,
-        }),
-      ),
-      series: this.slaSeries(records, query),
-    };
-  }
-
-  private slaSeries(records: ReportRecord[], query: ManagerReportQuery) {
-    const grouped = new Map<string, ReportRecord[]>();
-    for (const record of records) {
-      const key = bucketStart(record.occurredAt, query.bucket, query.timezone);
-      const values = grouped.get(key) ?? [];
-      values.push(record);
-      grouped.set(key, values);
-    }
-    return [...grouped.entries()].map(([key, values]) => ({
-      bucketStart: key,
-      eligible: values.filter((record) => slaStateOf(record) !== "unknown")
-        .length,
-      met: values.filter((record) => slaStateOf(record) === "on_track").length,
-      overdue: values.filter((record) => slaStateOf(record) === "overdue")
-        .length,
-      paused: values.filter((record) => slaStateOf(record) === "paused").length,
-      unknown: values.filter((record) => slaStateOf(record) === "unknown")
-        .length,
-    }));
+    return calculateSla(records, query);
   }
 
   autonomy(records: ReportRecord[], query: ManagerReportQuery) {
@@ -159,7 +114,11 @@ export class ReportSeriesCalculator {
   journal(
     records: ReportRecord[],
     query: ManagerReportQuery,
-    watermark: { eventId: string } | null,
+    watermark: {
+      snapshotSeq: string;
+      occurredAt: string | null;
+      eventId: string | null;
+    } | null,
   ) {
     const hash = reportQueryHash(query);
     const cursor = query.cursor ? decodeReportCursor(query.cursor, hash) : null;
@@ -169,12 +128,12 @@ export class ReportSeriesCalculator {
           !cursor ||
           record.occurredAt < cursor.occurredAt ||
           (record.occurredAt === cursor.occurredAt &&
-            record.eventId < cursor.eventId),
+            compareReportSeq(record.eventId, cursor.eventId) < 0),
       )
       .sort(
         (left, right) =>
           right.occurredAt.localeCompare(left.occurredAt) ||
-          right.eventId.localeCompare(left.eventId),
+          compareReportSeq(right.eventId, left.eventId),
       );
     const page = ordered.slice(0, query.limit);
     const last = page.at(-1);
@@ -184,7 +143,11 @@ export class ReportSeriesCalculator {
             occurredAt: last.occurredAt,
             eventId: last.eventId,
             queryHash: hash,
-            watermark: watermark?.eventId ?? "comments",
+            watermark: watermark ?? {
+              snapshotSeq: "0",
+              occurredAt: null,
+              eventId: null,
+            },
           })
         : null;
     return {
@@ -217,4 +180,10 @@ export class ReportSeriesCalculator {
       hasMore: ordered.length > page.length,
     };
   }
+}
+
+function compareReportSeq(left: string, right: string): number {
+  const a = BigInt(left);
+  const b = BigInt(right);
+  return a === b ? 0 : a < b ? -1 : 1;
 }

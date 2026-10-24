@@ -14,6 +14,7 @@ import {
   metadataQuality,
   recommendationOf,
   share,
+  slaStateOf,
   stageOf,
 } from "./report-helpers.ts";
 
@@ -72,7 +73,9 @@ export class ReportCalculator {
             Boolean(item.payload.urgent) &&
             !["rejected", "cancelled", "funded"].includes(item.status),
         ).length,
-        overdue: 0,
+        overdue: items.filter(
+          (item) => slaStateOf(latest.get(item.applicationId) ?? item) === "overdue",
+        ).length,
       }));
     const stages = population
       .map((item) => stageOf(latest.get(item.applicationId) ?? item))

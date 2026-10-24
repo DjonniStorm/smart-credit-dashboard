@@ -89,6 +89,7 @@ export class ApplicationActionsService {
           autonomyMode: outcome.application.autonomyCase?.mode ?? null,
           autonomyDisposition:
             outcome.application.autonomyCase?.disposition ?? null,
+          holdState: outcome.application.hold ? "active" : "none",
         },
       });
       await tx.remember(scope, request.idempotencyKey, eventId);

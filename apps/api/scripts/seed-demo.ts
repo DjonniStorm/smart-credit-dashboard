@@ -53,8 +53,10 @@ async function seed(): Promise<void> {
       );
       create table if not exists application_events (
         id bigserial primary key, application_id text not null references applications(id),
-        kind text not null, payload jsonb not null, created_at timestamptz not null default now()
+        kind text not null, payload jsonb not null, created_at timestamptz not null default now(),
+        event_key text unique
       );
+      alter table application_events add column if not exists event_key text;
       alter table applications add column if not exists decision jsonb;
     `);
     for (const account of demoAccounts) {
@@ -111,7 +113,6 @@ async function seedApplications(
       amount: 2_000_000,
       termMonths: 12,
       purpose: "working_capital",
-      jobId: "seed-job-bakery",
       status: "approved",
     },
     {
@@ -122,7 +123,6 @@ async function seedApplications(
       amount: 1_500_000,
       termMonths: 24,
       purpose: "equipment",
-      jobId: "seed-job-workshop",
       status: "needs_client",
     },
     {
@@ -133,7 +133,6 @@ async function seedApplications(
       amount: 800_000,
       termMonths: 6,
       purpose: "cash_gap",
-      jobId: "seed-job-logistics",
       status: "rejected",
     },
   ];
@@ -141,7 +140,7 @@ async function seedApplications(
     const now = new Date("2026-10-24T00:00:00.000Z").toISOString();
     await client.query(
       `insert into applications(id,number,inn,product_id,amount,term_months,purpose,status,check_job_id,scoring,decision,created_at,updated_at)
-       values($1,$2,$3,$4,$5,$6,$7,$8,$9,null,null,$10,$10)
+       values($1,$2,$3,$4,$5,$6,$7,$8,null,null,null,$9,$9)
        on conflict(id) do update set status=excluded.status, product_id=excluded.product_id, amount=excluded.amount,
        term_months=excluded.term_months, purpose=excluded.purpose, check_job_id=excluded.check_job_id,
        scoring=null, decision=null`,
@@ -154,15 +153,66 @@ async function seedApplications(
         application.termMonths,
         application.purpose,
         application.status,
-        application.jobId,
         now,
       ],
     );
+  }
+  await client.query(
+    `update scoring_jobs
+        set status='succeeded', finished_at=coalesce(finished_at, now()),
+            next_attempt_at=null
+      where application_id = any($1::text[]) and status in ('queued', 'running')`,
+    [applications.map((application) => application.id)],
+  );
+  await client.query(
+    `delete from application_events as duplicate
+      using application_events as original
+      where duplicate.event_key is not null
+        and duplicate.event_key = original.event_key
+        and (duplicate.created_at, duplicate.id) > (original.created_at, original.id)`,
+  );
+  await client.query(
+    `delete from application_events as duplicate
+      using application_events as original
+      where duplicate.payload->>'seedKey' is not null
+        and duplicate.payload->>'seedKey' = original.payload->>'seedKey'
+        and (duplicate.created_at, duplicate.id) > (original.created_at, original.id)`,
+  );
+  await client.query(
+    `update application_events
+        set event_key = payload->>'seedKey'
+      where event_key is null and payload->>'seedKey' is not null`,
+  );
+    await client.query(`drop index if exists application_events_event_key_idx`);
     await client.query(
-      `insert into scoring_jobs(id,application_id,status,idempotency_key,created_at,attempts)
-       values($1,$2,'queued',$3,$4,0)
-       on conflict(id) do update set status='queued', error=null, finished_at=null`,
-      [application.jobId, application.id, `seed-${application.id}`, now],
+      `create unique index application_events_event_key_idx
+       on application_events(event_key)`,
+    );
+  await client.query(
+    `create unique index if not exists application_events_event_key_all_idx
+       on application_events(event_key)`,
+  );
+  for (const application of applications) {
+    const jobId = `seed-job-${application.id}`;
+    await client.query(
+      `insert into scoring_jobs(
+         id, application_id, status, idempotency_key, created_at,
+         started_at, finished_at, attempts, next_attempt_at, result
+       ) values($1, $2, 'succeeded', $3, $4, $4, $4, 1, null, $5)
+       on conflict(application_id, idempotency_key) do update set
+         id = excluded.id, status = 'succeeded', finished_at = excluded.finished_at,
+         next_attempt_at = null, result = excluded.result`,
+      [
+        jobId,
+        application.id,
+        `seed-check-v1-${application.id}`,
+        "2026-10-04T09:00:00.000Z",
+        { seeded: true },
+      ],
+    );
+    await client.query(
+      `update applications set check_job_id=$2 where id=$1`,
+      [application.id, jobId],
     );
   }
   await seedReportEvents(client);
@@ -223,16 +273,16 @@ async function seedReportEvents(
         actionType: "approve",
         title: "Заявка одобрена",
         actorKind: "employee",
-        actorId: "employee-analyst",
-        actorName: "Анна Аналитик",
+        actorId: "an-1",
+        actorName: "Аналитик Демо 1",
         reportContext: {
           version: 1,
           productId: "working_capital",
           status: "approved",
           stage: "decision",
           actorKind: "employee",
-          actorId: "employee-analyst",
-          actorName: "Анна Аналитик",
+          actorId: "an-1",
+          actorName: "Аналитик Демо 1",
           recommendation: "approve",
           autonomyMode: "controlled",
           autonomyDisposition: "confirmed",
@@ -267,16 +317,16 @@ async function seedReportEvents(
         actionType: "counter_offer",
         title: "Встречное предложение",
         actorKind: "employee",
-        actorId: "employee-lead",
-        actorName: "Олег Руководитель",
+        actorId: "lead-1",
+        actorName: "Руководитель Демо",
         reportContext: {
           version: 1,
           productId: "equipment",
           status: "counter_offer",
           stage: "decision",
           actorKind: "employee",
-          actorId: "employee-lead",
-          actorName: "Олег Руководитель",
+          actorId: "lead-1",
+          actorName: "Руководитель Демо",
           recommendation: "approve",
           autonomyMode: "assist",
           autonomyDisposition: "manual_required",
@@ -311,16 +361,16 @@ async function seedReportEvents(
         actionType: "reject",
         title: "Отказ по заявке",
         actorKind: "employee",
-        actorId: "employee-analyst",
-        actorName: "Анна Аналитик",
+        actorId: "an-1",
+        actorName: "Аналитик Демо 1",
         reportContext: {
           version: 1,
           productId: "cash_gap",
           status: "rejected",
           stage: "decision",
           actorKind: "employee",
-          actorId: "employee-analyst",
-          actorName: "Анна Аналитик",
+          actorId: "an-1",
+          actorName: "Аналитик Демо 1",
           recommendation: "approve",
           autonomyMode: "assist",
           autonomyDisposition: "manual_required",
@@ -331,17 +381,19 @@ async function seedReportEvents(
   ];
   for (const event of events) {
     await client.query(
-      `insert into application_events(application_id, kind, payload, created_at)
-       select $1, $2, $3, $4
-        where not exists (
-          select 1 from application_events where payload->>'seedKey'=$5
-        )`,
+      `insert into application_events(event_key, application_id, kind, payload, created_at)
+       values ($1, $2, $3, $4, $5)
+       on conflict (event_key) do update set
+         application_id=excluded.application_id,
+         kind=excluded.kind,
+         payload=excluded.payload,
+         created_at=excluded.created_at`,
       [
+        event.key,
         event.applicationId,
         event.kind,
-        { ...event.payload, seedKey: event.key },
+        event.payload,
         event.at,
-        event.key,
       ],
     );
   }

@@ -12,8 +12,8 @@ import type {
 import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
 import type { CreditProduct } from "@repo/contracts/product-catalog";
 import type {
+  ManagerReportQuery,
   ManagerReportResponse,
-  ReportView,
 } from "@repo/contracts/reports";
 
 /** Продукт каталога и его ставка при текущей ключевой: ключевая + спред. */
@@ -47,10 +47,5 @@ export interface ArmApi {
     productId: string,
     request: AutonomyPolicyActionRequest,
   ): Promise<ApiAutonomySnapshot>;
-  getManagerReport(query?: {
-    view?: ReportView;
-    cursor?: string;
-    actor?: string;
-    limit?: number;
-  }): Promise<ManagerReportResponse>;
+  getManagerReport(query?: Partial<ManagerReportQuery>): Promise<ManagerReportResponse>;
 }

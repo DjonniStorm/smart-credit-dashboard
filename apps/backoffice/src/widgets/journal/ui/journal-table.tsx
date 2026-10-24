@@ -11,13 +11,13 @@ import {
   TextInput,
 } from "@mantine/core";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo } from "react";
 
 import type { ReportActorKind } from "@repo/contracts/reports";
 import { StateBlock } from "@repo/ui/state-block";
 
 import {
-  formatDateTime,
   statusLabel,
   useManagerReport,
 } from "@/entities/application";
@@ -32,38 +32,53 @@ const reportStatusLabel: Record<string, string> = {
   signing: "Подписание",
   funded: "Выдан",
   cancelled: "Отменена",
+  unknown: "Неизвестно",
 };
 
-function formatDate(value: string): string {
+function formatDate(value: string, timezone: string): string {
   return new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: timezone,
   }).format(new Date(value));
 }
 
 /** Журнал событий из API, с курсорной пагинацией и серверным фильтром актёра. */
 export function JournalTable() {
-  const [actor, setActor] = useState<ActorFilter>("all");
-  const [search, setSearch] = useState("");
-  const [cursor, setCursor] = useState<string | undefined>();
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const actor = (searchParams.get("actor") as ActorFilter | null) ?? "all";
+  const search = searchParams.get("search") ?? "";
   const report = useManagerReport("journal", {
-    cursor,
-    actor: actor === "all" ? undefined : actor,
+    actorKinds: actor === "all" ? undefined : [actor],
+    search,
     limit: 50,
   });
 
-  const items = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    if (!needle) {
-      return report.data?.journal?.items ?? [];
+  const items = useMemo(() => report.data?.journal?.items ?? [], [report.data]);
+
+  useEffect(() => {
+    if (!report.data) {
+      return;
     }
-    return (report.data?.journal?.items ?? []).filter((item) =>
-      [item.applicationNumber, item.actor.name, item.title, item.comment ?? ""]
-        .join(" ")
-        .toLowerCase()
-        .includes(needle),
-    );
-  }, [report.data, search]);
+    const changes: Record<string, string | null> = {};
+    if (!searchParams.get("from")) {
+      changes.from = report.data.query.from;
+    }
+    if (!searchParams.get("to")) {
+      changes.to = report.data.query.to;
+    }
+    if (!searchParams.get("timezone")) {
+      changes.timezone = report.data.query.timezone;
+    }
+    if (!searchParams.get("bucket")) {
+      changes.bucket = report.data.query.bucket;
+    }
+    if (Object.keys(changes).length > 0) {
+      updateUrl(router, pathname, searchParams, changes);
+    }
+  }, [pathname, report.data, router, searchParams]);
 
   if (report.isPending) {
     return <StateBlock kind="loading" title="Загружаем журнал" />;
@@ -92,8 +107,10 @@ export function JournalTable() {
           aria-label="Кто действовал"
           value={actor}
           onChange={(value) => {
-            setActor(value as ActorFilter);
-            setCursor(undefined);
+            updateUrl(router, pathname, searchParams, {
+              actor: value === "all" ? null : value,
+              cursor: null,
+            });
           }}
           data={[
             { value: "all", label: "Все" },
@@ -106,7 +123,13 @@ export function JournalTable() {
           aria-label="Поиск по журналу"
           placeholder="Номер, сотрудник или событие"
           value={search}
-          onChange={(event) => setSearch(event.currentTarget.value)}
+          onChange={(event) => {
+            const value = event.currentTarget.value;
+            updateUrl(router, pathname, searchParams, {
+              search: value || null,
+              cursor: null,
+            });
+          }}
           w={{ base: "100%", sm: 320 }}
         />
       </Group>
@@ -136,7 +159,7 @@ export function JournalTable() {
                 <Table.Tr key={item.eventId}>
                   <Table.Td className={classes.when}>
                     <time dateTime={item.occurredAt}>
-                      {formatDate(item.occurredAt)}
+                      {formatDate(item.occurredAt, report.data.query.timezone)}
                     </time>
                   </Table.Td>
                   <Table.Td>
@@ -165,7 +188,9 @@ export function JournalTable() {
                     )}
                   </Table.Td>
                   <Table.Td className={classes.status}>
-                    {item.status ? reportStatusLabel[item.status] : "—"}
+                    {item.status
+                      ? (reportStatusLabel[item.status] ?? "Неизвестно")
+                      : "—"}
                   </Table.Td>
                 </Table.Tr>
               ))}
@@ -177,15 +202,39 @@ export function JournalTable() {
         <Button
           variant="default"
           style={{ alignSelf: "flex-start" }}
-          onClick={() => setCursor(journal.nextCursor ?? undefined)}
+          onClick={() =>
+            updateUrl(router, pathname, searchParams, {
+              cursor: journal.nextCursor,
+            })
+          }
         >
           Следующая страница
         </Button>
       )}
       <Text size="xs" c="dimmed">
-        Срез сформирован {formatDateTime(report.data.query.to)} · старые события
+        Срез сформирован {formatDate(report.data.query.to, report.data.query.timezone)} · старые события
         могут быть отмечены как неполные.
       </Text>
     </Stack>
   );
+}
+
+function updateUrl(
+  router: ReturnType<typeof useRouter>,
+  pathname: string,
+  searchParams: ReturnType<typeof useSearchParams>,
+  changes: Record<string, string | null | undefined>,
+): void {
+  const next = new URLSearchParams(searchParams.toString());
+  for (const [key, value] of Object.entries(changes)) {
+    if (value) {
+      next.set(key, value);
+    } else {
+      next.delete(key);
+    }
+  }
+  const suffix = next.toString();
+  router.replace(`${pathname}${suffix ? `?${suffix}` : ""}`, {
+    scroll: false,
+  });
 }
