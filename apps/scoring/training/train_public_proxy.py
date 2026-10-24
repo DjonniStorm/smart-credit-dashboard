@@ -13,7 +13,7 @@ import math
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from app.ml_pipeline import evaluate_model
+from app.ml_pipeline import calibrate, evaluate_model, fit_isotonic_calibrator
 
 
 FEATURES = ("revenue", "dti_n", "loan_amnt", "fico_n", "experience_c")
@@ -34,6 +34,9 @@ class ProxyArtifact:
     train_count: int
     positive_rate: float
     validation: dict[str, float | int]
+    calibration_method: str
+    calibration_thresholds: tuple[float, ...]
+    calibration_probabilities: tuple[float, ...]
 
 
 def load_artifact(path: Path) -> ProxyArtifact:
@@ -53,6 +56,10 @@ def load_artifact(path: Path) -> ProxyArtifact:
         raise ValueError("artifact validation sample_count должен быть положительным")
     if not 0 <= float(artifact.validation["auc"]) <= 1:
         raise ValueError("artifact validation AUC вне диапазона")
+    if artifact.calibration_method != "isotonic":
+        raise ValueError("неподдерживаемый calibration method")
+    if len(artifact.calibration_thresholds) != len(artifact.calibration_probabilities) or not artifact.calibration_thresholds:
+        raise ValueError("artifact calibration curve повреждён")
     return artifact
 
 
@@ -61,17 +68,30 @@ def predict(artifact: ProxyArtifact, values: dict[str, float]) -> tuple[float, d
     missing = [feature for feature in artifact.features if feature not in values]
     if missing:
         raise ValueError(f"отсутствуют признаки: {', '.join(missing)}")
+    raw_probability, contributions = _raw_predict(artifact, values)
+    probability = calibrate(raw_probability, (artifact.calibration_thresholds, artifact.calibration_probabilities))
+    return max(0.0, min(1.0, probability)), contributions
+
+
+def _raw_predict(artifact: ProxyArtifact, values: dict[str, float]) -> tuple[float, dict[str, float]]:
+    missing = [feature for feature in artifact.features if feature not in values]
+    if missing:
+        raise ValueError(f"отсутствуют признаки: {', '.join(missing)}")
     contributions = {
         feature: artifact.weights[index] * ((float(values[feature]) - artifact.means[index]) / artifact.scales[index])
         for index, feature in enumerate(artifact.features)
     }
     linear_score = artifact.bias + sum(contributions.values())
-    probability = _sigmoid(linear_score)
-    return max(0.0, min(1.0, probability)), contributions
+    return _sigmoid(linear_score), contributions
 
 
 def _predict_row(artifact: ProxyArtifact, values: list[float]) -> float:
     probability, _ = predict(artifact, dict(zip(artifact.features, values)))
+    return probability
+
+
+def _predict_row_raw(artifact: ProxyArtifact, values: list[float]) -> float:
+    probability, _ = _raw_predict(artifact, dict(zip(artifact.features, values)))
     return probability
 
 
@@ -134,8 +154,11 @@ def _fit_logistic(features: list[list[float]], labels: list[int], steps: int = 2
 
 def train(path: Path, output: Path, *, max_rows: int = 20_000) -> ProxyArtifact:
     rows = read_rows(path, max_rows=max_rows)
-    split = max(20, int(len(rows) * 0.8))
-    train_rows = rows[:split]
+    train_end = max(20, int(len(rows) * 0.6))
+    calibration_end = max(train_end + 20, int(len(rows) * 0.8))
+    train_rows = rows[:train_end]
+    calibration_rows = rows[train_end:calibration_end]
+    validation_rows = rows[calibration_end:]
     stats, coefficients = _fit_logistic(
         [features for _, features, _ in train_rows], [label for _, _, label in train_rows], steps=600
     )
@@ -155,8 +178,19 @@ def train(path: Path, output: Path, *, max_rows: int = 20_000) -> ProxyArtifact:
         train_count=len(train_rows),
         positive_rate=sum(label for _, _, label in train_rows) / len(train_rows),
         validation={},
+        calibration_method="isotonic",
+        calibration_thresholds=(),
+        calibration_probabilities=(),
     )
-    validation_rows = rows[split:]
+    calibration_raw = [_predict_row_raw(provisional, features) for _, features, _ in calibration_rows]
+    calibration_curve = fit_isotonic_calibrator(calibration_raw, [label for _, _, label in calibration_rows])
+    provisional = ProxyArtifact(
+        **{
+            **asdict(provisional),
+            "calibration_thresholds": tuple(calibration_curve[0]),
+            "calibration_probabilities": tuple(calibration_curve[1]),
+        }
+    )
     validation_labels = [label for _, _, label in validation_rows]
     validation_probabilities = [_predict_row(provisional, features) for _, features, _ in validation_rows]
     validation_report = evaluate_model(
