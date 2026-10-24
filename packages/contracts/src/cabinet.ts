@@ -178,6 +178,8 @@ export const applicationSchema = applicationInputSchema.extend({
       account: z.string(),
     })
     .nullable(),
+  /** Кто закрыл заявку отменой: клиент отказался от предложения или отозвал её, сотрудник банка отменил. */
+  cancelledBy: z.enum(["client", "employee"]).nullable().default(null),
   /** Запрос клиента на срочный режим и решение банка по нему. */
   urgentRequest: urgentRequestSchema
     .omit({ resolvedBy: true })

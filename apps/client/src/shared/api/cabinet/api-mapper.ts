@@ -95,7 +95,11 @@ function decisionOf(application: ApiApplication): Application["decision"] {
       advice,
     };
   }
-  if (application.status === "REJECTED" || application.status === "CANCELLED") {
+  if (application.status === "CANCELLED") {
+    // Отмена без оффера: решения банка не было, причину показываем по cancelledBy.
+    return null;
+  }
+  if (application.status === "REJECTED") {
     return {
       outcome: "rejected",
       decidedAt: application.updatedAt,
@@ -222,6 +226,11 @@ export function toCabinetApplication(
     requests: requestsOf(application),
     decision: decisionOf(application),
     deal: dealOf(application),
+    cancelledBy:
+      application.cancelledBy === "client" ||
+      application.cancelledBy === "employee"
+        ? application.cancelledBy
+        : null,
     urgentRequest: application.urgentRequest,
     urgentBy: application.urgentBy,
     events: [],

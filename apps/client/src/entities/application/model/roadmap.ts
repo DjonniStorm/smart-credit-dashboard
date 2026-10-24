@@ -2,7 +2,13 @@ import type { Application } from "@repo/contracts/cabinet";
 
 import { tx } from "@/shared/i18n";
 
-import { isDeclinedByClient, stageOf, stages } from "./stage";
+import {
+  isCancelledByManager,
+  isDeclinedByClient,
+  isWithdrawnByClient,
+  stageOf,
+  stages,
+} from "./stage";
 
 export type RoadmapActor = "client" | "bank" | "system";
 export type RoadmapStepState = "done" | "current" | "upcoming";
@@ -40,11 +46,19 @@ const defaultActors: readonly RoadmapActor[] = [
   "bank",
 ];
 
-const decisionBranches = [
+/** Исходы на этапе проверки: что банк может решить дальше. */
+const reviewBranches = [
   tx.roadmap.branches.clarification,
   tx.roadmap.branches.counterOffer,
   tx.roadmap.branches.reject,
   tx.roadmap.branches.approve,
+];
+
+/** Исходы на этапе решения: варианты, когда оффер уже предложен. */
+const offerBranches = [
+  tx.roadmap.branches.accept,
+  tx.roadmap.branches.decline,
+  tx.roadmap.branches.reviewReturn,
 ];
 
 function stepState(index: number, current: number): RoadmapStepState {
@@ -82,6 +96,7 @@ export function buildRoadmap(app: Application): Roadmap {
         app.checksPassed < 1
           ? tx.roadmap.current.review
           : tx.roadmap.current.scoring;
+      branches = reviewBranches;
       break;
     case "needs_client": {
       const request = app.requests.find((item) => item.answer === null);
@@ -95,14 +110,14 @@ export function buildRoadmap(app: Application): Roadmap {
       currentStep.actor = "client";
       currentStep.explanation = tx.roadmap.current.counterOffer;
       currentStep.clientAction = tx.roadmap.current.counterOfferAction;
-      branches = decisionBranches;
+      branches = offerBranches;
       break;
     case "approved":
       if (!app.deal) {
         currentStep.actor = "client";
         currentStep.explanation = tx.roadmap.current.approvedOffer;
         currentStep.clientAction = tx.roadmap.current.approvedOfferAction;
-        branches = decisionBranches;
+        branches = offerBranches;
       } else if (app.deal.stage === "offer") {
         currentStep.actor = "bank";
         currentStep.explanation = tx.roadmap.current.preparing;
@@ -119,7 +134,13 @@ export function buildRoadmap(app: Application): Roadmap {
       }
       break;
     case "rejected":
-      if (isDeclinedByClient(app)) {
+      if (isCancelledByManager(app)) {
+        currentStep.actor = "bank";
+        currentStep.explanation = tx.roadmap.current.cancelledByManager;
+      } else if (isWithdrawnByClient(app)) {
+        currentStep.actor = "client";
+        currentStep.explanation = tx.roadmap.current.withdrawn;
+      } else if (isDeclinedByClient(app)) {
         currentStep.actor = "client";
         currentStep.explanation = tx.roadmap.current.declined;
       } else {
@@ -137,5 +158,11 @@ export function buildRoadmap(app: Application): Roadmap {
       break;
   }
 
-  return { steps, branches };
+  // Финальные статусы путь закончили: будущие шаги не показываем.
+  const visibleSteps =
+    app.status === "rejected"
+      ? steps.filter((step) => step.state !== "upcoming")
+      : steps;
+
+  return { steps: visibleSteps, branches };
 }

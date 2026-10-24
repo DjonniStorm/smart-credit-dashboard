@@ -36,7 +36,9 @@ import {
   DecisionFactors,
   HealthIndices,
   Roadmap,
+  isCancelledByManager,
   isDeclinedByClient,
+  isWithdrawnByClient,
   nextStepOf,
   stageOf,
   stages,
@@ -441,19 +443,38 @@ function StagePanel({ app }: { app: Application }) {
 
   if (app.status === "rejected") {
     const declined = isDeclinedByClient(app);
+    const withdrawn = isWithdrawnByClient(app);
+    const cancelledByManager = isCancelledByManager(app);
+    const title = cancelledByManager
+      ? t.rejected.cancelledByManagerTitle
+      : withdrawn
+        ? t.rejected.withdrawnTitle
+        : declined
+          ? t.rejected.declinedTitle
+          : t.rejected.title;
+    const text = cancelledByManager
+      ? t.rejected.cancelledByManagerText
+      : withdrawn
+        ? t.rejected.withdrawnText
+        : declined
+          ? t.rejected.declinedText
+          : decision?.summary;
     return (
       <Card>
         <Stack gap="md" align="flex-start">
           <Title order={2} size="h3">
-            {declined ? t.rejected.declinedTitle : t.rejected.title}
+            {title}
           </Title>
-          <Text>{declined ? t.rejected.declinedText : decision?.summary}</Text>
-          {!declined && decision?.advice && (
-            <div>
-              <Text fw={600}>{t.rejected.advice}</Text>
-              <Text>{decision.advice}</Text>
-            </div>
-          )}
+          <Text>{text}</Text>
+          {!declined &&
+            !withdrawn &&
+            !cancelledByManager &&
+            decision?.advice && (
+              <div>
+                <Text fw={600}>{t.rejected.advice}</Text>
+                <Text>{decision.advice}</Text>
+              </div>
+            )}
           <Button component={Link} href="/products" variant="default">
             {t.rejected.newApplication}
           </Button>

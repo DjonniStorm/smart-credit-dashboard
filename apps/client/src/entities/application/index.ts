@@ -11,7 +11,9 @@ export {
   useSign,
 } from "./api/applications";
 export {
+  isCancelledByManager,
   isDeclinedByClient,
+  isWithdrawnByClient,
   needsClient,
   nextStepOf,
   stageOf,
