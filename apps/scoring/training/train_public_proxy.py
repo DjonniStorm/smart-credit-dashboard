@@ -13,6 +13,8 @@ import math
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from app.ml_pipeline import evaluate_model
+
 
 FEATURES = ("revenue", "dti_n", "loan_amnt", "fico_n", "experience_c")
 
@@ -31,6 +33,7 @@ class ProxyArtifact:
     bias: float
     train_count: int
     positive_rate: float
+    validation: dict[str, float | int]
 
 
 def load_artifact(path: Path) -> ProxyArtifact:
@@ -43,6 +46,13 @@ def load_artifact(path: Path) -> ProxyArtifact:
         raise ValueError("несовместимая схема public-proxy features")
     if len(artifact.weights) != len(artifact.features):
         raise ValueError("некорректное число model weights")
+    required_metrics = {"brier", "logloss", "ece", "auc", "pr_auc", "ks", "sample_count"}
+    if not required_metrics.issubset(artifact.validation):
+        raise ValueError("artifact не содержит holdout validation metrics")
+    if int(artifact.validation["sample_count"]) <= 0:
+        raise ValueError("artifact validation sample_count должен быть положительным")
+    if not 0 <= float(artifact.validation["auc"]) <= 1:
+        raise ValueError("artifact validation AUC вне диапазона")
     return artifact
 
 
@@ -58,6 +68,11 @@ def predict(artifact: ProxyArtifact, values: dict[str, float]) -> tuple[float, d
     linear_score = artifact.bias + sum(contributions.values())
     probability = _sigmoid(linear_score)
     return max(0.0, min(1.0, probability)), contributions
+
+
+def _predict_row(artifact: ProxyArtifact, values: list[float]) -> float:
+    probability, _ = predict(artifact, dict(zip(artifact.features, values)))
+    return probability
 
 
 def _number(row: dict[str, str], key: str) -> float | None:
@@ -126,7 +141,7 @@ def train(path: Path, output: Path, *, max_rows: int = 20_000) -> ProxyArtifact:
     )
     means = tuple(stats[: len(FEATURES)])
     scales = tuple(stats[len(FEATURES) :])
-    artifact = ProxyArtifact(
+    provisional = ProxyArtifact(
         model="public-proxy-logistic-v1",
         version="2026-10-24",
         dataset_scope="public_proxy:lendingclub_granting_model",
@@ -139,6 +154,19 @@ def train(path: Path, output: Path, *, max_rows: int = 20_000) -> ProxyArtifact:
         bias=coefficients[-1],
         train_count=len(train_rows),
         positive_rate=sum(label for _, _, label in train_rows) / len(train_rows),
+        validation={},
+    )
+    validation_rows = rows[split:]
+    validation_labels = [label for _, _, label in validation_rows]
+    validation_probabilities = [_predict_row(provisional, features) for _, features, _ in validation_rows]
+    validation_report = evaluate_model(
+        provisional.model,
+        validation_labels,
+        validation_probabilities,
+        validation_probabilities,
+    )
+    artifact = ProxyArtifact(
+        **{**asdict(provisional), "validation": asdict(validation_report)}
     )
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(asdict(artifact), indent=2) + "\n", encoding="utf-8")

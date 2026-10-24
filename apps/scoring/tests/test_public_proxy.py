@@ -31,6 +31,8 @@ class PublicProxyTrainingTests(unittest.TestCase):
 
     def test_artifact_inference_returns_pd_and_contributions(self) -> None:
         artifact = load_artifact(Path("apps/scoring/artifacts/public-proxy-logistic.json"))
+        self.assertEqual(artifact.validation["sample_count"], 4000)
+        self.assertGreater(artifact.validation["auc"], 0.5)
         probability, contributions = predict(
             artifact,
             {"revenue": 100_000, "dti_n": 8, "loan_amnt": 5_000, "fico_n": 760, "experience_c": 1},

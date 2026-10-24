@@ -10,5 +10,16 @@
   "weights": [-0.2637089461998756, 0.176579057008175, 0.3139933211717638, -0.40567091695485985, 0.0],
   "bias": -1.459409959321021,
   "train_count": 16000,
-  "positive_rate": 0.2001875
+  "positive_rate": 0.2001875,
+  "validation": {
+    "model": "public-proxy-logistic-v1",
+    "brier": 0.154548,
+    "logloss": 0.485251,
+    "ece": 0.010244,
+    "auc": 0.637536,
+    "sample_count": 4000,
+    "positive_rate": 0.2,
+    "pr_auc": 0.292848,
+    "ks": 0.215
+  }
 }

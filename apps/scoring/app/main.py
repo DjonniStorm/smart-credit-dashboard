@@ -419,6 +419,7 @@ def model_evaluation() -> dict[str, object]:
 @app.get("/v1/models/registry")
 def model_registry() -> dict[str, object]:
     """Минимальный registry contract; deployment хранит фактические artefacts отдельно."""
+    proxy_artifact = load_artifact(Path(__file__).resolve().parent.parent / "artifacts" / "public-proxy-logistic.json")
     return {
         "champion": {
             "name": "rules-baseline-v2",
@@ -440,6 +441,7 @@ def model_registry() -> dict[str, object]:
                 "calibration": "not-calibrated-for-russian-sme",
                 "dataset_scope": "public_proxy:lendingclub_granting_model",
                 "production_eligible": False,
+                "validation": proxy_artifact.validation,
             },
         ],
         "policy": "policy-baseline-v2",
@@ -458,6 +460,7 @@ def public_proxy_score(payload: PublicProxyScoreRequest) -> dict[str, object]:
         "model_version": artifact.version,
         "dataset_scope": artifact.dataset_scope,
         "production_eligible": artifact.production_eligible,
+        "validation": artifact.validation,
         "pd": round(probability, 6),
         "contributions": contributions,
         "autonomy_mode": "shadow",
