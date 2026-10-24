@@ -35,6 +35,7 @@ import {
   ApplicationHistory,
   DecisionFactors,
   HealthIndices,
+  Roadmap,
   isDeclinedByClient,
   nextStepOf,
   stageOf,
@@ -168,6 +169,7 @@ function Detail({ app }: { app: Application }) {
                     nextStepOf(app)
                   )}
                 </Text>
+                <Roadmap app={app} />
               </Stack>
             </Card>
             <StagePanel app={app} />
