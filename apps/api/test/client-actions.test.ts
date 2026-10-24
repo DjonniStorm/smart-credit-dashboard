@@ -124,6 +124,7 @@ test("отказ закрывает заявку с пометкой, что о�
   const response = await clientAct(application.id, { type: "decline_offer" });
   assert.equal(response.application.status, "CANCELLED");
   assert.equal(response.application.cancelledBy, "client");
+  assert.equal(response.application.cancelledFrom, "counter_offer");
   assert.ok(response.application.offer);
   assert.equal(response.application.deal, null);
 });
@@ -136,6 +137,7 @@ test("отмена сотрудником после принятия закры
   const cancelled = toApiApplication(await reload(application.id));
   assert.equal(cancelled.status, "CANCELLED");
   assert.equal(cancelled.cancelledBy, "employee");
+  assert.equal(cancelled.cancelledFrom, "signing");
   assert.equal(cancelled.deal, null);
   await assert.rejects(
     clientAct(application.id, { type: "request_sign_code" }),
