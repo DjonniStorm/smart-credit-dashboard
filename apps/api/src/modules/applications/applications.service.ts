@@ -19,6 +19,7 @@ import type {
   ScoringJob,
 } from "@repo/contracts/workflow";
 
+import { DemoDataStore } from "../../common/demo-data/demo-data.store.ts";
 import { CatalogService } from "../catalog/catalog.service.ts";
 import {
   CompaniesService,
@@ -48,6 +49,7 @@ export class ApplicationsService {
     private readonly profiles: CompanyProfileService,
     private readonly autonomy: AutonomyStore,
     private readonly store: WorkflowStore,
+    private readonly data: DemoDataStore,
     @Optional() private readonly catalog?: CatalogService,
   ) {}
 
@@ -207,11 +209,32 @@ export class ApplicationsService {
             autoDecisionAt: controlWindowEndsAt ? now.toISOString() : null,
           }
         : null;
+      // Расхождения источников (ИНН, название, адрес, вид деятельности) для компании
+      // задаются в демо-сценарии и попадают в companySourceSnapshot; по ним система
+      // сама запрашивает подтверждение у клиента ещё до передачи заявки менеджеру.
+      const discrepancies = this.data.getCompanyProfileScenario(
+        application.inn,
+      ).discrepancies;
+      const autoRequest =
+        discrepancies.length > 0 &&
+        decision.recommendation !== "reject" &&
+        application.status === "in_review" &&
+        application.requestedInfo.length === 0 &&
+        !application.hold
+          ? {
+              items: [...new Set(discrepancies.map((item) => item.nextStep))],
+              reasons: discrepancies.map(
+                (item) =>
+                  `${item.label}: ${item.firstValue} / ${item.secondValue}`,
+              ),
+            }
+          : null;
       const catalog = this.catalog?.getCatalog();
       const product = catalog?.products.find(
         (item) => item.id === application.productId,
       );
       const offer =
+        !autoRequest &&
         product &&
         decision.autonomyMode === "controlled" &&
         decision.recommendation === "approve"
@@ -222,6 +245,12 @@ export class ApplicationsService {
               ratePct: productRate(product, catalog?.keyRate ?? 0),
             }
           : null;
+      const finalStatus = autoRequest
+        ? "needs_client"
+        : offer
+          ? "approved"
+          : "in_review";
+      const finalStage = autoRequest ? "completeness" : "decision";
       await this.store.completeJob(job, {
         result: {
           score: result.scoring.score,
@@ -230,13 +259,14 @@ export class ApplicationsService {
           details: toApiScoring(result.scoring),
         },
         decision: toApiDecision(decision),
-        status: offer ? "approved" : undefined,
+        status: autoRequest ? "needs_client" : offer ? "approved" : undefined,
         offer,
-        autonomyCase,
+        autonomyCase: autoRequest ? null : autonomyCase,
         checks: ["egrul", "bki", "fns", "scoring"].map((source) => ({
           source,
           status: "ok" as const,
         })),
+        clientRequest: autoRequest ?? undefined,
         eventPayload: {
           jobId: job.id,
           score: result.scoring.score,
@@ -245,17 +275,19 @@ export class ApplicationsService {
           rules: decision.rules,
           reasons: decision.reasons,
           autonomyMode: decision.autonomyMode,
-          autonomyDisposition: autonomyCase?.disposition ?? null,
+          autonomyDisposition:
+            (autoRequest ? null : autonomyCase)?.disposition ?? null,
           reportContext: {
             version: 1,
             productId: application.productId,
-            status: offer ? "approved" : "in_review",
-            stage: "decision",
+            status: finalStatus,
+            stage: finalStage,
             actorKind: "system",
             actorName: "Кредитный конвейер",
             recommendation: decision.recommendation,
             autonomyMode: decision.autonomyMode,
-            autonomyDisposition: autonomyCase?.disposition ?? null,
+            autonomyDisposition:
+              (autoRequest ? null : autonomyCase)?.disposition ?? null,
           },
         },
       });

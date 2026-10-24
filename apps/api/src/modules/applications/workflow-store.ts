@@ -284,6 +284,8 @@ export class WorkflowStore {
       autonomyCase?: ApplicationWorkflow["autonomyCase"];
       checks: SourceCheck[];
       eventPayload: unknown;
+      /** Автоматический запрос клиенту по расхождению источников: при наличии заявка уходит в needs_client. */
+      clientRequest?: { items: string[]; reasons: string[] };
     },
   ): Promise<boolean> {
     return this.db.transaction(async (manager) => {
@@ -367,24 +369,60 @@ export class WorkflowStore {
           };
         }
       }
-      await manager.query(
-        `update applications
-            set scoring=$2, decision=$3,
-                status=case when $4 then $5 else status end,
-                offer=case when $6 then $7 else offer end,
-                autonomy_case=$8, updated_at=now()
-          where id=$1`,
-        [
-          job.applicationId,
-          outcome.result,
-          decision,
-          status !== undefined,
-          status ?? null,
-          offer !== undefined,
-          offer ?? null,
-          autonomyCase ?? null,
-        ],
+      const requestRows = rowsOf(
+        await manager.query(
+          `update applications
+              set scoring=$2, decision=$3,
+                  status=case when $9 then 'needs_client'
+                              when $4 and (status <> 'needs_client' or requested_info is null or jsonb_array_length(requested_info)=0) then $5
+                              else status end,
+                  offer=case when $9 then null
+                             when $6 and (status <> 'needs_client' or requested_info is null or jsonb_array_length(requested_info)=0) then $7
+                             else offer end,
+                  requested_info=case when $9 then $10 else requested_info end,
+                  client_reply=case when $9 then null else client_reply end,
+                  autonomy_case=$8, updated_at=now()
+            where id=$1
+              and ($9 = false or (status='in_review' and (requested_info is null or jsonb_array_length(requested_info)=0)))
+            returning id, status`,
+          [
+            job.applicationId,
+            outcome.result,
+            decision,
+            status !== undefined,
+            status ?? null,
+            offer !== undefined,
+            offer ?? null,
+            autonomyCase ?? null,
+            Boolean(outcome.clientRequest),
+            outcome.clientRequest
+              ? JSON.stringify(outcome.clientRequest.items)
+              : null,
+          ],
+        ),
       );
+      // Если строка не обновилась из-за открытого запроса клиента, событие успеха
+      // не должно утверждать статус, которого на самом деле не было.
+      const effectiveStatus = requestRows[0]?.status;
+      const payload = eventPayload as
+        | {
+            reportContext?: { status?: string };
+          }
+        | null
+        | undefined;
+      if (
+        effectiveStatus &&
+        payload?.reportContext?.status &&
+        payload.reportContext.status !== effectiveStatus
+      ) {
+        eventPayload = {
+          ...payload,
+          reportContext: {
+            ...payload.reportContext,
+            status: effectiveStatus,
+          },
+        };
+      }
       if (autonomyCase?.eligible) {
         const applicationRows = rowsOf(
           await manager.query(
@@ -404,6 +442,35 @@ export class WorkflowStore {
         "scoring_succeeded",
         eventPayload,
       );
+      if (outcome.clientRequest && requestRows.length > 0) {
+        const productRows = rowsOf(
+          await manager.query(
+            "select product_id from applications where id=$1",
+            [job.applicationId],
+          ),
+        );
+        await this.eventIn(manager, job.applicationId, "status_changed", {
+          actionType: "auto_request_info",
+          title: "Автоматический запрос по расхождению источников",
+          comment: null,
+          actorKind: "system",
+          actorName: "Кредитный конвейер",
+          fromStatus: "in_review",
+          toStatus: "needs_client",
+          reasons: outcome.clientRequest.reasons.join(" | "),
+          reportContext: {
+            version: 1,
+            productId: String(productRows[0]?.product_id ?? ""),
+            status: "needs_client",
+            stage: "completeness",
+            actorKind: "system",
+            actorName: "Кредитный конвейер",
+            recommendation: decision?.recommendation ?? null,
+            autonomyMode: autonomyCase?.mode ?? null,
+            autonomyDisposition: autonomyCase?.disposition ?? null,
+          },
+        });
+      }
       if (autonomyCase) {
         await this.eventIn(manager, job.applicationId, "autonomy_candidate", {
           policyId: autonomyCase.policyId,
