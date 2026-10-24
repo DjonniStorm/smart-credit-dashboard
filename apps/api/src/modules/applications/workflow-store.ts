@@ -369,31 +369,35 @@ export class WorkflowStore {
           };
         }
       }
-      const requestRows = rowsOf(
+      // Факты проверки пишутся всегда: при гонке с параллельным джобом статусная
+      // часть может не примениться, но scoring/decision/autonomy_case терять нельзя.
+      const factRows = rowsOf(
+        await manager.query(
+          `update applications set scoring=$2, decision=$3, autonomy_case=$4, updated_at=now()
+           where id=$1 returning id, status`,
+          [job.applicationId, outcome.result, decision, autonomyCase ?? null],
+        ),
+      );
+      const stateRows = rowsOf(
         await manager.query(
           `update applications
-              set scoring=$2, decision=$3,
-                  status=case when $9 then 'needs_client'
-                              when $4 and (status <> 'needs_client' or requested_info is null or jsonb_array_length(requested_info)=0) then $5
+              set status=case when $6 then 'needs_client'
+                              when $2 and (status <> 'needs_client' or requested_info is null or jsonb_array_length(requested_info)=0) then $3
                               else status end,
-                  offer=case when $9 then null
-                             when $6 and (status <> 'needs_client' or requested_info is null or jsonb_array_length(requested_info)=0) then $7
+                  offer=case when $6 then null
+                             when $4 and (status <> 'needs_client' or requested_info is null or jsonb_array_length(requested_info)=0) then $5
                              else offer end,
-                  requested_info=case when $9 then $10 else requested_info end,
-                  client_reply=case when $9 then null else client_reply end,
-                  autonomy_case=$8, updated_at=now()
+                  requested_info=case when $6 then $7 else requested_info end,
+                  client_reply=case when $6 then null else client_reply end
             where id=$1
-              and ($9 = false or (status='in_review' and (requested_info is null or jsonb_array_length(requested_info)=0)))
+              and ($6 = false or (status='in_review' and (requested_info is null or jsonb_array_length(requested_info)=0)))
             returning id, status`,
           [
             job.applicationId,
-            outcome.result,
-            decision,
             status !== undefined,
             status ?? null,
             offer !== undefined,
             offer ?? null,
-            autonomyCase ?? null,
             Boolean(outcome.clientRequest),
             outcome.clientRequest
               ? JSON.stringify(outcome.clientRequest.items)
@@ -401,9 +405,10 @@ export class WorkflowStore {
           ],
         ),
       );
-      // Если строка не обновилась из-за открытого запроса клиента, событие успеха
-      // не должно утверждать статус, которого на самом деле не было.
-      const effectiveStatus = requestRows[0]?.status;
+      const stateApplied = stateRows.length > 0;
+      const effectiveStatus = stateApplied
+        ? stateRows[0]?.status
+        : factRows[0]?.status;
       const payload = eventPayload as
         | {
             reportContext?: { status?: string };
@@ -442,7 +447,7 @@ export class WorkflowStore {
         "scoring_succeeded",
         eventPayload,
       );
-      if (outcome.clientRequest && requestRows.length > 0) {
+      if (outcome.clientRequest && stateApplied) {
         const productRows = rowsOf(
           await manager.query(
             "select product_id from applications where id=$1",
