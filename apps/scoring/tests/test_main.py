@@ -204,6 +204,8 @@ class ModelEndpointTests(unittest.TestCase):
         self.assertEqual(report["selected"], report["selection"]["selected"])
         self.assertEqual(report["champion"]["sample_count"], 120)
         self.assertEqual(report["challenger"]["sample_count"], 120)
+        self.assertEqual(report["public_proxy"]["production_eligible"], False)
+        self.assertGreater(report["public_proxy"]["validation"]["auc"], 0.5)
 
     def test_registry_keeps_challenger_in_shadow(self) -> None:
         registry = model_registry()

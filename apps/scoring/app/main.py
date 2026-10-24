@@ -387,6 +387,7 @@ def score(req: ScoreRequest) -> ScoreResponse:
 @app.get("/v1/models/evaluation")
 def model_evaluation() -> dict[str, object]:
     """Temporal champion/challenger evaluation с безопасным quality gate."""
+    proxy_artifact = load_artifact(Path(__file__).resolve().parent.parent / "artifacts" / "public-proxy-logistic.json")
     scores, labels = synthetic_pd_dataset(size=600, seed=7)
     split = temporal_split(scores, labels)
     champion_probabilities = [max(0.01, min(0.5, 0.35 - value * 0.003)) for value in split.test]
@@ -405,6 +406,13 @@ def model_evaluation() -> dict[str, object]:
         },
         "champion": champion.__dict__,
         "challenger": challenger.__dict__,
+        "public_proxy": {
+            "model": proxy_artifact.model,
+            "version": proxy_artifact.version,
+            "dataset_scope": proxy_artifact.dataset_scope,
+            "production_eligible": proxy_artifact.production_eligible,
+            "validation": proxy_artifact.validation,
+        },
         "confidence_intervals": {
             "champion_brier": bootstrap_confidence_interval(
                 split.test_labels, champion_probabilities, metric="brier").__dict__,
