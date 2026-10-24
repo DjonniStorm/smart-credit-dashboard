@@ -7,6 +7,7 @@ export {
   useAutonomyPolicies,
   useAutonomyAudit,
   useAutonomyPolicyAction,
+  useManagerReport,
   useProducts,
   useResetDemo,
 } from "./api/queries";

@@ -119,6 +119,43 @@
   white-space: nowrap;
 }
 
+.metricList {
+  display: grid;
+  gap: 8px;
+}
+
+.metricRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: 12px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--kk-line);
+  font-size: 13px;
+}
+
+.metricRow:last-child {
+  border-bottom: 0;
+}
+
+.metricRow strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.metricShare {
+  min-width: 52px;
+  color: var(--mantine-color-dimmed);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.splitMetrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  padding-top: 4px;
+}
+
 @media (max-width: 62em) {
   .grid {
     grid-template-columns: minmax(0, 1fr);
@@ -129,6 +166,15 @@
 }
 
 @media (max-width: 30em) {
+  .tiles {
+    grid-template-columns: 1fr;
+  }
+
+  .splitMetrics {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
   .stage {
     grid-template-columns: 96px minmax(0, 1fr) 24px;
     gap: 8px;

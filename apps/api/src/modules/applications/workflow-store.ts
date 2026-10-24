@@ -108,6 +108,18 @@ export class WorkflowStore {
       );
       await this.eventIn(manager, applicationId, "application_created", {
         jobId,
+        productId: input.productId,
+        status: "in_review",
+        actorKind: "system",
+        actorName: "Кредитный конвейер",
+        reportContext: {
+          version: 1,
+          productId: input.productId,
+          status: "in_review",
+          stage: "intake",
+          actorKind: "system",
+          actorName: "Кредитный конвейер",
+        },
       });
       return {
         application: this.application(firstRow(applicationRows)),
@@ -145,7 +157,20 @@ export class WorkflowStore {
           [jobId, applicationId, idempotencyKey],
         ),
       );
-      await this.eventIn(manager, applicationId, "check_requested", { jobId });
+      await this.eventIn(manager, applicationId, "check_requested", {
+        jobId,
+        status: "in_review",
+        stage: "scoring",
+        actorKind: "system",
+        actorName: "Кредитный конвейер",
+        reportContext: {
+          version: 1,
+          status: "in_review",
+          stage: "scoring",
+          actorKind: "system",
+          actorName: "Кредитный конвейер",
+        },
+      });
       return this.job(firstRow(rows));
     });
   }
@@ -202,6 +227,16 @@ export class WorkflowStore {
         comment: "Заявка возвращена в ручное рассмотрение",
         actorKind: "system",
         actorName: "Кредитный конвейер",
+        reportContext: {
+          version: 1,
+          status: "in_review",
+          stage: "decision",
+          actorKind: "system",
+          actorName: "Кредитный конвейер",
+          recommendation: application.autonomyCase.recommendation,
+          autonomyMode: application.autonomyCase.mode,
+          autonomyDisposition: "expired",
+        },
       });
     });
   }
@@ -377,6 +412,17 @@ export class WorkflowStore {
           mode: autonomyCase.mode,
           recommendation: autonomyCase.recommendation,
           eligible: autonomyCase.eligible,
+          actorKind: "system",
+          actorName: "Кредитный конвейер",
+          reportContext: {
+            version: 1,
+            stage: "decision",
+            actorKind: "system",
+            actorName: "Кредитный конвейер",
+            recommendation: autonomyCase.recommendation,
+            autonomyMode: autonomyCase.mode,
+            autonomyDisposition: autonomyCase.disposition,
+          },
         });
         if (autonomyCase.disposition === "auto_offer_sent") {
           await this.eventIn(
@@ -386,6 +432,17 @@ export class WorkflowStore {
             {
               policyId: autonomyCase.policyId,
               controlWindowEndsAt: autonomyCase.controlWindowEndsAt ?? "",
+              actorKind: "system",
+              actorName: "Кредитный конвейер",
+              reportContext: {
+                version: 1,
+                stage: "decision",
+                actorKind: "system",
+                actorName: "Кредитный конвейер",
+                recommendation: autonomyCase.recommendation,
+                autonomyMode: autonomyCase.mode,
+                autonomyDisposition: autonomyCase.disposition,
+              },
             },
           );
         }
@@ -429,6 +486,14 @@ export class WorkflowStore {
         error,
         attempt: job.attempts,
         willRetry: retryAt !== null,
+        actorKind: "system",
+        actorName: "Кредитный конвейер",
+        reportContext: {
+          version: 1,
+          stage: "scoring",
+          actorKind: "system",
+          actorName: "Кредитный конвейер",
+        },
       });
       return status;
     });
@@ -459,6 +524,14 @@ export class WorkflowStore {
             error: STALE_JOB_ERROR,
             attempt: Number(row.attempts),
             willRetry: row.status === "queued",
+            actorKind: "system",
+            actorName: "Кредитный конвейер",
+            reportContext: {
+              version: 1,
+              stage: "scoring",
+              actorKind: "system",
+              actorName: "Кредитный конвейер",
+            },
           },
         );
       }
@@ -558,8 +631,8 @@ export class WorkflowStore {
     payload: unknown,
   ): Promise<void> {
     await manager.query(
-      "insert into application_events(application_id,kind,payload) values($1,$2,$3)",
-      [applicationId, kind, payload],
+      "insert into application_events(event_key,application_id,kind,payload) values($1,$2,$3,$4)",
+      [`event-${randomUUID()}`, applicationId, kind, payload],
     );
   }
 

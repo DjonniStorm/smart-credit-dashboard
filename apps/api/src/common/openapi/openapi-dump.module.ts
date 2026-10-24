@@ -4,6 +4,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
 } from "@nestjs/swagger";
 import { ZodSerializerDto, createZodDto } from "nestjs-zod";
 
@@ -12,6 +13,7 @@ import {
   apiAutonomySnapshotSchema,
   autonomyPolicyActionRequestSchema,
 } from "@repo/contracts/api";
+import { managerReportResponseSchema } from "@repo/contracts/reports";
 
 import {
   CompanyCheckDto,
@@ -33,6 +35,7 @@ class AutonomyAuditListDto extends createZodDto(
 class AutonomyPolicyActionDto extends createZodDto(
   autonomyPolicyActionRequestSchema,
 ) {}
+class ManagerReportDto extends createZodDto(managerReportResponseSchema) {}
 
 @Controller("health")
 class HealthController {
@@ -129,7 +132,50 @@ class AutonomyController {
   }
 }
 
+@Controller("v1/reports")
+class ReportsController {
+  @Get("manager")
+  @ApiOperation({ operationId: "ReportsController_manager" })
+  @ApiQuery({ name: "from", required: false, type: String })
+  @ApiQuery({ name: "to", required: false, type: String })
+  @ApiQuery({ name: "timezone", required: false, type: String })
+  @ApiQuery({ name: "view", required: false, enum: ["overview", "journal"] })
+  @ApiQuery({ name: "bucket", required: false, enum: ["day", "week"] })
+  @ApiQuery({ name: "cursor", required: false, type: String })
+  @ApiQuery({ name: "search", required: false, type: String })
+  @ApiQuery({ name: "limit", required: false, type: Number, minimum: 1, maximum: 100 })
+  @ApiQuery({ name: "product", required: false, type: String, isArray: true })
+  @ApiQuery({ name: "status", required: false, type: String, isArray: true })
+  @ApiQuery({ name: "assignee", required: false, type: String, isArray: true })
+  @ApiQuery({ name: "stage", required: false, type: String, isArray: true })
+  @ApiQuery({ name: "actor", required: false, type: String, isArray: true })
+  @ApiQuery({
+    name: "recommendation",
+    required: false,
+    type: String,
+    isArray: true,
+  })
+  @ApiQuery({ name: "autonomy", required: false, type: String, isArray: true })
+  @ApiQuery({
+    name: "autonomyDisposition",
+    required: false,
+    type: String,
+    isArray: true,
+  })
+  @ApiQuery({ name: "sla", required: false, type: String, isArray: true })
+  @ApiOkResponse({ type: ManagerReportDto })
+  @ZodSerializerDto(ManagerReportDto)
+  manager(): ManagerReportDto {
+    return {} as ManagerReportDto;
+  }
+}
+
 @Module({
-  controllers: [HealthController, CompaniesController, AutonomyController],
+  controllers: [
+    HealthController,
+    CompaniesController,
+    AutonomyController,
+    ReportsController,
+  ],
 })
 export class OpenApiDumpModule {}

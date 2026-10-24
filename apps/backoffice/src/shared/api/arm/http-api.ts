@@ -18,6 +18,10 @@ import {
   type CompanyProfileResponse,
   companyProfileResponseSchema,
 } from "@repo/contracts/company-profile";
+import {
+  managerReportResponseSchema,
+  type ManagerReportQuery,
+} from "@repo/contracts/reports";
 
 import {
   toArmApplication,
@@ -145,6 +149,42 @@ export const httpArmApi: ArmApi = {
         method: "POST",
         body: JSON.stringify(parsedBody),
       },
+    );
+  },
+  getManagerReport: (query?: Partial<ManagerReportQuery>) => {
+    const params = new URLSearchParams();
+    const scalarKeys = [
+      "from",
+      "to",
+      "timezone",
+      "view",
+      "bucket",
+      "cursor",
+      "search",
+      "limit",
+    ] as const;
+    for (const key of scalarKeys) {
+      const value = query?.[key];
+      if (value !== undefined) params.set(key, String(value));
+    }
+    const arrayKeys = [
+      ["product", query?.productIds],
+      ["status", query?.statuses],
+      ["assignee", query?.assigneeIds],
+      ["stage", query?.stages],
+      ["actor", query?.actorKinds],
+      ["recommendation", query?.recommendations],
+      ["autonomy", query?.autonomyModes],
+      ["autonomyDisposition", query?.autonomyDispositions],
+      ["sla", query?.slaStates],
+    ] as const;
+    for (const [key, values] of arrayKeys) {
+      if (values && values.length > 0) params.set(key, values.join(","));
+    }
+    const suffix = params.toString() ? `?${params.toString()}` : "";
+    return request<import("@repo/contracts/reports").ManagerReportResponse>(
+      `/reports/manager${suffix}`,
+      managerReportResponseSchema,
     );
   },
 };

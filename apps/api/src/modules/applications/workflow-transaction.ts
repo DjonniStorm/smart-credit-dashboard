@@ -173,9 +173,10 @@ export class WorkflowTransaction {
     }
     if (shouldCountOverride) {
       await this.manager.query(
-        `insert into application_events(application_id, kind, payload)
-         values($1, 'autonomy_override', $2)`,
+        `insert into application_events(event_key, application_id, kind, payload)
+         values($1, $2, 'autonomy_override', $3)`,
         [
+          `autonomy-override-${randomUUID()}`,
           current.id,
           {
             actionType,
@@ -211,8 +212,8 @@ export class WorkflowTransaction {
     payload: Record<string, unknown>,
   ): Promise<string> {
     const rows = await this.manager.query(
-      "insert into application_events(application_id,kind,payload) values($1,$2,$3) returning id",
-      [applicationId, kind, payload],
+      "insert into application_events(event_key,application_id,kind,payload) values($1,$2,$3,$4) returning id",
+      [`event-${randomUUID()}`, applicationId, kind, payload],
     );
     return String(rows[0].id);
   }

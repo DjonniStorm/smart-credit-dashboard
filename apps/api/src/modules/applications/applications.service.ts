@@ -246,6 +246,17 @@ export class ApplicationsService {
           reasons: decision.reasons,
           autonomyMode: decision.autonomyMode,
           autonomyDisposition: autonomyCase?.disposition ?? null,
+          reportContext: {
+            version: 1,
+            productId: application.productId,
+            status: offer ? "approved" : "in_review",
+            stage: "decision",
+            actorKind: "system",
+            actorName: "Кредитный конвейер",
+            recommendation: decision.recommendation,
+            autonomyMode: decision.autonomyMode,
+            autonomyDisposition: autonomyCase?.disposition ?? null,
+          },
         },
       });
     } catch (error) {

@@ -13,6 +13,7 @@ import { StorageModule } from "./common/storage/storage.module.ts";
 import { DemoDataModule } from "./common/demo-data/demo-data.module.ts";
 import { AuthModule } from "./modules/auth/auth.module.ts";
 import { CatalogModule } from "./modules/catalog/catalog.module.ts";
+import { ReportsModule } from "./modules/reports/reports.module.ts";
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { CatalogModule } from "./modules/catalog/catalog.module.ts";
     HealthModule,
     CompaniesModule,
     ApplicationsModule,
+    ReportsModule,
     ExampleModule,
   ],
   providers: [
