@@ -17,6 +17,12 @@ export {
   stageOf,
   stages,
 } from "./model/stage";
+export {
+  buildRoadmap,
+  type Roadmap as RoadmapData,
+  type RoadmapStep,
+} from "./model/roadmap";
+export { Roadmap } from "./ui/roadmap";
 export { DecisionFactors } from "./ui/decision-factors";
 export { HealthIndices } from "./ui/health-indices";
 export { ApplicationHistory } from "./ui/application-history";
