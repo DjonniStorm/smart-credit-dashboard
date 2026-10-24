@@ -12,6 +12,7 @@ import {
   clientActionResponseSchema,
 } from "@repo/contracts/client-actions";
 import { companyProfileResponseSchema } from "@repo/contracts/company-profile";
+import { clientReportDetailSchema, clientReportListSchema } from "@repo/contracts/client-reports";
 
 import {
   toCabinetApplication,
@@ -131,6 +132,16 @@ export const httpApi: CabinetApi = {
   sign: (id, code, key) => clientAction(id, { type: "sign", code }, key),
   setUrgent: (id, enabled, reason, key) =>
     clientAction(id, { type: "set_urgent", enabled, reason }, key),
+  listClientReports: (query) => {
+    const params = new URLSearchParams();
+    if (query?.cursor) params.set("cursor", query.cursor);
+    if (query?.limit) params.set("limit", String(query.limit));
+    for (const value of query?.status ?? []) params.append("status", value);
+    if (query?.from) params.set("from", query.from);
+    if (query?.to) params.set("to", query.to);
+    return call(clientReportListSchema, `/v1/client-reports?${params.toString()}`);
+  },
+  getClientReport: (id) => call(clientReportDetailSchema, `/v1/client-reports/${id}`),
 };
 
 function sendClientAction(

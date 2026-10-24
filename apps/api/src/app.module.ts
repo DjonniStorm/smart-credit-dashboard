@@ -14,6 +14,7 @@ import { DemoDataModule } from "./common/demo-data/demo-data.module.ts";
 import { AuthModule } from "./modules/auth/auth.module.ts";
 import { CatalogModule } from "./modules/catalog/catalog.module.ts";
 import { ReportsModule } from "./modules/reports/reports.module.ts";
+import { ClientReportsModule } from "./modules/client-reports/client-reports.module.ts";
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { ReportsModule } from "./modules/reports/reports.module.ts";
     CompaniesModule,
     ApplicationsModule,
     ReportsModule,
+    ClientReportsModule,
     ExampleModule,
   ],
   providers: [

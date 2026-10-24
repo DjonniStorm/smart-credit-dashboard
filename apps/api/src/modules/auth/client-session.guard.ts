@@ -38,3 +38,5 @@ export const CurrentClient = createParamDecorator(
     return request.clientSession;
   },
 );
+
+export type ClientOwnedResource = { inn: string };
