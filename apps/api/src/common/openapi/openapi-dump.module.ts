@@ -4,6 +4,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiProduces,
   ApiQuery,
 } from "@nestjs/swagger";
 import { ZodSerializerDto, createZodDto } from "nestjs-zod";
@@ -24,6 +25,7 @@ import {
   CompanyProfileDto,
 } from "../../modules/companies/dto/company-profile.dto.ts";
 import { HealthDto } from "../../modules/health/dto/health.dto.ts";
+import { clientReportDetailSchema, clientReportListSchema } from "@repo/contracts/client-reports";
 
 class AutonomySnapshotDto extends createZodDto(apiAutonomySnapshotSchema) {}
 class AutonomySnapshotListDto extends createZodDto(
@@ -36,6 +38,8 @@ class AutonomyPolicyActionDto extends createZodDto(
   autonomyPolicyActionRequestSchema,
 ) {}
 class ManagerReportDto extends createZodDto(managerReportResponseSchema) {}
+class ClientReportListDto extends createZodDto(clientReportListSchema) {}
+class ClientReportDetailDto extends createZodDto(clientReportDetailSchema) {}
 
 @Controller("health")
 class HealthController {
@@ -170,12 +174,46 @@ class ReportsController {
   }
 }
 
+@Controller("v1/client-reports")
+class ClientReportsOpenApiController {
+  @Get()
+  @ApiOperation({ operationId: "ClientReportsController_list" })
+  @ApiQuery({ name: "cursor", required: false, type: String })
+  @ApiQuery({ name: "limit", required: false, type: Number })
+  @ApiQuery({ name: "status", required: false, type: String, isArray: true })
+  @ApiQuery({ name: "from", required: false, type: String })
+  @ApiQuery({ name: "to", required: false, type: String })
+  @ApiOkResponse({ type: ClientReportListDto })
+  @ZodSerializerDto(ClientReportListDto)
+  list(): ClientReportListDto { return {} as ClientReportListDto; }
+
+  @Get("export.csv")
+  @ApiOperation({ operationId: "ClientReportsController_export" })
+  @ApiProduces("text/csv")
+  @ApiOkResponse({
+    description: "CSV-выгрузка отчётов клиента",
+    content: {
+      "text/csv": {
+        schema: { type: "string", format: "binary" },
+      },
+    },
+  })
+  export(): string { return ""; }
+
+  @Get(":id")
+  @ApiOperation({ operationId: "ClientReportsController_detail" })
+  @ApiOkResponse({ type: ClientReportDetailDto })
+  @ZodSerializerDto(ClientReportDetailDto)
+  detail(): ClientReportDetailDto { return {} as ClientReportDetailDto; }
+}
+
 @Module({
   controllers: [
     HealthController,
     CompaniesController,
     AutonomyController,
     ReportsController,
+    ClientReportsOpenApiController,
   ],
 })
 export class OpenApiDumpModule {}

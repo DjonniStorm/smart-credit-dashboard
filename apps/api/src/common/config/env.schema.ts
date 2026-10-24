@@ -14,6 +14,7 @@ export const envSchema = z.object({
     .positive()
     .default(DEFAULT_KEY_RATE.value),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  CLIENT_REPORT_CURSOR_SECRET: z.string().min(16).default("demo-client-report-cursor-secret"),
 });
 
 export type Env = z.infer<typeof envSchema>;

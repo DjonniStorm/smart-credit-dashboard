@@ -42,6 +42,7 @@ import {
   ClientSessionGuard,
   CurrentClient,
 } from "../auth/client-session.guard.ts";
+import { ClientApplicationScopeService } from "./client-application-scope.service.ts";
 import {
   CurrentEmployee,
   EmployeeSessionGuard,
@@ -50,6 +51,7 @@ import { ApplicationsService } from "./applications.service.ts";
 import { AutonomyStore } from "./autonomy.store.ts";
 import { ApplyApplicationActionCommand } from "./commands/apply-application-action.command.ts";
 import { ApplyClientActionCommand } from "./commands/apply-client-action.command.ts";
+import { toApiApplication } from "./api-mapper.ts";
 
 export class CreateApplicationDto extends createZodDto(
   apiCreateApplicationSchema,
@@ -84,6 +86,7 @@ export class ApplicationsController {
   constructor(
     private readonly applications: ApplicationsService,
     private readonly commands: CommandBus,
+    private readonly clientScope: ClientApplicationScopeService,
   ) {}
 
   @Get("queue")
@@ -137,10 +140,11 @@ export class ApplicationsController {
   }
 
   @Get()
+  @UseGuards(ClientSessionGuard)
   @ApiOkResponse({ type: ApplicationDto, isArray: true })
   @ZodSerializerDto(ApplicationListDto)
-  list(): Promise<ApplicationDto[]> {
-    return this.applications.listApiApplications();
+  list(@CurrentClient() session: DemoSession): Promise<ApplicationDto[]> {
+    return this.clientScope.list(session).then((items) => items.map((item) => toApiApplication(item)));
   }
 
   @Post()
@@ -154,6 +158,7 @@ export class ApplicationsController {
   }
 
   @Get(":id/context")
+  @UseGuards(EmployeeSessionGuard)
   @ApiOperation({ operationId: "ApplicationsController_context" })
   @ApiOkResponse({ type: ApplicationContextDto })
   @ZodSerializerDto(ApplicationContextDto)
@@ -162,10 +167,12 @@ export class ApplicationsController {
   }
 
   @Get(":id")
+  @UseGuards(ClientSessionGuard)
   @ApiOkResponse({ type: ApplicationDto })
   @ZodSerializerDto(ApplicationDto)
-  async get(@Param("id") id: string): Promise<ApplicationDto> {
-    return this.applications.getApiApplication(id);
+  async get(@Param("id") id: string, @CurrentClient() session: DemoSession): Promise<ApplicationDto> {
+    const application = await this.clientScope.get(session, id);
+    return toApiApplication(application);
   }
 
   @Post(":id/checks")

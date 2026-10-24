@@ -7,6 +7,7 @@ import type {
   ProductCatalog,
 } from "@repo/contracts/cabinet";
 import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
+import type { ClientReportDetail, ClientReportList, ClientReportQuery } from "@repo/contracts/client-reports";
 
 /**
  * Всё, что кабинет клиента берёт у бэкенда. Реализация использует HTTP API.
@@ -49,6 +50,8 @@ export interface CabinetApi {
     reason: string,
     idempotencyKey: string,
   ): Promise<Application>;
+  listClientReports(query?: Partial<ClientReportQuery>): Promise<ClientReportList>;
+  getClientReport(id: string): Promise<ClientReportDetail>;
 }
 
 export class ApiError extends Error {
