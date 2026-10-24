@@ -91,6 +91,12 @@ Scoring service остаётся заменяемым: baseline, обученн�
 
 ## Переход к ML
 
+В текущем коде реализован безопасный evaluation scaffold: temporal split без перемешивания,
+отдельный calibration split, isotonic challenger, bounded metrics и quality gate. Пока нет
+размеченного production-датасета, endpoint оценки намеренно выбирает champion при любой
+неуверенности и оставляет challenger в shadow. Этот scaffold не считается обученной моделью и
+не используется для автоматического одобрения.
+
 ### Этап 1: качество данных
 
 - единая схема feature snapshot;

@@ -11,6 +11,10 @@ from app.ml_pipeline import (
     synthetic_pd_dataset,
     drift_report,
     evaluate_model,
+    fit_sigmoid_calibrator,
+    calibrate_sigmoid,
+    select_challenger,
+    temporal_split,
 )
 
 
@@ -44,6 +48,31 @@ class MlPipelineTests(unittest.TestCase):
         self.assertEqual(evaluation.auc, 1.0)
         report = drift_report([0.1, 0.2, 0.3], [0.8, 0.9, 1.0])
         self.assertTrue(report.population_shifted)
+
+    def test_temporal_split_does_not_shuffle(self) -> None:
+        scores = list(range(20))
+        labels = [index % 2 for index in range(20)]
+        split = temporal_split(scores, labels)
+        self.assertEqual(split.train[0], 0)
+        self.assertEqual(split.test[-1], 19)
+        self.assertEqual(len(split.train) + len(split.calibration) + len(split.test), 20)
+
+    def test_sigmoid_calibrator_is_bounded_and_deterministic(self) -> None:
+        scores = [0.1, 0.2, 0.8, 0.9] * 20
+        labels = [0, 0, 1, 1] * 20
+        calibrator = fit_sigmoid_calibrator(scores, labels)
+        first = calibrate_sigmoid(0.8, calibrator)
+        second = calibrate_sigmoid(0.8, calibrator)
+        self.assertEqual(first, second)
+        self.assertGreater(first, 0.5)
+        self.assertLessEqual(first, 1.0)
+
+    def test_challenger_quality_gate_fails_safe(self) -> None:
+        champion = evaluate_model("champion", [0, 0, 1, 1], [0.1, 0.2, 0.7, 0.9])
+        challenger = evaluate_model("challenger", [0, 0, 1, 1], [0.2, 0.3, 0.6, 0.8])
+        selection = select_challenger(champion, challenger)
+        self.assertEqual(selection.selected, "champion")
+        self.assertFalse(selection.challenger_eligible)
 
 
 if __name__ == "__main__":

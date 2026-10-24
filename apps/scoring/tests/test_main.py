@@ -1,6 +1,13 @@
 import unittest
 
-from app.main import ScoreRequest, calculate_score, calculate_score_details, score
+from app.main import (
+    ScoreRequest,
+    calculate_score,
+    calculate_score_details,
+    model_evaluation,
+    model_registry,
+    score,
+)
 
 
 def request(**overrides: object) -> ScoreRequest:
@@ -188,6 +195,20 @@ class SourceGapTests(unittest.TestCase):
         without = score(complete(consentBki=False))
         self.assertLess(without.confidence, with_consent.confidence)
         self.assertLess(without.score, with_consent.score)
+
+
+class ModelEndpointTests(unittest.TestCase):
+    def test_evaluation_uses_temporal_split_and_quality_gate(self) -> None:
+        report = model_evaluation()
+        self.assertEqual(report["split"], {"train": 360, "calibration": 120, "test": 120})
+        self.assertEqual(report["selected"], report["selection"]["selected"])
+        self.assertEqual(report["champion"]["sample_count"], 120)
+        self.assertEqual(report["challenger"]["sample_count"], 120)
+
+    def test_registry_keeps_challenger_in_shadow(self) -> None:
+        registry = model_registry()
+        self.assertEqual(registry["champion"]["status"], "active")
+        self.assertEqual(registry["challengers"][0]["status"], "shadow")
 
 
 if __name__ == "__main__":

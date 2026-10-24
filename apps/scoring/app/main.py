@@ -6,7 +6,15 @@ from typing import Literal, Optional
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-from .ml_pipeline import drift_report, evaluate_model, synthetic_pd_dataset
+from .ml_pipeline import (
+    calibrate,
+    drift_report,
+    evaluate_model,
+    fit_isotonic_calibrator,
+    select_challenger,
+    synthetic_pd_dataset,
+    temporal_split,
+)
 
 app = FastAPI(title="alfa-future scoring", version="0.1.0")
 
@@ -367,12 +375,51 @@ def score(req: ScoreRequest) -> ScoreResponse:
 
 @app.get("/v1/models/evaluation")
 def model_evaluation() -> dict[str, object]:
-    """Регрессионный champion/challenger отчёт для демо и мониторинга."""
-    scores, labels = synthetic_pd_dataset(size=200, seed=7)
-    probabilities = [max(0.01, min(0.5, 0.35 - value * 0.003)) for value in scores]
-    baseline = evaluate_model("rules-baseline-v2", labels, probabilities, scores)
-    challenger = evaluate_model("calibrated-challenger-v1", labels, probabilities, scores)
-    return {"champion": baseline.__dict__, "challenger": challenger.__dict__, "selected": baseline.model}
+    """Temporal champion/challenger evaluation с безопасным quality gate."""
+    scores, labels = synthetic_pd_dataset(size=600, seed=7)
+    split = temporal_split(scores, labels)
+    champion_probabilities = [max(0.01, min(0.5, 0.35 - value * 0.003)) for value in split.test]
+    calibrator = fit_isotonic_calibrator(split.calibration, split.calibration_labels)
+    challenger_probabilities = [calibrate(value, calibrator) for value in split.test]
+    champion = evaluate_model("rules-baseline-v2", split.test_labels, champion_probabilities, split.test)
+    challenger = evaluate_model(
+        "calibrated-challenger-v1", split.test_labels, challenger_probabilities, split.test
+    )
+    selection = select_challenger(champion, challenger)
+    return {
+        "split": {
+            "train": len(split.train),
+            "calibration": len(split.calibration),
+            "test": len(split.test),
+        },
+        "champion": champion.__dict__,
+        "challenger": challenger.__dict__,
+        "selection": selection.__dict__,
+        "selected": selection.selected,
+    }
+
+
+@app.get("/v1/models/registry")
+def model_registry() -> dict[str, object]:
+    """Минимальный registry contract; deployment хранит фактические artefacts отдельно."""
+    return {
+        "champion": {
+            "name": "rules-baseline-v2",
+            "version": "2026-10-23",
+            "status": "active",
+            "calibration": "demonstration-only",
+        },
+        "challengers": [
+            {
+                "name": "calibrated-challenger-v1",
+                "version": "synthetic-evaluation",
+                "status": "shadow",
+                "calibration": "isotonic",
+            }
+        ],
+        "policy": "policy-baseline-v2",
+        "fail_safe": "champion + manual_review on validation or dependency failure",
+    }
 
 
 @app.post("/v1/models/drift")
