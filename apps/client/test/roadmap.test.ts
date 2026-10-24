@@ -19,6 +19,7 @@ function app(patch: Partial<Application>): Application {
     decision: null,
     deal: null,
     cancelledBy: null,
+    cancelledFrom: null,
     ...patch,
   } as Application;
 }
@@ -225,6 +226,24 @@ test("rejected сотрудником банка: отдельный текст,
   assert.equal(decision.actor, "bank");
   assert.match(decision.explanation, /отменил/);
   assert.deepEqual(map.branches, []);
+});
+
+test("rejected сотрудником банка после подписания: текущий шаг «Подписание»", () => {
+  const map = buildRoadmap(
+    app({
+      status: "rejected",
+      cancelledBy: "employee",
+      cancelledFrom: "signing",
+      decision: null,
+    }),
+  );
+  assert.deepEqual(
+    map.steps.map((step) => step.state),
+    ["done", "done", "done", "done", "current"],
+  );
+  const signing = stepAt(map, 4);
+  assert.equal(signing.title, "Подписание");
+  assert.match(signing.explanation, /отменил/);
 });
 
 test("blocked на проверке: текущий шаг по этапу до блокировки", () => {

@@ -57,6 +57,8 @@ export const applicationWorkflowSchema = z.object({
   clientReply: clientReplySchema.nullable().default(null),
   deal: applicationDealSchema.nullable().default(null),
   cancelledBy: actorSchema.shape.kind.nullable().default(null),
+  /** Статус до отмены: по нему кабинет показывает, на каком этапе путь закончился. */
+  cancelledFrom: workflowStatusSchema.nullable().default(null),
   checkJobId: z.string().nullable(),
   decision: apiDecisionSchema.nullable(),
   scoring: z

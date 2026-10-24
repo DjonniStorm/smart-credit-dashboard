@@ -202,6 +202,8 @@ export const apiApplicationSchema = z.object({
   deal: applicationDealSchema.nullable().default(null),
   /** Кто закрыл заявку отменой: клиент отказался от предложения или сотрудник её отменил. */
   cancelledBy: actorSchema.shape.kind.nullable().default(null),
+  /** Рабочий статус до отмены; заполнен только для CANCELLED. */
+  cancelledFrom: workflowStatusSchema.nullable().default(null),
   /** Запрос клиента на срочный режим и решение банка по нему. Автора решения клиенту не показываем. */
   urgentRequest: urgentRequestSchema
     .omit({ resolvedBy: true })

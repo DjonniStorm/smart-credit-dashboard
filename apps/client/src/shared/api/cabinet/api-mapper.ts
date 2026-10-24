@@ -64,8 +64,8 @@ function decisionOf(application: ApiApplication): Application["decision"] {
   });
   const advice = scoring.nextActions[0] ?? null;
 
-  // Решение сотрудника важнее рекомендации скоринга. После принятия и отказа клиента
-  // решение банка остаётся прежним: по нему кабинет отличает отказ клиента от отказа банка.
+  // Решение сотрудника важнее рекомендации скоринга. При отмене клиентом решение по
+  // офферу сохраняется, а саму отмену кабинет отличает по полю cancelledBy.
   const declinedByClient =
     application.status === "CANCELLED" && application.cancelledBy === "client";
   if (
@@ -231,6 +231,7 @@ export function toCabinetApplication(
       application.cancelledBy === "employee"
         ? application.cancelledBy
         : null,
+    cancelledFrom: application.cancelledFrom,
     urgentRequest: application.urgentRequest,
     urgentBy: application.urgentBy,
     events: [],
