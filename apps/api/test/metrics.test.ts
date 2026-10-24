@@ -88,8 +88,9 @@ async function seedMetrics(source: DataSource): Promise<void> {
     ["app-m-2"],
   );
 
-  const startedAt = new Date(Date.now() - 60_000).toISOString();
-  const finishedAt = new Date().toISOString();
+  const now = Date.now();
+  const startedAt = new Date(now - 60_000).toISOString();
+  const finishedAt = new Date(now).toISOString();
   await source.query(
     `insert into scoring_jobs(id, application_id, status, idempotency_key, created_at, started_at, finished_at, attempts)
      values
@@ -118,9 +119,7 @@ async function seedMetrics(source: DataSource): Promise<void> {
   );
 }
 
-function getMetrics(
-  targetPort: number,
-): Promise<{
+function getMetrics(targetPort: number): Promise<{
   status: number;
   headers: http.IncomingHttpHeaders;
   body: string;
