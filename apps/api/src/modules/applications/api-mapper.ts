@@ -169,6 +169,9 @@ export function toApiScoring(response: {
   score: number;
   model: string;
   model_version?: string;
+  policy_version?: string;
+  feature_snapshot_id?: string;
+  computed_at?: string;
   grade?: "A" | "B" | "C" | "D";
   risk_band?: "low" | "moderate" | "high";
   pd?: number;
@@ -179,11 +182,17 @@ export function toApiScoring(response: {
   factors?: ApiScoring["factors"];
   reasons?: string[];
   next_actions?: string[];
+  explainability?: string[];
+  autonomy_mode?: ApiScoring["autonomyMode"];
+  missing_sources?: string[];
 }): ApiScoring {
   return {
     score: response.score,
     model: response.model,
     modelVersion: response.model_version ?? response.model,
+    policyVersion: response.policy_version ?? "policy-baseline-v2",
+    featureSnapshotId: response.feature_snapshot_id ?? "",
+    computedAt: response.computed_at ?? new Date().toISOString(),
     grade: response.grade ?? "C",
     riskBand: response.risk_band ?? "moderate",
     pd: response.pd ?? 0.2,
@@ -198,5 +207,8 @@ export function toApiScoring(response: {
     })),
     reasons: response.reasons ?? [],
     nextActions: response.next_actions ?? [],
+    explainability: response.explainability ?? [],
+    autonomyMode: response.autonomy_mode ?? "shadow",
+    missingSources: response.missing_sources ?? [],
   };
 }

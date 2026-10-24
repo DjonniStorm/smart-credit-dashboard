@@ -1,3 +1,6 @@
+import hashlib
+import json
+from datetime import datetime, timezone
 from typing import Literal, Optional
 
 from fastapi import FastAPI
@@ -60,6 +63,9 @@ class ScoreResponse(BaseModel):
     model: str
     factors: list[ScoreFactor] = Field(default_factory=list)
     model_version: str = "2026-10-23"
+    policy_version: str = "policy-baseline-v2"
+    feature_snapshot_id: str = ""
+    computed_at: str = ""
     grade: Literal["A", "B", "C", "D"] = "C"
     pd: float = Field(default=0.2, ge=0, le=1)
     risk_band: Literal["low", "moderate", "high"] = "moderate"
@@ -98,6 +104,13 @@ def _bki_number(req: ScoreRequest, key: str) -> float | None:
 
 def _positive(value: float | None) -> bool:
     return value is not None and value > 0
+
+
+def _feature_snapshot_id(req: ScoreRequest) -> str:
+    """Stable identifier for the exact normalized input used by scoring."""
+    payload = req.model_dump(mode="json", exclude_none=True)
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    return "fs-" + hashlib.sha256(encoded).hexdigest()[:24]
 
 
 def _source_coverage(req: ScoreRequest) -> float:
@@ -139,7 +152,16 @@ def calculate_score_details(req: ScoreRequest) -> tuple[float, list[ScoreFactor]
         impact = 0.0
         value = "Нет данных"
     score += impact
-    factors.append(ScoreFactor(id="egrul_status", label="Статус ЕГРЮЛ", value=value, impact=impact))
+    factors.append(
+        ScoreFactor(
+            id="egrul_status",
+            label="Статус ЕГРЮЛ",
+            value=value,
+            impact=impact,
+            source="egrul",
+            confidence=1.0 if status else 0.0,
+        )
+    )
 
     overdue_days = _bki_number(req, "overdueDays")
     if overdue_days is None:
@@ -155,7 +177,16 @@ def calculate_score_details(req: ScoreRequest) -> tuple[float, list[ScoreFactor]
         impact = -25.0
         value = f"Просрочка {int(overdue_days)} дн."
     score += impact
-    factors.append(ScoreFactor(id="bki_overdue", label="Просрочки БКИ", value=value, impact=impact))
+    factors.append(
+        ScoreFactor(
+            id="bki_overdue",
+            label="Просрочки БКИ",
+            value=value,
+            impact=impact,
+            source="bki",
+            confidence=1.0 if overdue_days is not None and req.consentBki else 0.0,
+        )
+    )
 
     tax_debt = _number(req.fns, "taxDebtRub")
     if tax_debt is None:
@@ -171,7 +202,16 @@ def calculate_score_details(req: ScoreRequest) -> tuple[float, list[ScoreFactor]
         impact = -20.0
         value = f"Долг {tax_debt:,.0f} ₽"
     score += impact
-    factors.append(ScoreFactor(id="fns_tax_debt", label="Налоговый долг", value=value, impact=impact))
+    factors.append(
+        ScoreFactor(
+            id="fns_tax_debt",
+            label="Налоговый долг",
+            value=value,
+            impact=impact,
+            source="fns",
+            confidence=1.0 if tax_debt is not None else 0.0,
+        )
+    )
 
     active_loans = _bki_number(req, "activeLoans")
     if active_loans is None:
@@ -184,7 +224,16 @@ def calculate_score_details(req: ScoreRequest) -> tuple[float, list[ScoreFactor]
         impact = -5.0
         value = f"Активных кредитов: {int(active_loans)}"
     score += impact
-    factors.append(ScoreFactor(id="bki_active_loans", label="Активные кредиты", value=value, impact=impact))
+    factors.append(
+        ScoreFactor(
+            id="bki_active_loans",
+            label="Активные кредиты",
+            value=value,
+            impact=impact,
+            source="bki",
+            confidence=1.0 if active_loans is not None and req.consentBki else 0.0,
+        )
+    )
 
     return max(0.0, min(100.0, score)), factors
 
@@ -275,6 +324,9 @@ def _derived_result(req: ScoreRequest, score: float) -> dict[str, object]:
 
     return {
         "model_version": "2026-10-23",
+        "policy_version": "policy-baseline-v2",
+        "feature_snapshot_id": _feature_snapshot_id(req),
+        "computed_at": datetime.now(timezone.utc).isoformat(),
         "grade": grade,
         "pd": round(pd, 4),
         "risk_band": risk_band,
