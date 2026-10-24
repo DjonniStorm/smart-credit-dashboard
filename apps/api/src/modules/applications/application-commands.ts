@@ -198,6 +198,7 @@ export function runCommand(
     }
     case "cancel":
       next.cancelledBy = "employee";
+      next.cancelledFrom = current.status;
       next.deal = null;
       return changeStatus("cancelled", "Заявка отменена", action.reason);
     case "assign": {

@@ -108,6 +108,7 @@ export function runClientCommand(
         "Предложение сейчас нельзя отклонить",
       );
       next.cancelledBy = "client";
+      next.cancelledFrom = current.status;
       return changeStatus("cancelled", "Клиент отказался от предложения");
     }
     case "request_sign_code": {

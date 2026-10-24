@@ -30,13 +30,35 @@ function interruptIndex(app: Application): number {
   return app.checksPassed < 1 ? 1 : 2;
 }
 
+/** Индекс финального шага по статусу до отмены. */
+function cancelledFromIndex(app: Application): number {
+  switch (app.cancelledFrom) {
+    case "draft":
+      return 0;
+    case "in_review":
+      return app.checksPassed < 1 ? 1 : 2;
+    case "needs_client":
+      return 2;
+    case "approved":
+    case "counter_offer":
+      return 3;
+    case "accepted":
+    case "signing":
+      return 4;
+    default:
+      return 3;
+  }
+}
+
 /** Индекс финального шага закрытой заявки: где именно она закончилась. */
 function terminalIndex(app: Application): number {
   if (app.cancelledBy === "client") {
     return isDeclinedByClient(app) ? 3 : 0;
   }
   if (app.cancelledBy === "employee") {
-    return interruptIndex(app);
+    return app.cancelledFrom !== null
+      ? cancelledFromIndex(app)
+      : interruptIndex(app);
   }
   return 3;
 }

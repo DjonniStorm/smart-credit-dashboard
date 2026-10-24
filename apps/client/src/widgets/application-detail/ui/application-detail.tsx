@@ -140,6 +140,11 @@ function Detail({ app }: { app: Application }) {
   const catalog = useCatalog();
   const product = catalog.data?.products.find((p) => p.id === app.productId);
   const stage = stageOf(app);
+  // Закрытые заявки путь закончили: рельса и карта не показывают будущие этапы.
+  const railStages =
+    app.status === "rejected"
+      ? stages.slice(0, Math.min(stage.current, stages.length - 1) + 1)
+      : stages;
 
   return (
     <Stack gap="lg">
@@ -160,7 +165,7 @@ function Detail({ app }: { app: Application }) {
                   {lx.detail.path}
                 </Title>
                 <StageRail
-                  stages={stages}
+                  stages={railStages}
                   current={stage.current}
                   waitingForClient={stage.waitingForClient}
                 />

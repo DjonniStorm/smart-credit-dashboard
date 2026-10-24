@@ -107,6 +107,7 @@ export function toApiApplication(
     clientReply: application.clientReply,
     deal: dealStatuses.has(application.status) ? application.deal : null,
     cancelledBy: application.cancelledBy,
+    cancelledFrom: application.cancelledFrom,
     urgentRequest: clientUrgentRequest(application.urgentRequest),
     urgentBy: application.urgent
       ? (application.urgentSource?.by ?? null)

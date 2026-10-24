@@ -67,7 +67,7 @@ export class WorkflowTransaction {
        hold=$6, urgent=$7, urgent_reason=$8, assignee_id=$9, handoff=$10,
        check_job_id=$11, scoring=$12, decision=$13, updated_at=$14,
        client_reply=$15, deal=$16, cancelled_by=$17, autonomy_case=$18,
-       urgent_source=$19, urgent_request=$20 where id=$1`,
+       urgent_source=$19, urgent_request=$20, cancelled_from=$21 where id=$1`,
       [
         application.id,
         application.status,
@@ -89,6 +89,7 @@ export class WorkflowTransaction {
         application.autonomyCase,
         application.urgentSource,
         application.urgentRequest,
+        application.cancelledFrom,
       ],
     );
   }
@@ -123,8 +124,9 @@ export class WorkflowTransaction {
     const shouldCountOverride =
       currentCase.eligible && isManualOverride && !currentCase.overrideCounted;
     const shouldClose =
-      ["accept_offer", "reject", "cancel", "decline_offer", "sign"].includes(actionType) &&
-      !currentCase.closed;
+      ["accept_offer", "reject", "cancel", "decline_offer", "sign"].includes(
+        actionType,
+      ) && !currentCase.closed;
     if (!shouldCountOverride && !shouldClose) {
       return;
     }

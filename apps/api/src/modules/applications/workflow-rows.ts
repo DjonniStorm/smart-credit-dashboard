@@ -32,6 +32,8 @@ export function applicationFromRow(row: Row): ApplicationWorkflow {
     deal: (row.deal as ApplicationWorkflow["deal"]) ?? null,
     cancelledBy:
       (row.cancelled_by as ApplicationWorkflow["cancelledBy"]) ?? null,
+    cancelledFrom:
+      (row.cancelled_from as ApplicationWorkflow["cancelledFrom"]) ?? null,
     checkJobId: (row.check_job_id as string | null) ?? null,
     scoring: (row.scoring as ApplicationWorkflow["scoring"]) ?? null,
     decision: (row.decision as ApplicationWorkflow["decision"]) ?? null,
