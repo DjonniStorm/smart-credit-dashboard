@@ -33,6 +33,7 @@ import {
   toApiManagement,
   toApiScoring,
 } from "./api-mapper.ts";
+import { buildAutoRequest } from "./auto-request.ts";
 import { AutonomyStore } from "./autonomy.store.ts";
 import { decide } from "./decision-engine.ts";
 import {
@@ -64,7 +65,6 @@ export class ApplicationsService {
     const applications = await this.store.listApplications();
     return applications.map((application) => toApiApplication(application));
   }
-
   /** Очередь АРМ: заявки с управленческим состоянием, только для сотрудников. */
   async listQueue(): Promise<ApiQueueItem[]> {
     const applications = await this.store.listApplications();
@@ -88,7 +88,6 @@ export class ApplicationsService {
       await this.store.listComments(id, "client"),
     );
   }
-
   async getApiApplicationContext(id: string): Promise<ApiApplicationContext> {
     await this.store.expireAutoOffer(id);
     const application = await this.getApplication(id);
@@ -154,9 +153,7 @@ export class ApplicationsService {
   }
 
   /**
-   * Вызывается воркером после атомарного захвата задачи (статус `running`, `attempts` уже увеличен).
-   * Ошибка скоринга уходит в retry; ошибка записи самого результата тоже, а если не записался и retry,
-   * задачу подберёт recovery по истечении аренды.
+   * Вызывается воркером после атомарного захвата задачи; ошибки уходят в retry.
    */
   async processJob(job: ScoringJob): Promise<void> {
     try {
@@ -209,26 +206,11 @@ export class ApplicationsService {
             autoDecisionAt: controlWindowEndsAt ? now.toISOString() : null,
           }
         : null;
-      // Расхождения источников (ИНН, название, адрес, вид деятельности) для компании
-      // задаются в демо-сценарии и попадают в companySourceSnapshot; по ним система
-      // сама запрашивает подтверждение у клиента ещё до передачи заявки менеджеру.
-      const discrepancies = this.data.getCompanyProfileScenario(
-        application.inn,
-      ).discrepancies;
-      const autoRequest =
-        discrepancies.length > 0 &&
-        decision.recommendation !== "reject" &&
-        application.status === "in_review" &&
-        application.requestedInfo.length === 0 &&
-        !application.hold
-          ? {
-              items: [...new Set(discrepancies.map((item) => item.nextStep))],
-              reasons: discrepancies.map(
-                (item) =>
-                  `${item.label}: ${item.firstValue} / ${item.secondValue}`,
-              ),
-            }
-          : null;
+      const autoRequest = buildAutoRequest(
+        application,
+        decision,
+        this.data.getCompanyProfileScenario(application.inn).discrepancies,
+      );
       const catalog = this.catalog?.getCatalog();
       const product = catalog?.products.find(
         (item) => item.id === application.productId,
@@ -250,7 +232,6 @@ export class ApplicationsService {
         : offer
           ? "approved"
           : "in_review";
-      const finalStage = autoRequest ? "completeness" : "decision";
       await this.store.completeJob(job, {
         result: {
           score: result.scoring.score,
@@ -281,7 +262,7 @@ export class ApplicationsService {
             version: 1,
             productId: application.productId,
             status: finalStatus,
-            stage: finalStage,
+            stage: autoRequest ? "completeness" : "decision",
             actorKind: "system",
             actorName: "Кредитный конвейер",
             recommendation: decision.recommendation,
