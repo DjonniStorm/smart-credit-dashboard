@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from .ml_pipeline import (
     calibrate,
+    bootstrap_confidence_interval,
     drift_report,
     evaluate_model,
     fit_isotonic_calibrator,
@@ -394,6 +395,12 @@ def model_evaluation() -> dict[str, object]:
         },
         "champion": champion.__dict__,
         "challenger": challenger.__dict__,
+        "confidence_intervals": {
+            "champion_brier": bootstrap_confidence_interval(
+                split.test_labels, champion_probabilities, metric="brier").__dict__,
+            "challenger_brier": bootstrap_confidence_interval(
+                split.test_labels, challenger_probabilities, metric="brier").__dict__,
+        },
         "selection": selection.__dict__,
         "selected": selection.selected,
     }

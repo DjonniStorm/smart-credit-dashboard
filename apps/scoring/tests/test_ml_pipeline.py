@@ -15,6 +15,9 @@ from app.ml_pipeline import (
     calibrate_sigmoid,
     select_challenger,
     temporal_split,
+    bootstrap_confidence_interval,
+    precision_recall_auc,
+    ks_statistic,
 )
 
 
@@ -73,6 +76,17 @@ class MlPipelineTests(unittest.TestCase):
         selection = select_challenger(champion, challenger)
         self.assertEqual(selection.selected, "champion")
         self.assertFalse(selection.challenger_eligible)
+
+    def test_advanced_risk_metrics_and_bootstrap_are_deterministic(self) -> None:
+        labels = [0, 0, 1, 1] * 25
+        probabilities = [0.1, 0.2, 0.7, 0.9] * 25
+        self.assertEqual(precision_recall_auc(labels, probabilities), 1.0)
+        self.assertEqual(ks_statistic(labels, probabilities), 1.0)
+        first = bootstrap_confidence_interval(labels, probabilities, metric="brier", seed=11)
+        second = bootstrap_confidence_interval(labels, probabilities, metric="brier", seed=11)
+        self.assertEqual(first, second)
+        self.assertLessEqual(first.lower, first.estimate)
+        self.assertLessEqual(first.estimate, first.upper)
 
 
 if __name__ == "__main__":

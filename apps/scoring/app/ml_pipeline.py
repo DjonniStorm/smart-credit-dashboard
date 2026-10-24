@@ -35,6 +35,8 @@ class ModelEvaluation:
     auc: float
     sample_count: int = 0
     positive_rate: float = 0.0
+    pr_auc: float = 0.0
+    ks: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -62,6 +64,15 @@ class DriftReport:
     population_shifted: bool
     baseline_count: int
     current_count: int
+
+
+@dataclass(frozen=True)
+class ConfidenceInterval:
+    metric: str
+    estimate: float
+    lower: float
+    upper: float
+    samples: int
 
 
 def _sigmoid(value: float) -> float:
@@ -247,6 +258,82 @@ def rank_auc(labels: Sequence[int], scores: Sequence[float]) -> float:
     return wins / (len(positives) * len(negatives))
 
 
+def precision_recall_auc(labels: Sequence[int], scores: Sequence[float]) -> float:
+    """Average-precision style PR-AUC for imbalanced default targets."""
+    if len(labels) != len(scores) or not labels:
+        raise ValueError("labels и scores должны быть непустыми массивами одинаковой длины")
+    validate_binary_dataset(labels)
+    positives = sum(labels)
+    if not positives:
+        raise ValueError("PR-AUC требует положительный класс")
+    order = sorted(range(len(scores)), key=lambda index: scores[index], reverse=True)
+    true_positives = 0
+    area = 0.0
+    previous_recall = 0.0
+    for rank, index in enumerate(order, start=1):
+        if labels[index] == 1:
+            true_positives += 1
+            recall = true_positives / positives
+            precision = true_positives / rank
+            area += (recall - previous_recall) * precision
+            previous_recall = recall
+    return area
+
+
+def ks_statistic(labels: Sequence[int], scores: Sequence[float]) -> float:
+    """Kolmogorov-Smirnov separation between default/non-default scores."""
+    if len(labels) != len(scores) or not labels:
+        raise ValueError("labels и scores должны быть непустыми массивами одинаковой длины")
+    validate_binary_dataset(labels)
+    positives = sum(labels)
+    negatives = len(labels) - positives
+    order = sorted(range(len(scores)), key=lambda index: scores[index], reverse=True)
+    seen_positive = seen_negative = 0
+    maximum = 0.0
+    for index in order:
+        if labels[index]:
+            seen_positive += 1
+        else:
+            seen_negative += 1
+        maximum = max(maximum, abs(seen_positive / positives - seen_negative / negatives))
+    return maximum
+
+
+def bootstrap_confidence_interval(
+    labels: Sequence[int], probabilities: Sequence[float], *, metric: str = "brier",
+    iterations: int = 300, seed: int = 7, confidence: float = 0.95,
+) -> ConfidenceInterval:
+    """Deterministic percentile bootstrap interval for quality-gate reporting."""
+    if iterations < 50 or not 0 < confidence < 1:
+        raise ValueError("iterations должен быть >= 50, confidence в диапазоне 0..1")
+    validate_binary_dataset(labels, probabilities)
+    metric_functions = {
+        "brier": lambda y, p: brier_score(y, p),
+        "logloss": lambda y, p: log_loss(y, p),
+        "auc": lambda y, p: rank_auc(y, p),
+        "pr_auc": lambda y, p: precision_recall_auc(y, p),
+        "ks": lambda y, p: ks_statistic(y, p),
+    }
+    if metric not in metric_functions:
+        raise ValueError(f"неподдерживаемая bootstrap metric: {metric}")
+    rng = random.Random(seed)
+    values: list[float] = []
+    indices = list(range(len(labels)))
+    for _ in range(iterations):
+        sample = [rng.choice(indices) for _ in indices]
+        sample_labels = [labels[index] for index in sample]
+        if len(set(sample_labels)) < 2:
+            continue
+        values.append(metric_functions[metric](sample_labels, [probabilities[index] for index in sample]))
+    if len(values) < max(20, iterations // 2):
+        raise ValueError("недостаточно валидных bootstrap samples с обоими классами")
+    values.sort()
+    estimate = metric_functions[metric](labels, probabilities)
+    lower_index = int((1 - confidence) / 2 * (len(values) - 1))
+    upper_index = int((1 - (1 - confidence) / 2) * (len(values) - 1))
+    return ConfidenceInterval(metric, round(estimate, 6), round(values[lower_index], 6), round(values[upper_index], 6), len(values))
+
+
 def evaluate_model(
     model: str,
     labels: Sequence[int],
@@ -266,6 +353,8 @@ def evaluate_model(
         auc=round(rank_auc(labels, ranking), 6),
         sample_count=len(labels),
         positive_rate=round(sum(labels) / len(labels), 6),
+        pr_auc=round(precision_recall_auc(labels, ranking), 6),
+        ks=round(ks_statistic(labels, ranking), 6),
     )
 
 
