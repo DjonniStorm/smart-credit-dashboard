@@ -18,6 +18,7 @@ from app.ml_pipeline import (
     bootstrap_confidence_interval,
     precision_recall_auc,
     ks_statistic,
+    fairness_audit,
 )
 
 
@@ -87,6 +88,14 @@ class MlPipelineTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertLessEqual(first.lower, first.estimate)
         self.assertLessEqual(first.estimate, first.upper)
+
+    def test_fairness_audit_is_grouped_and_audit_only(self) -> None:
+        report = fairness_audit(
+            [0, 1, 0, 1], [0.1, 0.8, 0.7, 0.2], ["a", "a", "b", "b"]
+        )
+        self.assertEqual(set(report), {"a", "b"})
+        self.assertEqual(report["a"]["sample_count"], 2)
+        self.assertGreaterEqual(report["b"]["fpr"], 0)
 
 
 if __name__ == "__main__":

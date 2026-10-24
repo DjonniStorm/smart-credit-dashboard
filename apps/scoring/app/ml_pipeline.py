@@ -75,6 +75,37 @@ class ConfidenceInterval:
     samples: int
 
 
+def fairness_audit(
+    labels: Sequence[int], probabilities: Sequence[float], groups: Sequence[str], *, threshold: float = 0.5
+) -> dict[str, dict[str, float | int]]:
+    """Audit-only group metrics; groups never enter model inference or decisioning."""
+    if len(labels) != len(probabilities) or len(labels) != len(groups) or not labels:
+        raise ValueError("labels, probabilities и groups должны иметь одинаковый непустой размер")
+    validate_binary_dataset(labels, probabilities)
+    if not 0 < threshold < 1:
+        raise ValueError("threshold должен быть в диапазоне 0..1")
+    report: dict[str, dict[str, float | int]] = {}
+    for group in sorted(set(groups)):
+        indexes = [index for index, value in enumerate(groups) if value == group]
+        group_labels = [labels[index] for index in indexes]
+        positives = sum(group_labels)
+        negatives = len(group_labels) - positives
+        predicted_positive = sum(probabilities[index] >= threshold for index in indexes)
+        true_positive = sum(
+            labels[index] == 1 and probabilities[index] >= threshold for index in indexes
+        )
+        false_positive = sum(
+            labels[index] == 0 and probabilities[index] >= threshold for index in indexes
+        )
+        report[group] = {
+            "sample_count": len(indexes),
+            "selection_rate": predicted_positive / len(indexes),
+            "tpr": true_positive / positives if positives else 0.0,
+            "fpr": false_positive / negatives if negatives else 0.0,
+        }
+    return report
+
+
 def _sigmoid(value: float) -> float:
     """Numerically stable sigmoid for calibration and inference."""
     if value >= 0:
