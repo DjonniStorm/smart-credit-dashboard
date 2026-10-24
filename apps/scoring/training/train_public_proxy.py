@@ -41,7 +41,7 @@ def _number(row: dict[str, str], key: str) -> float | None:
     return value if math.isfinite(value) else None
 
 
-def read_rows(path: Path) -> list[tuple[str, list[float], int]]:
+def read_rows(path: Path, *, max_rows: int = 20_000) -> list[tuple[str, list[float], int]]:
     rows: list[tuple[str, list[float], int]] = []
     with path.open(newline="", encoding="utf-8-sig") as stream:
         for row in csv.DictReader(stream):
@@ -55,7 +55,11 @@ def read_rows(path: Path) -> list[tuple[str, list[float], int]]:
             rows.append((issue_date, [float(value) for value in values if value is not None], int(target)))
     if len(rows) < 100 or len({label for _, _, label in rows}) < 2:
         raise ValueError("CSV должен содержать минимум 100 валидных строк и оба класса Default")
-    return sorted(rows, key=lambda item: item[0])
+    ordered = sorted(rows, key=lambda item: item[0])
+    if len(ordered) > max_rows:
+        stride = len(ordered) / max_rows
+        ordered = [ordered[int(index * stride)] for index in range(max_rows)]
+    return ordered
 
 
 def _sigmoid(value: float) -> float:
@@ -86,11 +90,13 @@ def _fit_logistic(features: list[list[float]], labels: list[int], steps: int = 2
     return means + scales, weights + [bias]
 
 
-def train(path: Path, output: Path) -> ProxyArtifact:
-    rows = read_rows(path)
+def train(path: Path, output: Path, *, max_rows: int = 20_000) -> ProxyArtifact:
+    rows = read_rows(path, max_rows=max_rows)
     split = max(20, int(len(rows) * 0.8))
     train_rows = rows[:split]
-    stats, coefficients = _fit_logistic([features for _, features, _ in train_rows], [label for _, _, label in train_rows])
+    stats, coefficients = _fit_logistic(
+        [features for _, features, _ in train_rows], [label for _, _, label in train_rows], steps=600
+    )
     means = tuple(stats[: len(FEATURES)])
     scales = tuple(stats[len(FEATURES) :])
     artifact = ProxyArtifact(
@@ -116,8 +122,9 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("csv", type=Path)
     parser.add_argument("--output", type=Path, default=Path("artifacts/public-proxy-logistic.json"))
+    parser.add_argument("--max-rows", type=int, default=20_000)
     args = parser.parse_args()
-    artifact = train(args.csv, args.output)
+    artifact = train(args.csv, args.output, max_rows=args.max_rows)
     print(json.dumps(asdict(artifact), indent=2))
 
 
