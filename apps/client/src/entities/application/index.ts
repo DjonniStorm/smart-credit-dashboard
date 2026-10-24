@@ -35,3 +35,18 @@ export {
   saveDraft,
   type ApplicationDraft,
 } from "./model/draft";
+
+export {
+  FinancingSelection,
+  useFinancingSelection,
+} from "./model/financing-selection";
+export {
+  applicationAction,
+  countApplications,
+  focusAction,
+  matchesFilter,
+  requiresAction,
+  resolveFocus,
+  type FinancingFilter,
+  type Focus,
+} from "./model/financing";

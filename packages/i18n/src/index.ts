@@ -5,3 +5,5 @@ export { createTranslator, t, type MessageVars } from "./t.ts";
 export { cabinetText, type CabinetText } from "./cabinet.ts";
 export { backofficeText, type BackofficeText } from "./backoffice.ts";
 export { alfiText, type AlfiText } from "./alfi.ts";
+
+export { financingText } from "./financing.ts";
