@@ -149,6 +149,10 @@ export const scoringResultSchema = z.object({
     .optional(),
   reasons: z.array(z.string()).optional(),
   nextActions: z.array(z.string()).optional(),
+  explainability: z.array(z.string()).optional(),
+  policyVersion: z.string().optional(),
+  featureSnapshotId: z.string().optional(),
+  missingSources: z.array(z.string()).optional(),
   factors: z.array(scoreFactorSchema),
   computedAt: z.string(),
 });

@@ -111,6 +111,10 @@ function mapApplication(
           recommendation: scoring.recommendation,
           reasons: scoring.reasons,
           nextActions: scoring.nextActions,
+          policyVersion: scoring.policyVersion,
+          featureSnapshotId: scoring.featureSnapshotId,
+          explainability: scoring.explainability,
+          missingSources: scoring.missingSources,
           factors: scoring.factors.map((factor) => {
             return {
               id: factor.id,
@@ -120,7 +124,7 @@ function mapApplication(
               source: factorSource(factor.source),
             };
           }),
-          computedAt: application.updatedAt,
+          computedAt: scoring.computedAt || application.updatedAt,
         }
       : null,
     decision: context?.decision

@@ -91,6 +91,11 @@ export const scoreFactorResponseSchema = z.object({
   label: z.string(),
   value: z.string(),
   impact: z.number(),
+  effect: z.enum(["positive", "negative", "neutral"]).optional(),
+  confidence: z.number().min(0).max(1).nullable().optional(),
+  missing_reason: z.string().nullable().optional(),
+  observed_at: z.string().nullable().optional(),
+  source: z.string().optional(),
 });
 export type ScoreFactorResponse = z.infer<typeof scoreFactorResponseSchema>;
 
@@ -120,6 +125,11 @@ export const scoreResponseSchema = z.object({
     .optional(),
   reasons: z.array(z.string()).optional(),
   next_actions: z.array(z.string()).optional(),
+  explainability: z.array(z.string()).optional(),
+  autonomy_mode: z.enum(["shadow", "assist", "controlled"]).optional(),
+  policy_version: z.string().optional(),
+  feature_snapshot_id: z.string().optional(),
+  computed_at: z.string().optional(),
 });
 export type ScoreResponse = z.infer<typeof scoreResponseSchema>;
 

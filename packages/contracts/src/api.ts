@@ -73,6 +73,10 @@ export const apiScoreFactorSchema = z.object({
   label: z.string(),
   value: z.string(),
   impact: z.number(),
+  effect: z.enum(["positive", "negative", "neutral"]).optional(),
+  confidence: z.number().min(0).max(1).nullable().optional(),
+  missingReason: z.string().nullable().optional(),
+  observedAt: z.string().nullable().optional(),
   source: z.string().optional(),
 });
 export type ApiScoreFactor = z.infer<typeof apiScoreFactorSchema>;
@@ -97,6 +101,12 @@ export const apiScoringSchema = z.object({
   factors: z.array(apiScoreFactorSchema),
   reasons: z.array(z.string()),
   nextActions: z.array(z.string()),
+  explainability: z.array(z.string()).optional(),
+  autonomyMode: z.enum(["shadow", "assist", "controlled"]).optional(),
+  policyVersion: z.string().optional(),
+  featureSnapshotId: z.string().optional(),
+  computedAt: z.string().optional(),
+  missingSources: z.array(z.string()).optional(),
 });
 export type ApiScoring = z.infer<typeof apiScoringSchema>;
 

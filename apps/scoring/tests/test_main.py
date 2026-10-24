@@ -81,6 +81,16 @@ class ScoreTests(unittest.TestCase):
         self.assertEqual(result.recommendation, "reject")
         self.assertTrue(any("Просрочка" in reason for reason in result.reasons))
 
+    def test_result_contains_reproducible_snapshot_and_provenance(self) -> None:
+        first = score(request(consentBki=True))
+        second = score(request(consentBki=True))
+        self.assertEqual(first.feature_snapshot_id, second.feature_snapshot_id)
+        self.assertTrue(first.feature_snapshot_id.startswith("fs-"))
+        self.assertEqual(first.policy_version, "policy-baseline-v2")
+        self.assertTrue(first.computed_at)
+        self.assertEqual(first.factors[0].source, "egrul")
+        self.assertEqual(first.factors[1].source, "bki")
+
 
 def complete(**overrides: object) -> ScoreRequest:
     data: dict[str, object] = {
