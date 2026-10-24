@@ -18,8 +18,32 @@ function app(patch: Partial<Application>): Application {
     requests: [],
     decision: null,
     deal: null,
+    cancelledBy: null,
     ...patch,
   } as Application;
+}
+
+function offer() {
+  return {
+    amount: 1_000_000,
+    termMonths: 24,
+    ratePercent: 18,
+    monthlyPayment: 50_000,
+  };
+}
+
+function bankDecision(
+  overrides: Partial<NonNullable<Application["decision"]>> = {},
+): NonNullable<Application["decision"]> {
+  return {
+    outcome: "rejected",
+    decidedAt: "2026-10-24T10:00:00Z",
+    summary: "Доходы не подтверждены",
+    advice: "Можно подать новую заявку после обновления отчётности",
+    offer: null,
+    factors: [],
+    ...overrides,
+  } as NonNullable<Application["decision"]>;
 }
 
 function stepAt(map: Roadmap, index: number): RoadmapStep {
@@ -28,13 +52,26 @@ function stepAt(map: Roadmap, index: number): RoadmapStep {
   return step;
 }
 
+const reviewBranches = [
+  "уточнение",
+  "встречное предложение",
+  "отказ",
+  "одобрение",
+];
+
+const offerBranches = [
+  "принять",
+  "отказаться",
+  "банк может вернуть на проверку",
+];
+
 test("карта из шести шагов в порядке этапов", () => {
   const map = buildRoadmap(app({}));
   assert.deepEqual(
     map.steps.map((step) => step.title),
     ["Заявка", "Проверка данных", "Оценка", "Решение", "Подписание", "Выдача"],
   );
-  assert.deepEqual(map.branches, []);
+  assert.deepEqual(map.branches, reviewBranches);
 });
 
 test("in_review без пройденных проверок: текущий шаг «Проверка данных»", () => {
@@ -46,6 +83,7 @@ test("in_review без пройденных проверок: текущий ш�
   const review = stepAt(map, 1);
   assert.equal(review.title, "Проверка данных");
   assert.equal(review.actor, "system");
+  assert.deepEqual(map.branches, reviewBranches);
 });
 
 test("in_review после первой проверки: текущий шаг «Оценка»", () => {
@@ -57,6 +95,7 @@ test("in_review после первой проверки: текущий шаг 
   const scoring = stepAt(map, 2);
   assert.equal(scoring.title, "Оценка");
   assert.equal(scoring.actor, "bank");
+  assert.deepEqual(map.branches, reviewBranches);
 });
 
 test("needs_client: вопрос банка и причина на текущем шаге", () => {
@@ -81,18 +120,22 @@ test("needs_client: вопрос банка и причина на текуще�
   assert.deepEqual(map.branches, []);
 });
 
-test("counter_offer: текущий шаг «Решение» с ветками", () => {
+test("counter_offer: текущий шаг «Решение», ветки исхода оффера", () => {
   const map = buildRoadmap(app({ status: "counter_offer" }));
   const decision = stepAt(map, 3);
   assert.equal(decision.state, "current");
   assert.equal(decision.actor, "client");
   assert.ok(decision.clientAction);
-  assert.deepEqual(map.branches, [
-    "уточнение",
-    "встречное предложение",
-    "отказ",
-    "одобрение",
-  ]);
+  assert.deepEqual(map.branches, offerBranches);
+});
+
+test("approved без сделки: текущий шаг «Решение», ветки исхода оффера", () => {
+  const map = buildRoadmap(app({ status: "approved" }));
+  const decision = stepAt(map, 3);
+  assert.equal(decision.state, "current");
+  assert.equal(decision.actor, "client");
+  assert.ok(decision.clientAction);
+  assert.deepEqual(map.branches, offerBranches);
 });
 
 test("approved на подписании: текущий шаг «Подписание» с действием клиента", () => {
@@ -118,22 +161,16 @@ test("disbursed: все шаги пройдены, веток нет", () => {
   assert.deepEqual(map.branches, []);
 });
 
-test("rejected банком: причина и подсказка на шаге «Решение»", () => {
+test("rejected банком: причина и подсказка на шаге «Решение», будущие шаги скрыты", () => {
   const map = buildRoadmap(
-    app({
-      status: "rejected",
-      decision: {
-        outcome: "rejected",
-        decidedAt: "2026-10-24T10:00:00Z",
-        summary: "Доходы не подтверждены",
-        advice: "Можно подать новую заявку после обновления отчётности",
-        offer: null,
-        factors: [],
-      } as Application["decision"],
-    }),
+    app({ status: "rejected", decision: bankDecision() }),
+  );
+  assert.deepEqual(
+    map.steps.map((step) => step.state),
+    ["done", "done", "done", "current"],
   );
   const decision = stepAt(map, 3);
-  assert.equal(decision.state, "current");
+  assert.equal(decision.title, "Решение");
   assert.equal(decision.explanation, "Доходы не подтверждены");
   assert.equal(
     decision.clientAction,
@@ -142,18 +179,16 @@ test("rejected банком: причина и подсказка на шаге 
   assert.deepEqual(map.branches, []);
 });
 
-test("rejected клиентом: отказ от предложения, а не банка", () => {
+test("rejected клиентом: отказ от оффера, будущие шаги скрыты", () => {
   const map = buildRoadmap(
     app({
       status: "rejected",
-      decision: {
+      cancelledBy: "client",
+      decision: bankDecision({
         outcome: "approved",
-        decidedAt: "2026-10-24T10:00:00Z",
-        summary: "Одобрено",
-        advice: null,
-        offer: null,
-        factors: [],
-      } as Application["decision"],
+        summary: "Заявка одобрена",
+        offer: offer(),
+      }),
     }),
   );
   const decision = stepAt(map, 3);
@@ -163,10 +198,70 @@ test("rejected клиентом: отказ от предложения, а не
   assert.deepEqual(map.branches, []);
 });
 
-test("blocked: ручная проверка на шаге «Решение»", () => {
-  const map = buildRoadmap(app({ status: "blocked" }));
+test("rejected клиентом до предложения: заявка отозвана, остался только черновик", () => {
+  const map = buildRoadmap(
+    app({ status: "rejected", cancelledBy: "client", decision: null }),
+  );
+  assert.deepEqual(
+    map.steps.map((step) => step.state),
+    ["current"],
+  );
+  const draft = stepAt(map, 0);
+  assert.equal(draft.title, "Заявка");
+  assert.equal(draft.actor, "client");
+  assert.match(draft.explanation, /отозвана/);
+  assert.deepEqual(map.branches, []);
+});
+
+test("rejected сотрудником банка: отдельный текст, будущие шаги скрыты", () => {
+  const map = buildRoadmap(
+    app({ status: "rejected", cancelledBy: "employee", decision: null }),
+  );
+  assert.deepEqual(
+    map.steps.map((step) => step.state),
+    ["done", "done", "current"],
+  );
+  const decision = stepAt(map, 2);
+  assert.equal(decision.actor, "bank");
+  assert.match(decision.explanation, /отменил/);
+  assert.deepEqual(map.branches, []);
+});
+
+test("blocked на проверке: текущий шаг по этапу до блокировки", () => {
+  const map = buildRoadmap(app({ status: "blocked", checksPassed: 0 }));
+  assert.deepEqual(
+    map.steps.map((step) => step.state),
+    ["done", "current", "upcoming", "upcoming", "upcoming", "upcoming"],
+  );
+  const review = stepAt(map, 1);
+  assert.equal(review.title, "Проверка данных");
+  assert.match(review.explanation, /заблокирована/);
+  assert.deepEqual(map.branches, []);
+});
+
+test("blocked с оффером: текущий шаг «Решение»", () => {
+  const map = buildRoadmap(
+    app({
+      status: "blocked",
+      decision: bankDecision({ outcome: "approved", offer: offer() }),
+    }),
+  );
   const decision = stepAt(map, 3);
   assert.equal(decision.state, "current");
   assert.match(decision.explanation, /заблокирована/);
+  assert.deepEqual(map.branches, []);
+});
+
+test("blocked при подписании: текущий шаг «Подписание»", () => {
+  const map = buildRoadmap(
+    app({
+      status: "blocked",
+      deal: { stage: "signing" } as Application["deal"],
+    }),
+  );
+  const signing = stepAt(map, 4);
+  assert.equal(signing.state, "current");
+  assert.equal(signing.title, "Подписание");
+  assert.match(signing.explanation, /заблокирована/);
   assert.deepEqual(map.branches, []);
 });

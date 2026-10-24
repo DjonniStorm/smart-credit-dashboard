@@ -51,6 +51,8 @@ jobs:
         run: pnpm --filter api test
         env:
           TEST_DATABASE_URL: postgres://alfa:alfa@localhost:5432/alfa
+      - name: Client unit tests
+        run: pnpm --filter client test
       - name: Scoring unit tests
         working-directory: apps/scoring
         run: uv run --locked python -m unittest discover -s tests -v
