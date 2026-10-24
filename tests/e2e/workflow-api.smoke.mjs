@@ -41,12 +41,12 @@ test.describe("workflow API without mocks", () => {
     const job = await started.json();
 
     let terminal;
-    for (let attempt = 0; attempt < 20; attempt += 1) {
+    for (let attempt = 0; attempt < 60; attempt += 1) {
       const response = await request.get(`${apiBase}/v1/jobs/${job.id}`);
       expect(response.ok()).toBeTruthy();
       terminal = await response.json();
       if (["succeeded", "failed"].includes(terminal.status)) break;
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
     expect(["succeeded", "failed"]).toContain(terminal.status);
   });

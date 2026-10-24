@@ -56,3 +56,68 @@ jobs:
       - name: Scoring unit tests
         working-directory: apps/scoring
         run: uv run --locked python -m unittest discover -s tests -v
+
+  e2e:
+    name: e2e playwright
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: alfa
+          POSTGRES_PASSWORD: alfa
+          POSTGRES_DB: alfa
+        ports: ["5432:5432"]
+        options: >-
+          --memory=512m --health-cmd "pg_isready -U alfa -d alfa" --health-interval 2s --health-timeout 3s --health-retries 30
+    steps:
+      - uses: actions/checkout@v7
+
+      # Версия pnpm берётся из packageManager в package.json.
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.21"
+          enable-cache: true
+          cache-dependency-glob: apps/scoring/uv.lock
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      # Синтетические демо-данные и политики автономности: seed идемпотентен.
+      - name: Seed demo database
+        run: pnpm --filter api db:seed
+        env:
+          DATABASE_URL: postgres://alfa:alfa@localhost:5432/alfa
+
+      # Playwright сам поднимает api/client/backoffice через webServer в
+      # playwright.config.mjs; scoring поднимаем заранее отдельным сервисом.
+      - name: Start scoring service
+        working-directory: apps/scoring
+        run: |
+          nohup uv run --locked uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/scoring.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8000/health > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:8000/health
+
+      - name: Run e2e tests
+        run: npx playwright test
+        env:
+          DATABASE_URL: postgres://alfa:alfa@localhost:5432/alfa
+          SCORING_URL: http://127.0.0.1:8000
+          API_BASE_URL: http://localhost:4000
+          CLIENT_BASE_URL: http://localhost:3000
+          BACKOFFICE_BASE_URL: http://localhost:3001

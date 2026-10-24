@@ -24,6 +24,14 @@ test("client and backoffice render the same scoring context", async ({
   browser,
 }) => {
   const applicationId = "seed-app-bakery";
+
+  // Контекст заявки доступен только под сессией сотрудника.
+  const employeeSignIn = await request.post(
+    `${apiBase}/v1/auth/employee-sign-in`,
+    { data: { employeeId: "an-1" } },
+  );
+  expect(employeeSignIn.ok()).toBeTruthy();
+
   const contextBefore = await request.get(
     `${apiBase}/v1/applications/${applicationId}/context`,
   );
@@ -59,7 +67,9 @@ test("client and backoffice render the same scoring context", async ({
   await expect(page.getByText("Кредитный риск")).toBeVisible();
   await expect(page.getByText("Автономность решения")).toBeVisible();
   await expect(
-    page.getByText(String(context.application.scoring.score), { exact: false }),
+    page
+      .getByText(String(context.application.scoring.score), { exact: false })
+      .first(),
   ).toBeVisible();
 
   const clientPage = await browser.newPage();
@@ -68,9 +78,11 @@ test("client and backoffice render the same scoring context", async ({
   await clientPage.goto(`${clientBase}/applications/${applicationId}`);
   await expect(clientPage.getByText("Индексы компании")).toBeVisible();
   await expect(
-    clientPage.getByText(String(context.application.scoring.healthIndex), {
-      exact: true,
-    }),
+    clientPage
+      .getByText(String(context.application.scoring.healthIndex), {
+        exact: true,
+      })
+      .first(),
   ).toBeVisible();
 
   const applicationUrl = clientPage.url();
