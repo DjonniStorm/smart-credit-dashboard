@@ -32,6 +32,7 @@ export function loadDraft(): ApplicationDraft | null {
 export function saveDraft(draft: ApplicationDraft) {
   try {
     window.localStorage.setItem(KEY, JSON.stringify(draft));
+    window.dispatchEvent(new Event("kk-draft-changed"));
   } catch {
     // Без хранилища черновик живёт только на странице.
   }
@@ -40,6 +41,7 @@ export function saveDraft(draft: ApplicationDraft) {
 export function clearDraft() {
   try {
     window.localStorage.removeItem(KEY);
+    window.dispatchEvent(new Event("kk-draft-changed"));
   } catch {
     // нечего чистить
   }

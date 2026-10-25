@@ -14,6 +14,7 @@ import { ApplicationsService } from "./applications.service.ts";
 import { AutonomyStore } from "./autonomy.store.ts";
 import { ClientActionsService } from "./client-actions.service.ts";
 import { ClientApplicationScopeService } from "./client-application-scope.service.ts";
+import { ClientApplicationsService } from "./client-applications.service.ts";
 import { ApplyApplicationActionHandler } from "./commands/apply-application-action.handler.ts";
 import { ApplyClientActionHandler } from "./commands/apply-client-action.handler.ts";
 import { QueueWorkerService } from "./queue-worker.service.ts";
@@ -25,6 +26,7 @@ import { WorkflowStore } from "./workflow-store.ts";
   providers: [
     ClientApplicationScopeService,
     ApplicationsService,
+    ClientApplicationsService,
     ApplicationActionsService,
     WorkflowStore,
     QueueWorkerService,

@@ -18,17 +18,25 @@ export function StageRail({
   current,
   waitingForClient = false,
   label = "Путь заявки",
+  completedLabel = "Все этапы пройдены",
 }: {
   stages: readonly string[];
   current: number;
   waitingForClient?: boolean;
   label?: string;
+  completedLabel?: string;
 }): JSX.Element {
   return (
     <div className={classes.root}>
       {/* Видна только на узкой дорожке; скринридер читает подписи списка. */}
       <p className={classes.caption} aria-hidden>
-        Этап {current + 1} из {stages.length}: {stages[current]}
+        {current >= stages.length ? (
+          completedLabel
+        ) : (
+          <>
+            Этап {current + 1} из {stages.length}: {stages[current]}
+          </>
+        )}
       </p>
       <ol
         className={classes.rail}

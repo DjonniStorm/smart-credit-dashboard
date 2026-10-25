@@ -34,7 +34,14 @@ const isApplication = (p: string) =>
 // Порядок как в business.jpg. Разделов банка, которых нет в прототипе,
 // не прячем: подписываем, что их нет в демо.
 const items: Item[] = [
-  { label: t.home, icon: IconHome },
+  {
+    label: t.home,
+    icon: IconHome,
+    href: "/home",
+    active: (p) => {
+      return p === "/home";
+    },
+  },
   {
     label: t.credits,
     icon: IconCreditCard,

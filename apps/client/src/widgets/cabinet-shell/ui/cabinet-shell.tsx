@@ -7,7 +7,11 @@ import { type ReactNode, useEffect } from "react";
 
 import { StateBlock } from "@repo/ui/state-block";
 
-import { needsClient, useApplications } from "@/entities/application";
+import {
+  FinancingSelection,
+  needsClient,
+  useApplications,
+} from "@/entities/application";
 import { useSession } from "@/entities/session";
 import { CabinetAlfi } from "@/features/alfi-assistant";
 import { tx } from "@/shared/i18n";
@@ -47,37 +51,42 @@ export function CabinetShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AppShell
-      header={{ height: 52 }}
-      navbar={{
-        width: 220,
-        breakpoint: "sm",
-        collapsed: { mobile: !navOpened },
-      }}
-      padding={0}
-      classNames={{
-        header: classes.header,
-        navbar: classes.navbar,
-        main: classes.main,
-      }}
+    <FinancingSelection
+      key={account?.id ?? "signed-out"}
+      accountId={account?.id}
     >
-      <AppShell.Header>
-        <CabinetHeader
-          account={account}
-          navOpened={navOpened}
-          onToggleNav={nav.toggle}
-        />
-      </AppShell.Header>
-      <AppShell.Navbar p="xs">
-        {account && <Nav onNavigate={nav.close} />}
-      </AppShell.Navbar>
-      <AppShell.Main>
-        <div className={classes.content}>{body}</div>
-        <Text size="xs" c="dimmed" className={classes.note}>
-          {tx.demo.footer}
-        </Text>
-        {account && <CabinetAlfi />}
-      </AppShell.Main>
-    </AppShell>
+      <AppShell
+        header={{ height: 52 }}
+        navbar={{
+          width: 220,
+          breakpoint: "sm",
+          collapsed: { mobile: !navOpened },
+        }}
+        padding={0}
+        classNames={{
+          header: classes.header,
+          navbar: classes.navbar,
+          main: classes.main,
+        }}
+      >
+        <AppShell.Header>
+          <CabinetHeader
+            account={account}
+            navOpened={navOpened}
+            onToggleNav={nav.toggle}
+          />
+        </AppShell.Header>
+        <AppShell.Navbar p="xs">
+          {account && <Nav onNavigate={nav.close} />}
+        </AppShell.Navbar>
+        <AppShell.Main>
+          <div className={classes.content}>{body}</div>
+          <Text size="xs" c="dimmed" className={classes.note}>
+            {tx.demo.footer}
+          </Text>
+          {account && <CabinetAlfi />}
+        </AppShell.Main>
+      </AppShell>
+    </FinancingSelection>
   );
 }

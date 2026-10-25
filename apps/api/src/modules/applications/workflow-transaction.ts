@@ -25,10 +25,15 @@ export function commentFromRow(
 export class WorkflowTransaction {
   constructor(private readonly manager: EntityManager) {}
 
-  async lockApplication(id: string): Promise<ApplicationWorkflow | null> {
+  async lockApplication(
+    id: string,
+    inn?: string,
+  ): Promise<ApplicationWorkflow | null> {
     const rows = await this.manager.query(
-      "select * from applications where id=$1 for update",
-      [id],
+      inn === undefined
+        ? "select * from applications where id=$1 for update"
+        : "select * from applications where id=$1 and inn=$2 for update",
+      inn === undefined ? [id] : [id, inn],
     );
     return rows[0] ? applicationFromRow(rows[0]) : null;
   }

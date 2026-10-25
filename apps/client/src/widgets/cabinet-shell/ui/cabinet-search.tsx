@@ -11,6 +11,7 @@ import {
   IconCreditCard,
   IconFileText,
   IconFiles,
+  IconHome,
   IconPlus,
   IconSearch,
 } from "@tabler/icons-react";
@@ -42,6 +43,12 @@ export function CabinetSearch() {
     {
       group: t.pages,
       actions: [
+        {
+          id: "home",
+          label: lx.nav.home,
+          leftSection: <IconHome {...icon} />,
+          onClick: go("/home"),
+        },
         {
           id: "new",
           label: tx.wizard.title,

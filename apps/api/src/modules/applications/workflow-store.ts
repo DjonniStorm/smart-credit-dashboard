@@ -17,6 +17,7 @@ import type {
   ScoringJob,
 } from "@repo/contracts/workflow";
 
+import { WorkflowReadStore } from "./workflow-read-store.ts";
 import { applicationFromRow } from "./workflow-rows.ts";
 import { WorkflowTransaction, commentFromRow } from "./workflow-transaction.ts";
 
@@ -196,15 +197,21 @@ export class WorkflowStore {
     return rows.map(commentFromRow);
   }
 
-  async getApplication(id: string): Promise<ApplicationWorkflow | null> {
-    return this.applicationIn(this.db.manager, id);
+  async getApplication(
+    id: string,
+    inn?: string,
+  ): Promise<ApplicationWorkflow | null> {
+    return new WorkflowReadStore(this.db).get(id, inn);
   }
 
   /** Возвращает просроченную автооферту в ручное рассмотрение до чтения карточки. */
-  async expireAutoOffer(id: string): Promise<void> {
-    await this.db.transaction(async (manager) => {
+  async expireAutoOffer(
+    id: string,
+    inn?: string,
+  ): Promise<ApplicationWorkflow | null> {
+    return this.db.transaction(async (manager) => {
       const tx = new WorkflowTransaction(manager);
-      const application = await tx.lockApplication(id);
+      const application = await tx.lockApplication(id, inn);
       const endsAt = application?.autonomyCase?.controlWindowEndsAt;
       if (
         !application ||
@@ -212,7 +219,7 @@ export class WorkflowStore {
         !endsAt ||
         new Date() < new Date(endsAt)
       ) {
-        return;
+        return application;
       }
       application.status = "in_review";
       application.offer = null;
@@ -238,16 +245,12 @@ export class WorkflowStore {
           autonomyDisposition: "expired",
         },
       });
+      return application;
     });
   }
 
-  async listApplications(): Promise<ApplicationWorkflow[]> {
-    const rows = rowsOf(
-      await this.db.query(
-        "select * from applications order by created_at desc",
-      ),
-    );
-    return rows.map((row) => this.application(row));
+  async listApplications(inn?: string): Promise<ApplicationWorkflow[]> {
+    return new WorkflowReadStore(this.db).list(inn);
   }
 
   async getJob(id: string): Promise<ScoringJob | null> {
