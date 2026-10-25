@@ -528,9 +528,8 @@
   }
 
   .state-diagram__canvas svg {
-    min-width: 38.75rem;
+    min-width: 43.75rem;
   }
-
 }
 
 @media (prefers-reduced-motion: reduce) {

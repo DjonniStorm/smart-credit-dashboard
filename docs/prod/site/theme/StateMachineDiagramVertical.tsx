@@ -25,7 +25,7 @@ type StateMachineDiagramProps = {
 export function StateMachineDiagramVertical({ currentStatus }: StateMachineDiagramProps): JSX.Element {
   return (
     <div className="state-diagram__canvas" aria-label="Схема переходов заявки">
-      <svg viewBox="0 0 620 840" role="img" aria-labelledby="state-diagram-title state-diagram-description">
+      <svg viewBox="0 0 700 900" role="img" aria-labelledby="state-diagram-title state-diagram-description">
         <title id="state-diagram-title">Переходы заявки между состояниями</title>
         <desc id="state-diagram-description">
           Основной путь заявки от черновика до моделируемой выдачи, возврат на уточнение и отдельные исходы.
@@ -90,31 +90,31 @@ export function StateMachineDiagramVertical({ currentStatus }: StateMachineDiagr
           <text className="state-diagram__action" x="310" y="826" textAnchor="middle">done</text>
         </g>
 
-        <text className="state-diagram__lane-label" x="488" y="340" textAnchor="middle">УПРАВЛЯЮЩИЕ ИСХОДЫ</text>
-        <path className="state-diagram__line" d="M420 420 H448 V398 H462" markerEnd="url(#state-arrow)" />
-        <line className="state-diagram__line" x1="448" x2="448" y1="398" y2="530" />
-        <line className="state-diagram__line" markerEnd="url(#state-arrow)" x1="448" x2="462" y1="470" y2="470" />
-        <line className="state-diagram__line" markerEnd="url(#state-arrow)" x1="448" x2="482" y1="530" y2="530" />
-        <text className="state-diagram__transition" x="610" y="368" textAnchor="end">любой нефинальный статус</text>
+        <text className="state-diagram__lane-label" x="570" y="318" textAnchor="middle">УПРАВЛЯЮЩИЕ ИСХОДЫ</text>
+        <path className="state-diagram__line" d="M420 420 H520 V390 H540" markerEnd="url(#state-arrow)" />
+        <line className="state-diagram__line" x1="520" x2="520" y1="390" y2="610" />
+        <line className="state-diagram__line" markerEnd="url(#state-arrow)" x1="520" x2="540" y1="500" y2="500" />
+        <line className="state-diagram__line" markerEnd="url(#state-arrow)" x1="520" x2="540" y1="610" y2="610" />
+        <text className="state-diagram__transition" x="690" y="350" textAnchor="end">любой нефинальный статус</text>
         <g className="state-diagram__outcome state-diagram__outcome--rejected">
-          <polygon points="488,372 514,398 488,424 462,398" />
-          <text x="488" y="402" textAnchor="middle">REJECTED</text>
-          <text className="state-diagram__outcome-action" x="488" y="438" textAnchor="middle">менеджер / REJECT</text>
+          <polygon points="570,360 600,390 570,420 540,390" />
+          <text x="570" y="394" textAnchor="middle">REJECTED</text>
+          <text className="state-diagram__outcome-action" x="570" y="448" textAnchor="middle">менеджер / REJECT</text>
         </g>
         <g className="state-diagram__outcome state-diagram__outcome--cancelled">
-          <circle cx="488" cy="470" r="26" />
-          <text x="488" y="474" textAnchor="middle">CANCELLED</text>
-          <text className="state-diagram__outcome-action" x="488" y="510" textAnchor="middle">клиент или менеджер</text>
+          <circle cx="570" cy="500" r="30" />
+          <text x="570" y="504" textAnchor="middle">CANCELLED</text>
+          <text className="state-diagram__outcome-action" x="570" y="552" textAnchor="middle">клиент или менеджер</text>
         </g>
         <g className="state-diagram__outcome state-diagram__outcome--blocked">
-          <polygon points="488,520 503,508 523,514 530,535 515,551 493,546 482,532" />
-          <text x="506" y="536" textAnchor="middle">BLOCKED</text>
-          <text className="state-diagram__outcome-action" x="506" y="565" textAnchor="middle">менеджер / BLOCK</text>
+          <polygon points="570,585 590,595 602,617 590,639 565,645 545,628 540,605 554,590" />
+          <text x="570" y="620" textAnchor="middle">BLOCKED</text>
+          <text className="state-diagram__outcome-action" x="570" y="670" textAnchor="middle">менеджер / BLOCK</text>
         </g>
-        <line className="state-diagram__line" markerEnd="url(#state-arrow)" x1="506" x2="496" y1="551" y2="585" />
-        <rect className="state-diagram__control" x="455" y="585" width="82" height="38" rx="8" />
-        <text className="state-diagram__control-label" x="496" y="609" textAnchor="middle">UNBLOCK</text>
-        <text className="state-diagram__transition" x="496" y="640" textAnchor="middle">к статусу до блокировки</text>
+        <line className="state-diagram__line" markerEnd="url(#state-arrow)" x1="570" x2="570" y1="645" y2="700" />
+        <rect className="state-diagram__control" x="530" y="700" width="80" height="38" rx="8" />
+        <text className="state-diagram__control-label" x="570" y="724" textAnchor="middle">UNBLOCK</text>
+        <text className="state-diagram__transition" x="570" y="774" textAnchor="middle">к статусу до блокировки</text>
       </svg>
     </div>
   );
