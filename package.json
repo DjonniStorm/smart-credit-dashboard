@@ -12,8 +12,9 @@
     "format": "prettier --write .",
     "db:up": "docker compose -f infra/dev/docker-compose.yml up -d --wait",
     "db:down": "docker compose -f infra/dev/docker-compose.yml down",
-    "docker:up": "docker compose -f infra/prod/docker-compose.yml up --build -d --wait",
+    "docker:up": "docker compose --env-file infra/prod/.env -f infra/prod/docker-compose.yml up --build -d --wait",
     "docker:down": "docker compose -f infra/prod/docker-compose.yml down",
+    "docker:seed": "docker compose --env-file infra/prod/.env --profile seed -f infra/prod/docker-compose.yml run --build --rm demo-seed",
     "docker:monitoring:up": "docker compose --env-file infra/prod/.env -f infra/prod/docker-compose.yml --profile monitoring up -d --wait",
     "docker:monitoring:down": "docker compose -f infra/prod/docker-compose.yml --profile monitoring stop prometheus grafana node-exporter cadvisor blackbox-exporter",
     "test:e2e": "playwright test"

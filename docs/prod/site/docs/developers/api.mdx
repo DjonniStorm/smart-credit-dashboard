@@ -21,6 +21,6 @@ OpenAPI-документ строится из серверных контрол
 
 ## Коллекция запросов
 
-[Коллекция Postman для профиля компании](https://github.com/DjonniStorm/smart-credit-dashboard/blob/dev/docs/api-collection/company-profile.postman_collection.json) содержит запросы к профилю, согласию БКИ и проверке недоступного источника. Импортируйте JSON в Postman и установите `baseUrl` для локального или опубликованного API. Это коллекция одного набора операций, не полный экспорт всех маршрутов Swagger.
+[Коллекция Postman для профиля и проверок компании](https://github.com/DjonniStorm/smart-credit-dashboard/blob/dev/docs/api-collection/company-profile.postman_collection.json) содержит последовательность запросов с входом через демо-профиль, сохранением cookie, согласием БКИ и синтетической проверкой источников. Импортируйте JSON, задайте `baseUrl` и запускайте запросы по порядку в Collection Runner. Cookie jar Postman должен быть включён. Это коллекция профиля компании, не полный экспорт всех маршрутов Swagger.
 
 Связи таблиц описаны в [модели данных](/developers/data-model), а последовательность ручной проверки — в [сценариях](/developers/verification-scenarios).
