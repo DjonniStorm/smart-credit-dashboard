@@ -43,8 +43,10 @@ flowchart LR
   backoffice -. "workspace import" .-> ui
   backoffice -. "workspace import" .-> i18n
   api -. "workspace import" .-> contracts
-  contracts -. "generated OpenAPI flow" .-> sdk
-  api -. "OpenAPI document" .-> contracts
+  openapi@{ shape: notch-rect, label: "packages/sdk/openapi.json<br/>generated OpenAPI document" }
+  class openapi generated
+  api -. "generate from Nest controllers" .-> openapi
+  openapi -. "openapi-ts" .-> sdk
   root_tools -. "tooling dependencies" .-> eslint
   root_tools -. "tooling dependencies" .-> typescript
   docs -. "docs-site tooling" .-> mmd

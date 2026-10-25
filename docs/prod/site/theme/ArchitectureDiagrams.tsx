@@ -148,14 +148,13 @@ const tabs: DiagramTab[] = [
     fallback: [
       "apps/client, apps/backoffice и apps/api используют shared packages через workspace imports.",
       "apps/scoring остаётся workspace-приложением без зависимости от packages/*.",
-      "contracts порождает generated OpenAPI flow для sdk.",
+      "Nest API генерирует OpenAPI-документ, из которого openapi-ts создаёт SDK.",
       "docs/prod/site не входит в pnpm workspace и хранит свои SVG-артефакты.",
     ],
     routeLabel: "Поток генерации",
     route: [
       "apps/api",
-      "packages/contracts",
-      "generated OpenAPI",
+      "packages/sdk/openapi.json",
       "packages/sdk",
       "Client Web",
     ],

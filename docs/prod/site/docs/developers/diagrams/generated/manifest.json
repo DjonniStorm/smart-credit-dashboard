@@ -22,7 +22,7 @@
       "id": "repository",
       "source": "repository.mmd",
       "output": "repository.svg",
-      "sourceHash": "a663e1efbab134d8f1e2f5a45b5c555f16806c3dfcee795a67a88222f6e7e390",
+      "sourceHash": "49f4e94b214332de8f2605781557931d5686faab4fda1d7d15d9dbcc959547c6",
       "title": "Repository and package view",
       "description": "Mermaid flowchart: workspace applications, shared packages, tooling, generated OpenAPI flow и отдельный docs-site."
     },

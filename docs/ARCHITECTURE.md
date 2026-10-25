@@ -1,5 +1,7 @@
 # Архитектура сквозного контура
 
+> **Целевое состояние.** Схема и описания ниже включают отдельный worker, object storage и Alfi adapter как планируемые компоненты. Они не отражают текущий Docker Compose. Фактически развёрнутый контур и границы API описаны в `docs/prod/site/docs/developers/architecture.mdx`.
+
 ```text
 Client cabinet ──HTTP──> API ──> PostgreSQL
                               ├─> durable jobs ──> Worker

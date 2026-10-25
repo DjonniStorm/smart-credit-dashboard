@@ -24,7 +24,7 @@ Decision engine сопоставляет результат scoring с autonomy 
 
 Эта схема показывает не сетевой маршрут, а границы кода. `apps/client`, `apps/backoffice` и `apps/api` используют общие contracts, SDK, UI и i18n через workspace imports. `apps/scoring` тоже входит в workspace, но не импортирует `packages/*`.
 
-Generated OpenAPI flow идёт от contracts к SDK. ESLint, TypeScript config и root tooling вынесены в отдельную область, потому что они обслуживают сборку, а не runtime. `docs/prod/site` находится вне pnpm workspace, имеет собственные зависимости и собирает committed SVG из Mermaid исходников.
+OpenAPI-документ создаётся из контроллеров Nest API в `packages/sdk/openapi.json`; затем `openapi-ts` генерирует SDK. `packages/contracts` содержит общие типы и импортируется приложениями, но не является источником OpenAPI. ESLint, TypeScript config и root tooling обслуживают сборку, а не runtime. `docs/prod/site` находится вне pnpm workspace и имеет собственные зависимости.
 
 ### Deployment view, C4 Deployment
 
