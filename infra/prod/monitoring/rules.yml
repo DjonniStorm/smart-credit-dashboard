@@ -1,0 +1,69 @@
+groups:
+  - name: smart-credit-availability
+    rules:
+      - alert: MonitoringTargetDown
+        expr: up == 0 or probe_success == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Target мониторинга недоступен"
+          description: "{{ $labels.job }} / {{ $labels.instance }} не отвечает не менее 2 минут."
+
+  - name: smart-credit-host
+    rules:
+      - alert: HostCpuHigh
+        expr: 100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Высокая загрузка CPU хоста"
+          description: "CPU занят более чем на 85% в течение 10 минут."
+
+      - alert: HostMemoryHigh
+        expr: 100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 90
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Высокое использование памяти хоста"
+          description: "Используется более 90% RAM в течение 10 минут."
+
+      - alert: HostRootDiskLow
+        expr: 100 * node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs|proc|sysfs|devtmpfs"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs|proc|sysfs|devtmpfs"} < 15
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Мало свободного места на корневом диске"
+          description: "На / осталось менее 15% места в течение 10 минут."
+
+  - name: smart-credit-scoring
+    rules:
+      - alert: ScoringJobStuck
+        expr: smart_credit_scoring_oldest_ready_job_age_seconds > 300
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Готовая задача скоринга застряла в очереди"
+          description: "Возраст старейшей готовой задачи превышает 300 секунд."
+
+      - alert: ScoringQueueDepthHigh
+        expr: smart_credit_scoring_queue_depth > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Очередь скоринга растёт"
+          description: "В очереди больше 10 задач не менее 5 минут."
+
+      - alert: ScoringJobErrors
+        expr: smart_credit_scoring_jobs_failed_5m > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Зафиксирована ошибка scoring job"
+          description: "Одна или несколько задач скоринга завершились ошибкой за последние 5 минут."
