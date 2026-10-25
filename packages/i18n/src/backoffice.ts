@@ -104,6 +104,8 @@ const ru = {
       waitingSources: "Ждём ответы источников",
       noScoring: "Скоринга ещё нет",
       waitingText: "Скоринг считается, когда ответят все источники.",
+      clientReplied:
+        "Клиент ответил на запрос. Проверьте документы и примите решение.",
     },
     aria: {
       summary: "Сводка и действия",
@@ -307,6 +309,28 @@ const ru = {
       `кейсы ${closed}, кандидаты ${eligible}`,
     overrides: (count: number, rate: string) =>
       `переопределения ${count} (${rate})`,
+  },
+  settings: {
+    title: "Настройки",
+    accountTitle: "Учётная запись",
+    switchAccount: "Сменить учётную запись",
+  },
+  nav: {
+    profile: "Личный кабинет",
+  },
+  profile: {
+    title: "Личный кабинет",
+    accountTitle: "Учётная запись",
+    settingsLink: "Настройки",
+    approvalLimit: (limit: string) => `Одобряет до ${limit}`,
+    roleAndLimit: (role: string, limit: string) =>
+      `${role}, одобряет до ${limit}`,
+  },
+  theme: {
+    title: "Тема",
+    light: "Светлая",
+    dark: "Тёмная",
+    auto: "Как в системе",
   },
 } as const;
 

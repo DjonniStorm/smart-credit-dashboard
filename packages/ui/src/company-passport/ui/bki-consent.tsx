@@ -1,7 +1,12 @@
-import { Alert, Button, Text } from "@mantine/core";
+import { Alert, Button, Group, Text } from "@mantine/core";
+
 import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
 
-import { formatCompanyDate, passportText, type CompanyPassportMode } from "../model/model";
+import {
+  type CompanyPassportMode,
+  formatCompanyDate,
+  passportText,
+} from "../model/model";
 
 export function BkiConsent({
   profile,
@@ -19,7 +24,9 @@ export function BkiConsent({
   if (profile.bkiConsent.status === "granted") {
     return (
       <Text size="sm" c="dimmed" aria-live="polite">
-        {passportText.bkiGranted(formatCompanyDate(profile.bkiConsent.grantedAt))}
+        {passportText.bkiGranted(
+          formatCompanyDate(profile.bkiConsent.grantedAt),
+        )}
       </Text>
     );
   }
@@ -28,13 +35,21 @@ export function BkiConsent({
     <Alert color="yellow" title={passportText.bkiRequiredTitle}>
       {passportText.bkiRequiredText}
       {mode === "client" && onGrant && (
-        <Button mt="sm" onClick={onGrant} loading={pending}>
-          {passportText.grantBkiConsent}
-        </Button>
+        <Group justify="flex-end" mt="sm">
+          <Button onClick={onGrant} loading={pending}>
+            {passportText.grantBkiConsent}
+          </Button>
+        </Group>
       )}
-      {error && <Text c="red" size="sm" mt="xs" role="alert">{error}</Text>}
+      {error && (
+        <Text c="red" size="sm" mt="xs" role="alert">
+          {error}
+        </Text>
+      )}
       {mode === "backoffice" && (
-        <Text size="sm" mt="xs">{passportText.bkiBackofficeText}</Text>
+        <Text size="sm" mt="xs">
+          {passportText.bkiBackofficeText}
+        </Text>
       )}
     </Alert>
   );

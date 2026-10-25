@@ -1,0 +1,50 @@
+/* Знак банка: общий для шапки клиента и АРМ. */
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  min-height: 44px;
+  color: var(--mantine-color-text);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: var(--mantine-font-size-lg);
+  border-radius: var(--mantine-radius-sm);
+}
+
+.root:focus-visible {
+  outline: 2px solid var(--kk-brand);
+  outline-offset: 4px;
+}
+
+.mark {
+  display: inline-flex;
+  /* Наушники знака берут цвет текста темы, буква остаётся фирменной. */
+  color: var(--mantine-color-text);
+}
+
+.name {
+  /* Оттенок из гайда банка #EF3124: он для логотипа и графиков. */
+  color: var(--kk-brand-bright);
+}
+
+.product {
+  padding-left: 8px;
+  border-left: 1px solid var(--kk-line);
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--mantine-color-dimmed);
+  white-space: nowrap;
+}
+
+@media (max-width: 48em) {
+  .product {
+    display: none;
+  }
+}
+
+@media (max-width: 22em) {
+  .name {
+    display: none;
+  }
+}

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { StateBlock } from "@repo/ui/state-block";
 
 import { roleLabel, signIn, useEmployees } from "@/entities/employee";
+import { ax } from "@/features/alfi-assistant";
 import { armApi } from "@/shared/api/arm";
 import { formatRub } from "@/shared/lib/money";
 
@@ -43,7 +44,7 @@ export function SignInForm() {
         <Stack gap="lg">
           <Stack gap={4}>
             <Title order={1} fz={24} lh="30px">
-              Вход в кредитный конвейер
+              {ax.arm.signIn}
             </Title>
             <Text c="dimmed" size="sm">
               Выберите демо-учётку. Пароля нет: это прототип на синтетических

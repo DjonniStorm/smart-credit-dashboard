@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import type { Employee } from "@repo/contracts/application";
+import { backofficeText, i18n } from "@repo/i18n";
 
 import { roleLabel, signOut } from "@/entities/employee";
 import { formatRub } from "@/shared/lib/money";
@@ -26,6 +27,8 @@ const initials = (name: string) =>
     .map((w) => w[0])
     .join("")
     .toUpperCase();
+
+const bx = backofficeText(i18n.defaultLocale);
 
 export function ProfileMenu({ employee }: { employee: Employee }) {
   const router = useRouter();
@@ -53,9 +56,14 @@ export function ProfileMenu({ employee }: { employee: Employee }) {
         </UnstyledButton>
       </Menu.Target>
       <Menu.Dropdown>
-        <Menu.Label>Одобряет до {formatRub(employee.approvalLimit)}</Menu.Label>
+        <Menu.Label>
+          {bx.profile.approvalLimit(formatRub(employee.approvalLimit))}
+        </Menu.Label>
+        <Menu.Item component={Link} href="/profile">
+          {bx.profile.title}
+        </Menu.Item>
         <Menu.Item component={Link} href="/settings">
-          Настройки
+          {bx.settings.title}
         </Menu.Item>
         <Menu.Item
           onClick={() => {
@@ -63,7 +71,7 @@ export function ProfileMenu({ employee }: { employee: Employee }) {
             router.replace("/login");
           }}
         >
-          Сменить учётную запись
+          {bx.settings.switchAccount}
         </Menu.Item>
       </Menu.Dropdown>
     </Menu>

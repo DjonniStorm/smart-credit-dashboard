@@ -17,12 +17,6 @@ const ru = {
     signOut: "Выйти",
     main: "Разделы кабинета",
   },
-  demo: {
-    footer:
-      "Прототип. Компании, люди и показатели синтетические, банк и внешние проверки смоделированы.",
-    reset: "Сбросить демо-данные",
-    resetDone: "Демо-данные сброшены",
-  },
   common: {
     retry: "Повторить",
     back: "Назад",
@@ -397,6 +391,24 @@ const ru = {
     toApplication: "К заявке",
   },
   negotiation: negotiationRu,
+  termsSandbox: {
+    title: "Песочница условий",
+    lead: "Меняйте параметры и смотрите ориентир до отправки новой заявки.",
+    demo: "Демо-режим",
+    product: "Продукт",
+    amount: "Сумма",
+    term: "Срок",
+    amountSuffix: " ₽",
+    termSuffix: " мес.",
+    productOption: (name: string, from: number, to: number) =>
+      `${name} · ${from}–${to} мес.`,
+    paymentTitle: "Ориентировочный платёж",
+    paymentValue: (value: string) => `${value} / мес.`,
+    readinessTitle: "Готовность условий",
+    readinessScore: (score: number) => `${score}/100`,
+    rateNote: (rate: number) =>
+      `Ставка от ${rate}% годовых. Расчёт ориентировочный и не является обещанием одобрения; параметры заявки не изменены.`,
+  },
   companyPassport: {
     title: "Паспорт компании",
     unavailableTitle: "Паспорт пока недоступен",
@@ -459,6 +471,27 @@ const ru = {
     scoringCompleted: "Проверка данных завершена",
     statusChanged: "Статус заявки изменён",
     clientAction: "Действие клиента принято",
+  },
+  settings: {
+    title: "Настройки",
+    accountTitle: "Учётная запись",
+    switchAccount: "Сменить учётную запись",
+  },
+  profile: {
+    title: "Личный кабинет",
+    accountTitle: "Учётная запись",
+    inn: (inn: string) => `ИНН ${inn}`,
+    companyLink: "Открыть профиль компании",
+  },
+  theme: {
+    title: "Тема",
+    light: "Светлая",
+    dark: "Тёмная",
+    auto: "Как в системе",
+  },
+  account: {
+    profile: "Личный кабинет",
+    settings: "Настройки",
   },
   notFound: {
     title: "Такой страницы нет",
