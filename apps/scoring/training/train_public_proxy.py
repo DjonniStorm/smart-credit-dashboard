@@ -15,7 +15,6 @@ from pathlib import Path
 
 from app.ml_pipeline import calibrate, evaluate_model, fit_isotonic_calibrator
 
-
 FEATURES = ("revenue", "dti_n", "loan_amnt", "fico_n", "experience_c")
 
 
@@ -58,7 +57,10 @@ def load_artifact(path: Path) -> ProxyArtifact:
         raise ValueError("artifact validation AUC вне диапазона")
     if artifact.calibration_method != "isotonic":
         raise ValueError("неподдерживаемый calibration method")
-    if len(artifact.calibration_thresholds) != len(artifact.calibration_probabilities) or not artifact.calibration_thresholds:
+    if (
+        len(artifact.calibration_thresholds) != len(artifact.calibration_probabilities)
+        or not artifact.calibration_thresholds
+    ):
         raise ValueError("artifact calibration curve повреждён")
     return artifact
 
@@ -69,16 +71,21 @@ def predict(artifact: ProxyArtifact, values: dict[str, float]) -> tuple[float, d
     if missing:
         raise ValueError(f"отсутствуют признаки: {', '.join(missing)}")
     raw_probability, contributions = _raw_predict(artifact, values)
-    probability = calibrate(raw_probability, (artifact.calibration_thresholds, artifact.calibration_probabilities))
+    probability = calibrate(
+        raw_probability, (artifact.calibration_thresholds, artifact.calibration_probabilities)
+    )
     return max(0.0, min(1.0, probability)), contributions
 
 
-def _raw_predict(artifact: ProxyArtifact, values: dict[str, float]) -> tuple[float, dict[str, float]]:
+def _raw_predict(
+    artifact: ProxyArtifact, values: dict[str, float]
+) -> tuple[float, dict[str, float]]:
     missing = [feature for feature in artifact.features if feature not in values]
     if missing:
         raise ValueError(f"отсутствуют признаки: {', '.join(missing)}")
     contributions = {
-        feature: artifact.weights[index] * ((float(values[feature]) - artifact.means[index]) / artifact.scales[index])
+        feature: artifact.weights[index]
+        * ((float(values[feature]) - artifact.means[index]) / artifact.scales[index])
         for index, feature in enumerate(artifact.features)
     }
     linear_score = artifact.bias + sum(contributions.values())
@@ -86,12 +93,12 @@ def _raw_predict(artifact: ProxyArtifact, values: dict[str, float]) -> tuple[flo
 
 
 def _predict_row(artifact: ProxyArtifact, values: list[float]) -> float:
-    probability, _ = predict(artifact, dict(zip(artifact.features, values)))
+    probability, _ = predict(artifact, dict(zip(artifact.features, values, strict=True)))
     return probability
 
 
 def _predict_row_raw(artifact: ProxyArtifact, values: list[float]) -> float:
-    probability, _ = _raw_predict(artifact, dict(zip(artifact.features, values)))
+    probability, _ = _raw_predict(artifact, dict(zip(artifact.features, values, strict=True)))
     return probability
 
 
@@ -114,7 +121,9 @@ def read_rows(path: Path, *, max_rows: int = 20_000) -> list[tuple[str, list[flo
             issue_date = row.get("issue_d", "")
             if any(value is None for value in values) or not issue_date:
                 continue
-            rows.append((issue_date, [float(value) for value in values if value is not None], int(target)))
+            rows.append(
+                (issue_date, [float(value) for value in values if value is not None], int(target))
+            )
     if len(rows) < 100 or len({label for _, _, label in rows}) < 2:
         raise ValueError("CSV должен содержать минимум 100 валидных строк и оба класса Default")
     ordered = sorted(rows, key=lambda item: item[0])
@@ -132,17 +141,29 @@ def _sigmoid(value: float) -> float:
     return exponent / (1.0 + exponent)
 
 
-def _fit_logistic(features: list[list[float]], labels: list[int], steps: int = 2_500) -> tuple[list[float], list[float]]:
+def _fit_logistic(
+    features: list[list[float]], labels: list[int], steps: int = 2_500
+) -> tuple[list[float], list[float]]:
     means = [sum(row[index] for row in features) / len(features) for index in range(len(FEATURES))]
-    scales = [max(1.0, math.sqrt(sum((row[index] - means[index]) ** 2 for row in features) / len(features))) for index in range(len(FEATURES))]
-    normalized = [[(value - means[index]) / scales[index] for index, value in enumerate(row)] for row in features]
+    scales = [
+        max(
+            1.0,
+            math.sqrt(sum((row[index] - means[index]) ** 2 for row in features) / len(features)),
+        )
+        for index in range(len(FEATURES))
+    ]
+    normalized = [
+        [(value - means[index]) / scales[index] for index, value in enumerate(row)]
+        for row in features
+    ]
     weights = [0.0] * len(FEATURES)
     bias = 0.0
     for _ in range(steps):
         gradient = [0.0] * len(FEATURES)
         bias_gradient = 0.0
-        for row, label in zip(normalized, labels):
-            error = _sigmoid(sum(weight * value for weight, value in zip(weights, row)) + bias) - label
+        for row, label in zip(normalized, labels, strict=True):
+            score = sum(weight * value for weight, value in zip(weights, row, strict=True)) + bias
+            error = _sigmoid(score) - label
             for index, value in enumerate(row):
                 gradient[index] += error * value
             bias_gradient += error
@@ -160,7 +181,9 @@ def train(path: Path, output: Path, *, max_rows: int = 20_000) -> ProxyArtifact:
     calibration_rows = rows[train_end:calibration_end]
     validation_rows = rows[calibration_end:]
     stats, coefficients = _fit_logistic(
-        [features for _, features, _ in train_rows], [label for _, _, label in train_rows], steps=600
+        [features for _, features, _ in train_rows],
+        [label for _, _, label in train_rows],
+        steps=600,
     )
     means = tuple(stats[: len(FEATURES)])
     scales = tuple(stats[len(FEATURES) :])
@@ -182,8 +205,12 @@ def train(path: Path, output: Path, *, max_rows: int = 20_000) -> ProxyArtifact:
         calibration_thresholds=(),
         calibration_probabilities=(),
     )
-    calibration_raw = [_predict_row_raw(provisional, features) for _, features, _ in calibration_rows]
-    calibration_curve = fit_isotonic_calibrator(calibration_raw, [label for _, _, label in calibration_rows])
+    calibration_raw = [
+        _predict_row_raw(provisional, features) for _, features, _ in calibration_rows
+    ]
+    calibration_curve = fit_isotonic_calibrator(
+        calibration_raw, [label for _, _, label in calibration_rows]
+    )
     provisional = ProxyArtifact(
         **{
             **asdict(provisional),
@@ -192,16 +219,16 @@ def train(path: Path, output: Path, *, max_rows: int = 20_000) -> ProxyArtifact:
         }
     )
     validation_labels = [label for _, _, label in validation_rows]
-    validation_probabilities = [_predict_row(provisional, features) for _, features, _ in validation_rows]
+    validation_probabilities = [
+        _predict_row(provisional, features) for _, features, _ in validation_rows
+    ]
     validation_report = evaluate_model(
         provisional.model,
         validation_labels,
         validation_probabilities,
         validation_probabilities,
     )
-    artifact = ProxyArtifact(
-        **{**asdict(provisional), "validation": asdict(validation_report)}
-    )
+    artifact = ProxyArtifact(**{**asdict(provisional), "validation": asdict(validation_report)})
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(asdict(artifact), indent=2) + "\n", encoding="utf-8")
     return artifact
