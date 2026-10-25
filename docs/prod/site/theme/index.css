@@ -437,6 +437,26 @@
   stroke-dasharray: 3 3;
 }
 
+.state-diagram__outcome-action {
+  fill: var(--state-muted);
+  font-family: inherit;
+  font-size: 9px;
+}
+
+.state-diagram__control {
+  fill: var(--state-red-soft);
+  stroke: var(--state-red);
+  stroke-width: 1.5;
+}
+
+.state-diagram__control-label {
+  fill: var(--state-red);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
 .state-map-legend {
   display: flex;
   flex-wrap: wrap;
@@ -505,6 +525,10 @@
 
   .state-diagram__canvas {
     margin-inline: -0.25rem;
+  }
+
+  .state-diagram__canvas svg {
+    min-width: 38.75rem;
   }
 
 }

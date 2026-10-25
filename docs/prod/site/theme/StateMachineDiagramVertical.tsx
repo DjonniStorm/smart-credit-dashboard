@@ -60,6 +60,8 @@ export function StateMachineDiagramVertical({ currentStatus }: StateMachineDiagr
         <text className="state-diagram__transition" x="326" y="375">пройдены</text>
         <StateBox action="review" current={currentStatus === "UNDER_REVIEW"} status="UNDER_REVIEW" width={220} x={200} y={385} />
 
+        <path className="state-diagram__line state-diagram__line--accent" d="M270 310 H16 V503 H32" markerEnd="url(#state-arrow-accent)" />
+        <text className="state-diagram__transition" x="24" y="330">из VALIDATING</text>
         <path className="state-diagram__line state-diagram__line--accent" d="M200 420 H112 V468" markerEnd="url(#state-arrow-accent)" />
         <text className="state-diagram__transition" x="20" y="412">нужны сведения</text>
         <StateBox action="ask" current={currentStatus === "NEEDS_INFO"} status="NEEDS_INFO" width={160} x={32} y={468} />
@@ -69,6 +71,10 @@ export function StateMachineDiagramVertical({ currentStatus }: StateMachineDiagr
         <line className="state-diagram__line" markerEnd="url(#state-arrow)" x1="310" x2="310" y1="455" y2="500" />
         <text className="state-diagram__transition" x="326" y="485">одобрено</text>
         <StateBox action="offer" current={currentStatus === "OFFERED"} status="OFFERED" width={220} x={200} y={500} />
+        <path className="state-diagram__line state-diagram__line--muted" d="M200 560 H12 V420 H200" markerEnd="url(#state-arrow)" />
+        <text className="state-diagram__transition" x="24" y="578">перехват менеджера</text>
+        <path className="state-diagram__line state-diagram__line--muted" d="M420 560 H448" />
+        <text className="state-diagram__transition" x="424" y="578">клиент отклонил</text>
         <line className="state-diagram__line" markerEnd="url(#state-arrow)" x1="310" x2="310" y1="570" y2="602" />
         <text className="state-diagram__transition" x="326" y="592">принял</text>
         <StateBox action="accept" current={currentStatus === "ACCEPTED"} status="ACCEPTED" width={220} x={200} y={602} />
@@ -84,24 +90,31 @@ export function StateMachineDiagramVertical({ currentStatus }: StateMachineDiagr
           <text className="state-diagram__action" x="310" y="826" textAnchor="middle">done</text>
         </g>
 
-        <text className="state-diagram__lane-label" x="488" y="340" textAnchor="middle">ОТДЕЛЬНЫЕ ИСХОДЫ</text>
+        <text className="state-diagram__lane-label" x="488" y="340" textAnchor="middle">УПРАВЛЯЮЩИЕ ИСХОДЫ</text>
         <path className="state-diagram__line" d="M420 420 H448 V398 H462" markerEnd="url(#state-arrow)" />
         <line className="state-diagram__line" x1="448" x2="448" y1="398" y2="530" />
         <line className="state-diagram__line" markerEnd="url(#state-arrow)" x1="448" x2="462" y1="470" y2="470" />
         <line className="state-diagram__line" markerEnd="url(#state-arrow)" x1="448" x2="482" y1="530" y2="530" />
-        <text className="state-diagram__transition" x="450" y="368" textAnchor="end">решение банка</text>
+        <text className="state-diagram__transition" x="610" y="368" textAnchor="end">любой нефинальный статус</text>
         <g className="state-diagram__outcome state-diagram__outcome--rejected">
           <polygon points="488,372 514,398 488,424 462,398" />
           <text x="488" y="402" textAnchor="middle">REJECTED</text>
+          <text className="state-diagram__outcome-action" x="488" y="438" textAnchor="middle">менеджер / REJECT</text>
         </g>
         <g className="state-diagram__outcome state-diagram__outcome--cancelled">
           <circle cx="488" cy="470" r="26" />
           <text x="488" y="474" textAnchor="middle">CANCELLED</text>
+          <text className="state-diagram__outcome-action" x="488" y="510" textAnchor="middle">клиент или менеджер</text>
         </g>
         <g className="state-diagram__outcome state-diagram__outcome--blocked">
           <polygon points="488,520 503,508 523,514 530,535 515,551 493,546 482,532" />
           <text x="506" y="536" textAnchor="middle">BLOCKED</text>
+          <text className="state-diagram__outcome-action" x="506" y="565" textAnchor="middle">менеджер / BLOCK</text>
         </g>
+        <line className="state-diagram__line" markerEnd="url(#state-arrow)" x1="506" x2="496" y1="551" y2="585" />
+        <rect className="state-diagram__control" x="455" y="585" width="82" height="38" rx="8" />
+        <text className="state-diagram__control-label" x="496" y="609" textAnchor="middle">UNBLOCK</text>
+        <text className="state-diagram__transition" x="496" y="640" textAnchor="middle">к статусу до блокировки</text>
       </svg>
     </div>
   );

@@ -15,6 +15,7 @@ const mainPath = [
   "VALIDATING",
   "UNDER_REVIEW",
   "NEEDS_INFO",
+  "UNDER_REVIEW",
   "OFFERED",
   "ACCEPTED",
   "SIGNING",
@@ -58,11 +59,18 @@ const flowSteps: FlowStep[] = [
     action: "Ответить и вернуть заявку в проверку",
   },
   {
+    status: "UNDER_REVIEW",
+    actor: "Система и банк",
+    title: "Повторное рассмотрение",
+    detail: "Все открытые запросы получили ответ. Заявка возвращается на рассмотрение с обновлёнными данными.",
+    action: "Проверить ответ и принять решение",
+  },
+  {
     status: "OFFERED",
     actor: "Банк",
     title: "Условия готовы",
-    detail: "Банк может предложить исходные условия или counter-offer с объяснением изменений.",
-    action: "Показать клиенту предложение",
+    detail: "Банк может предложить исходные условия или counter-offer с объяснением изменений. Статус остаётся OFFERED.",
+    action: "Показать клиенту предложение или вернуть на рассмотрение",
   },
   {
     status: "ACCEPTED",
@@ -73,7 +81,7 @@ const flowSteps: FlowStep[] = [
   },
   {
     status: "SIGNING",
-    actor: "Система",
+    actor: "Предприниматель",
     title: "Подписание",
     detail: "В прототипе подписание моделируется кодом подтверждения внутри кабинета.",
     action: "Подтвердить договор",
@@ -145,11 +153,11 @@ export function StateMachineDemo(): JSX.Element {
         <div className="state-machine-demo__journey">
           <div className="state-machine-demo__rail" aria-label="Шаги основного пути">
             {mainPath.map((status, index) => (
-              <div className="state-machine-demo__rail-item" key={status}>
+              <div className="state-machine-demo__rail-item" key={`${status}-${index}`}>
                 <button
                   className={`state-node ${index === stepIndex ? "is-current" : ""} ${index < stepIndex ? "is-past" : ""}`}
                   type="button"
-                  aria-label={`Открыть состояние ${status}`}
+                  aria-label={`Открыть шаг ${index + 1}: состояние ${status}`}
                   aria-current={index === stepIndex ? "step" : undefined}
                   onClick={() => setStepIndex(index)}
                 >
