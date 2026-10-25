@@ -18,6 +18,7 @@ WORKDIR /app
 ENV NODE_ENV=production     HOSTNAME=0.0.0.0     PORT=3001
 COPY --from=build --chown=node:node /app/apps/backoffice/.next/standalone ./
 COPY --from=build --chown=node:node /app/apps/backoffice/.next/static ./apps/backoffice/.next/static
+COPY --from=build --chown=node:node /app/apps/backoffice/public ./apps/backoffice/public
 USER node
 EXPOSE 3001
 CMD ["node", "apps/backoffice/server.js"]

@@ -18,6 +18,7 @@ WORKDIR /app
 ENV NODE_ENV=production     HOSTNAME=0.0.0.0     PORT=3000
 COPY --from=build --chown=node:node /app/apps/client/.next/standalone ./
 COPY --from=build --chown=node:node /app/apps/client/.next/static ./apps/client/.next/static
+COPY --from=build --chown=node:node /app/apps/client/public ./apps/client/public
 USER node
 EXPOSE 3000
 CMD ["node", "apps/client/server.js"]

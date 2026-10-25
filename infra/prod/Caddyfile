@@ -1,16 +1,24 @@
-# По умолчанию http://localhost. Для публичного домена: DOMAIN=example.ru, SCHEME=https
-# (Caddy сам получит сертификат Let's Encrypt).
-
-{$SCHEME}://{$DOMAIN} {
-	reverse_proxy client:3000
+{$DOMAIN} {
+	handle /api/* {
+		uri strip_prefix /api
+		reverse_proxy api:4000
+	}
+	handle {
+		reverse_proxy client:3000
+	}
 }
 
-{$SCHEME}://backoffice.{$DOMAIN} {
-	reverse_proxy backoffice:3001
+{$BACKOFFICE_DOMAIN} {
+	handle /api/* {
+		uri strip_prefix /api
+		reverse_proxy api:4000
+	}
+	handle {
+		reverse_proxy backoffice:3001
+	}
 }
 
-# Swagger UI: /docs
-{$SCHEME}://api.{$DOMAIN} {
+{$API_DOMAIN} {
 	handle /metrics {
 		respond 404
 	}
