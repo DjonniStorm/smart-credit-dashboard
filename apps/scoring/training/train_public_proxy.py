@@ -132,7 +132,7 @@ def _sigmoid(value: float) -> float:
     return exponent / (1.0 + exponent)
 
 
-def _fit_logistic(features: list[list[float]], labels: list[int], steps: int = 2_500) -> tuple[list[float], float]:
+def _fit_logistic(features: list[list[float]], labels: list[int], steps: int = 2_500) -> tuple[list[float], list[float]]:
     means = [sum(row[index] for row in features) / len(features) for index in range(len(FEATURES))]
     scales = [max(1.0, math.sqrt(sum((row[index] - means[index]) ** 2 for row in features) / len(features))) for index in range(len(FEATURES))]
     normalized = [[(value - means[index]) / scales[index] for index, value in enumerate(row)] for row in features]
