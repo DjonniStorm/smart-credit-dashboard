@@ -140,6 +140,7 @@ export class ApplicationsController {
 
   @Get()
   @UseGuards(ClientSessionGuard)
+  @ApiUnauthorizedResponse({ description: "Нет сессии клиента" })
   @ApiOkResponse({ type: ApplicationDto, isArray: true })
   @ZodSerializerDto(ApplicationListDto)
   list(@CurrentClient() session: DemoSession): Promise<ApplicationDto[]> {
@@ -149,6 +150,10 @@ export class ApplicationsController {
   @Post()
   @UseGuards(ClientSessionGuard)
   @ApiOperation({ operationId: "ApplicationsController_create" })
+  @ApiForbiddenResponse({
+    description: "Компания не совпадает с текущей сессией",
+  })
+  @ApiUnauthorizedResponse({ description: "Нет сессии клиента" })
   @ApiOkResponse({ type: CreateApplicationResponseDto })
   @ZodSerializerDto(CreateApplicationResponseDto)
   async create(
@@ -161,6 +166,7 @@ export class ApplicationsController {
   @Get(":id/context")
   @UseGuards(EmployeeSessionGuard)
   @ApiOperation({ operationId: "ApplicationsController_context" })
+  @ApiUnauthorizedResponse({ description: "Нет сессии сотрудника" })
   @ApiOkResponse({ type: ApplicationContextDto })
   @ZodSerializerDto(ApplicationContextDto)
   async context(@Param("id") id: string): Promise<ApplicationContextDto> {
@@ -169,6 +175,8 @@ export class ApplicationsController {
 
   @Get(":id")
   @UseGuards(ClientSessionGuard)
+  @ApiUnauthorizedResponse({ description: "Нет сессии клиента" })
+  @ApiNotFoundResponse({ description: "Заявки нет или она чужая" })
   @ApiOkResponse({ type: ApplicationDto })
   @ZodSerializerDto(ApplicationDto)
   async get(
@@ -182,6 +190,10 @@ export class ApplicationsController {
   @UseGuards(ClientSessionGuard)
   @HttpCode(202)
   @ApiOperation({ operationId: "ApplicationsController_startCheck" })
+  @ApiUnauthorizedResponse({ description: "Нет сессии клиента" })
+  @ApiNotFoundResponse({
+    description: "Задачи или заявки нет либо она принадлежит другой компании",
+  })
   @ApiOkResponse({ type: JobDto })
   @ZodSerializerDto(JobDto)
   async check(
@@ -200,6 +212,10 @@ export class JobsController {
 
   @Get(":id")
   @UseGuards(ClientSessionGuard)
+  @ApiUnauthorizedResponse({ description: "Нет сессии клиента" })
+  @ApiNotFoundResponse({
+    description: "Задачи или заявки нет либо она принадлежит другой компании",
+  })
   @ApiOkResponse({ type: JobDto })
   @ZodSerializerDto(JobDto)
   async get(

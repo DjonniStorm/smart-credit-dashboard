@@ -61,8 +61,8 @@ export class ApplicationsService {
     return { application, checkJob: { id: job.id, status: job.status } };
   }
 
-  async listApiApplications(): Promise<ApiApplication[]> {
-    const applications = await this.store.listApplications();
+  async listApiApplications(inn?: string): Promise<ApiApplication[]> {
+    const applications = await this.store.listApplications(inn);
     return applications.map((application) => toApiApplication(application));
   }
   /** Очередь АРМ: заявки с управленческим состоянием, только для сотрудников. */
@@ -80,9 +80,11 @@ export class ApplicationsService {
     }));
   }
 
-  async getApiApplication(id: string): Promise<ApiApplication> {
-    await this.store.expireAutoOffer(id);
-    const application = await this.getApplication(id);
+  async getApiApplication(id: string, inn?: string): Promise<ApiApplication> {
+    const application = await this.store.expireAutoOffer(id, inn);
+    if (!application) {
+      throw new NotFoundException("Заявка не найдена");
+    }
     return toApiApplication(
       application,
       await this.store.listComments(id, "client"),
@@ -121,8 +123,8 @@ export class ApplicationsService {
     };
   }
 
-  async getApplication(id: string): Promise<ApplicationWorkflow> {
-    const application = await this.store.getApplication(id);
+  async getApplication(id: string, inn?: string): Promise<ApplicationWorkflow> {
+    const application = await this.store.getApplication(id, inn);
     if (!application) throw new NotFoundException("Заявка не найдена");
     return application;
   }

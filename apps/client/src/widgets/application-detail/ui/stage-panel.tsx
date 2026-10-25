@@ -15,7 +15,11 @@ import type { Application } from "@repo/contracts/cabinet";
 import { formatRub } from "@repo/ui/money";
 import { ToneBadge } from "@repo/ui/tone-badge";
 
-import { isCancelledByManager, isDeclinedByClient, isWithdrawnByClient } from "@/entities/application";
+import {
+  isCancelledByManager,
+  isDeclinedByClient,
+  isWithdrawnByClient,
+} from "@/entities/application";
 import { AnswerRequestForm } from "@/features/answer-request";
 import { OfferDecision } from "@/features/decide-offer";
 import { formatDate, tx } from "@/shared/i18n";
@@ -222,4 +226,3 @@ export function StagePanel({ app }: { app: Application }) {
 
   return null;
 }
-

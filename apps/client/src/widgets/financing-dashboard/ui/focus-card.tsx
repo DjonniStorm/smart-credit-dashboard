@@ -31,6 +31,10 @@ export function FocusCard({
   const action = focusAction(focus);
   const app = focus.kind === "application" ? focus.app : null;
   const stage = app ? stageOf(app) : null;
+  const railStages =
+    app?.status === "rejected" && stage
+      ? stages.slice(0, Math.min(stage.current, stages.length - 1) + 1)
+      : stages;
   const primary = ["request", "sign", "offer", "draft", "empty"].includes(
     action.kind,
   );
@@ -96,7 +100,8 @@ export function FocusCard({
               </Text>
             )}
             <StageRail
-              stages={stages}
+              stages={railStages}
+              completedLabel={fx.completed}
               current={stage.current}
               waitingForClient={stage.waitingForClient}
             />

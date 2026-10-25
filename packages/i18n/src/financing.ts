@@ -1,4 +1,4 @@
-import type { Locale } from "./locale.ts";
+import { Locale } from "./locale.ts";
 
 const ru = {
   title: "Финансирование бизнеса",
@@ -27,13 +27,20 @@ const ru = {
     closed: "Завершены",
   },
   inFocus: "В фокусе",
-  choose: (number: string) => "Выбрать заявку " + number,
+  choose: (number: string) => {
+    return "Выбрать заявку " + number;
+  },
   open: "Открыть",
   requested: "Запрошено",
+  completed: "Все этапы пройдены",
   offered: "Предложение банка",
-  months: (n: number) => n + " мес.",
+  months: (n: number) => {
+    return n + " мес.";
+  },
   autoFocus: "К ближайшему действию",
-  otherActions: (n: number) => "Ещё " + n + " требуют вашего участия",
+  otherActions: (n: number) => {
+    return "Ещё " + n + " требуют вашего участия";
+  },
   emptyFilter: "Под выбранный фильтр нет заявок",
   resetFilter: "Показать все",
   draft: "Черновик заявки",
@@ -75,7 +82,95 @@ const ru = {
   unknownProduct: "Кредитная заявка",
 };
 
-export function financingText(locale: Locale) {
-  void locale;
-  return ru;
+export type FinancingText = typeof ru;
+
+const en: FinancingText = {
+  title: "Business financing",
+  next: "Your next step",
+  demo: "Demo: synthetic data",
+  newApplication: "New application",
+  company: "Your business",
+  source: "Known information from the customer profile",
+  turnover: "Average monthly turnover",
+  revenue: "Revenue over the last 12 months",
+  debt: "Monthly debt payments",
+  noData: "No data",
+  companyLink: "Open business profile",
+  sourceError: "Could not load data source status",
+  sourceLoading: "Checking data source status",
+  consent: "Your consent is required to request credit history",
+  companyPending: "Some information is still being checked",
+  companyIssue: "Some information needs clarification",
+  retry: "Try again",
+  list: "Your applications",
+  allApplications: "All applications",
+  filters: {
+    all: "All",
+    action: "Action required",
+    review: "Under review",
+    closed: "Completed",
+  },
+  inFocus: "Selected",
+  choose: (number: string) => {
+    return "Select application " + number;
+  },
+  open: "Open",
+  requested: "Requested",
+  completed: "All stages completed",
+  offered: "Bank offer",
+  months: (n: number) => {
+    return n + (n === 1 ? " month" : " months");
+  },
+  autoFocus: "Go to the next action",
+  otherActions: (n: number) => {
+    return n + " more require your attention";
+  },
+  emptyFilter: "No applications match this filter",
+  resetFilter: "Show all",
+  draft: "Application draft",
+  draftHint:
+    "Continue from the saved step. The draft has not been submitted to the bank.",
+  continueDraft: "Continue draft",
+  empty: "Start with your business needs",
+  emptyHint:
+    "Choose a financing purpose, amount and term to see suitable products before applying.",
+  selectProduct: "Find financing",
+  requestTitle: "Respond to the bank request",
+  requestAction: "Respond to the bank",
+  signTitle: "The contract is ready to sign",
+  signHint: "Open and sign the contract to continue.",
+  signAction: "Go to signing",
+  offerTitle: "Review the bank offer",
+  offerHint:
+    "Compare the offered terms with your request and decide whether they suit your needs.",
+  offerAction: "View terms",
+  waitTitle: "No action is required from you right now",
+  blockedTitle: "The application is under manual review",
+  blockedHint:
+    "The bank is reviewing your application. Available explanations are in the application details.",
+  invalidTitle: "Checking the application state",
+  invalidHint:
+    "There is not enough information for the next action. Refresh the applications or open the details.",
+  fundedTitle: "The loan has been disbursed",
+  fundedHint:
+    "The amount, terms and disbursement result are in the application details.",
+  rejectedTitle: "The review is complete",
+  rejectedHint:
+    "The reason for the decision and available next steps are in the application details.",
+  declinedTitle: "You declined the offer",
+  declinedHint:
+    "The application is closed. You can choose another product if needed.",
+  details: "Open application",
+  result: "View result",
+  loading: "Loading business financing",
+  unknownProduct: "Loan application",
+};
+
+const dictionaries: Record<Locale, FinancingText> = {
+  [Locale.Ru]: ru,
+  [Locale.En]: en,
+};
+
+export function financingText(locale: Locale): FinancingText {
+  return dictionaries[locale] ?? dictionaries[Locale.Ru];
 }

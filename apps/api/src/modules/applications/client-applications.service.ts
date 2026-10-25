@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { ForbiddenException, Injectable } from "@nestjs/common";
 
 import type { ApiCreateApplication } from "@repo/contracts/api";
 
@@ -14,20 +10,15 @@ export class ClientApplicationsService {
   constructor(private readonly applications: ApplicationsService) {}
 
   async list(inn: string) {
-    const applications = await this.applications.listApiApplications();
-    return applications.filter((application) => application.inn === inn);
+    return this.applications.listApiApplications(inn);
   }
 
   async assertAccess(id: string, inn: string) {
-    const application = await this.applications.getApplication(id);
-    if (application.inn !== inn) {
-      throw new NotFoundException("Заявка не найдена");
-    }
+    await this.applications.getApplication(id, inn);
   }
 
   async get(id: string, inn: string) {
-    await this.assertAccess(id, inn);
-    return this.applications.getApiApplication(id);
+    return this.applications.getApiApplication(id, inn);
   }
 
   async job(id: string, inn: string) {

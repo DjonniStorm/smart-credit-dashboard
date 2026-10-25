@@ -77,6 +77,7 @@ export function applicationAction(app: Application): NextAction {
         label: fx.requestAction,
       };
     }
+    return invalidAction(href);
   } else if (app.status === "approved" && app.deal?.stage === "signing") {
     return {
       kind: "sign",
@@ -109,6 +110,10 @@ export function applicationAction(app: Application): NextAction {
       label: fx.details,
     };
   }
+  return invalidAction(href);
+}
+
+function invalidAction(href: string): NextAction {
   return {
     kind: "invalid",
     title: fx.invalidTitle,
