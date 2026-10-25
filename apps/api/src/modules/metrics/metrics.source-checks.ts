@@ -19,14 +19,36 @@ export async function collectSourceChecksMetrics(
   lines.push(
     "# HELP smart_credit_source_checks_total Всего проверок источников",
   );
-  lines.push("# TYPE smart_credit_source_checks_total counter");
+  lines.push("# TYPE smart_credit_source_checks_total gauge");
   lines.push(metricLine("smart_credit_source_checks_total", number(row.total)));
 
   lines.push(
     "# HELP smart_credit_source_checks_failed_total Проверки источников с ошибкой",
   );
-  lines.push("# TYPE smart_credit_source_checks_failed_total counter");
+  lines.push("# TYPE smart_credit_source_checks_failed_total gauge");
   lines.push(
     metricLine("smart_credit_source_checks_failed_total", number(row.failed)),
   );
+
+  const groupedRows = rowsOf(
+    await db.query(
+      `select source, status, count(*)::int as count
+       from source_checks
+       where source in ('egrul', 'bki', 'fns') and status in ('ok', 'failed')
+       group by source, status`,
+    ),
+  );
+  lines.push(
+    "# HELP smart_credit_source_checks_by_source_status Число проверок источников по источнику и статусу (снимок БД)",
+  );
+  lines.push("# TYPE smart_credit_source_checks_by_source_status gauge");
+  for (const item of groupedRows) {
+    lines.push(
+      metricLine(
+        "smart_credit_source_checks_by_source_status",
+        number(item.count),
+        { source: String(item.source), status: String(item.status) },
+      ),
+    );
+  }
 }

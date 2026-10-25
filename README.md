@@ -80,3 +80,14 @@ pnpm docker:up
 ```
 
 То же самое, что `docker compose -f infra/prod/docker-compose.yml up --build -d --wait`. Остановить: `pnpm docker:down`.
+
+### Необязательный мониторинг
+
+Мониторинг рассчитан на Linux-хост с Docker. Node Exporter и cAdvisor показывают ресурсы Linux Docker-хоста и контейнеров; в Docker Desktop на Windows это Linux VM, а не ресурсы Windows.
+
+1. Скопируйте `infra/prod/.env.example` в `infra/prod/.env` и задайте непустой `GRAFANA_ADMIN_PASSWORD` (сильный пароль). Файл `.env` локальный и не коммитится.
+2. Запустите профиль: `pnpm docker:monitoring:up`. Он поднимает обычный production Compose вместе с Prometheus, Grafana и exporters.
+3. На самом сервере откройте `http://127.0.0.1:3002` (Grafana, пользователь `admin`) или `http://127.0.0.1:9090` (Prometheus). Порты доступны только на loopback.
+4. Для удалённого доступа используйте SSH-туннель: `ssh -L 3002:127.0.0.1:3002 -L 9090:127.0.0.1:9090 user@server`, затем откройте эти адреса локально.
+
+Prometheus внутри Docker проверяет API `/health` и `/metrics`, scoring `/health`, а также client и backoffice. Публичный маршрут `api.<domain>/metrics` закрыт ответом 404. Правила alerting видны на дашборде, внешняя доставка уведомлений не настроена. `pnpm docker:monitoring:down` останавливает только monitoring-сервисы, не трогая обычные production-сервисы; named volumes и контейнеры мониторинга остаются для следующего запуска.
