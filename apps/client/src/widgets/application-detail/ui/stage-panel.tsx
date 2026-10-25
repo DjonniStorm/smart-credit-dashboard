@@ -99,6 +99,22 @@ export function StagePanel({ app }: { app: Application }) {
     );
   }
 
+  if (
+    (app.status === "counter_offer" || app.status === "approved") &&
+    !app.deal
+  ) {
+    return (
+      <Card>
+        <Stack gap="sm" align="flex-start">
+          <Title order={2} size="h3">
+            {t.offerPending.title}
+          </Title>
+          <Text>{t.offerPending.text}</Text>
+        </Stack>
+      </Card>
+    );
+  }
+
   if (app.deal?.stage === "signing") {
     return (
       <Card>
