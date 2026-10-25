@@ -1,0 +1,33 @@
+# Локальная разработка
+
+Для запуска нужны Node.js 24 или новее, pnpm 11.25.0 и запущенный Docker.
+
+Из корня репозитория выполните:
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Команда `pnpm dev` запускает PostgreSQL в Docker и приложения через Turborepo. Основные адреса:
+
+| Компонент | Адрес |
+| --- | --- |
+| Кабинет предпринимателя | `http://localhost:3000` |
+| Банковское АРМ | `http://localhost:3001` |
+| Swagger UI API | `http://localhost:4000/docs` |
+| Scoring Swagger UI | `http://localhost:8000/docs` |
+
+Для заполнения демонстрационных данных выполните `pnpm --filter api db:seed`. Команда идемпотентна. Чтобы остановить локальную PostgreSQL, используйте `pnpm db:down`.
+
+## Запуск сайта документации
+
+Сайт в `docs/prod/site` устанавливается и запускается отдельно:
+
+```bash
+cd docs/prod/site
+npm ci
+npm run dev
+```
+
+Ему не нужны Docker, API или зависимости pnpm workspace.

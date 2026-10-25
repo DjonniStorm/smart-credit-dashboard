@@ -1,0 +1,17 @@
+{
+  "name": "smart-credit-dashboard-docs",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "rspress dev",
+    "build": "rspress build",
+    "preview": "rspress preview --port 4173"
+  },
+  "devDependencies": {
+    "@rspress/core": "2.0.23"
+  }
+}

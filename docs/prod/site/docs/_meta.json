@@ -1,0 +1,18 @@
+[
+  "index",
+  {
+    "type": "dir-section-header",
+    "name": "entrepreneur",
+    "label": "Кабинет предпринимателя"
+  },
+  {
+    "type": "dir-section-header",
+    "name": "bank",
+    "label": "Банковское АРМ"
+  },
+  {
+    "type": "dir-section-header",
+    "name": "developers",
+    "label": "Техническая документация"
+  }
+]
