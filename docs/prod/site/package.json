@@ -7,9 +7,9 @@
     "node": "24.x"
   },
   "scripts": {
-    "dev": "rspress dev",
+    "dev": "rspress dev --host 127.0.0.1",
     "build": "rspress build",
-    "preview": "rspress preview --port 4173"
+    "preview": "rspress preview --host 127.0.0.1 --port 4173"
   },
   "devDependencies": {
     "@rspress/core": "2.0.23"

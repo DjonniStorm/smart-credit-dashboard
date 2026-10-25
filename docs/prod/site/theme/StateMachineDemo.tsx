@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import { StateMachineDiagramVertical } from "./StateMachineDiagramVertical";
 
 type FlowStep = {
@@ -27,49 +28,56 @@ const flowSteps: FlowStep[] = [
     status: "DRAFT",
     actor: "Предприниматель",
     title: "Черновик заявки",
-    detail: "Компания, цель, продукт и параметры финансирования собраны в одном контексте.",
+    detail:
+      "Компания, цель, продукт и параметры финансирования собраны в одном контексте.",
     action: "Заполнить обязательные поля и согласия",
   },
   {
     status: "SUBMITTED",
     actor: "Предприниматель",
     title: "Заявка отправлена",
-    detail: "Клиент подтвердил запрос. Дальше заявку принимает кредитный конвейер.",
+    detail:
+      "Клиент подтвердил запрос. Дальше заявку принимает кредитный конвейер.",
     action: "Передать заявку на проверку",
   },
   {
     status: "VALIDATING",
     actor: "Система",
     title: "Проверка данных",
-    detail: "Система сопоставляет данные компании, источники, документы и ограничения продукта.",
+    detail:
+      "Система сопоставляет данные компании, источники, документы и ограничения продукта.",
     action: "Запустить проверки и scoring",
   },
   {
     status: "UNDER_REVIEW",
     actor: "Банк",
     title: "Заявка на рассмотрении",
-    detail: "Менеджер видит факторы риска, готовность заявки, источники и рекомендацию системы.",
+    detail:
+      "Менеджер видит факторы риска, готовность заявки, источники и рекомендацию системы.",
     action: "Подтвердить рекомендацию или выбрать следующий шаг",
   },
   {
     status: "NEEDS_INFO",
     actor: "Система и клиент",
     title: "Нужно уточнение",
-    detail: "Расхождение не скрывается за отказом. Клиент получает понятный вопрос и способ ответа.",
+    detail:
+      "Расхождение не скрывается за отказом. Клиент получает понятный вопрос и способ ответа.",
     action: "Ответить и вернуть заявку в проверку",
   },
   {
     status: "UNDER_REVIEW",
     actor: "Система и банк",
     title: "Повторное рассмотрение",
-    detail: "Все открытые запросы получили ответ. Заявка возвращается на рассмотрение с обновлёнными данными.",
+    detail:
+      "Все открытые запросы получили ответ. Заявка возвращается на рассмотрение с обновлёнными данными.",
     action: "Проверить ответ и принять решение",
   },
   {
     status: "OFFERED",
     actor: "Банк",
     title: "Условия готовы",
-    detail: "Банк может предложить исходные условия или counter-offer с объяснением изменений. Статус остаётся OFFERED.",
+    detail:
+      "Банк может предложить исходные условия или counter-offer с объяснением изменений. Статус остаётся OFFERED.",
     action: "Показать клиенту предложение или вернуть на рассмотрение",
   },
   {
@@ -77,20 +85,21 @@ const flowSteps: FlowStep[] = [
     actor: "Предприниматель",
     title: "Условия приняты",
     detail: "Клиент сравнил условия и подтвердил выбранное предложение.",
-    action: "Подготовить демонстрационное подписание",
+    action: "Подготовить подписание",
   },
   {
     status: "SIGNING",
     actor: "Предприниматель",
     title: "Подписание",
-    detail: "В прототипе подписание моделируется кодом подтверждения внутри кабинета.",
+    detail: "Предприниматель подтверждает договор кодом внутри кабинета.",
     action: "Подтвердить договор",
   },
   {
     status: "FUNDED",
     actor: "Система",
-    title: "Моделируемая выдача",
-    detail: "Заявка завершает основной путь. Статус относится к конкретной заявке клиента.",
+    title: "Выдача завершена",
+    detail:
+      "Заявка завершает основной путь. Статус относится к конкретной заявке клиента.",
     action: "Показать итог и историю решения",
   },
 ];
@@ -111,12 +120,44 @@ export function StateMachineDemo(): JSX.Element {
     setStepIndex(0);
   }
 
+  function renderControls(): JSX.Element {
+    return (
+      <div
+        className="state-machine-demo__controls"
+        aria-label="Управление демонстрацией"
+      >
+        <button type="button" onClick={reset} disabled={stepIndex === 0}>
+          В начало
+        </button>
+        <button
+          type="button"
+          onClick={() => moveStep(-1)}
+          disabled={stepIndex === 0}
+        >
+          Назад
+        </button>
+        <button
+          type="button"
+          className="primary"
+          onClick={() => moveStep(1)}
+          disabled={stepIndex === flowSteps.length - 1}
+        >
+          Следующий шаг
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <section className="state-machine-demo" aria-label="Интерактивная карта состояний заявки">
+    <section
+      className="state-machine-demo"
+      aria-label="Интерактивная карта состояний заявки"
+    >
       <div className="state-machine-demo__topline">
         <span className="state-machine-demo__kicker">Демо-концепт</span>
         <span className="state-machine-demo__counter">
-          {String(stepIndex + 1).padStart(2, "0")} / {String(flowSteps.length).padStart(2, "0")}
+          {String(stepIndex + 1).padStart(2, "0")} /{" "}
+          {String(flowSteps.length).padStart(2, "0")}
         </span>
       </div>
 
@@ -124,10 +165,15 @@ export function StateMachineDemo(): JSX.Element {
         <div>
           <h2>Заявка движется, а не исчезает в ожидании</h2>
           <p>
-            Один маршрут показывает, кто действует сейчас, что меняется в системе и почему заявка переходит дальше.
+            Один маршрут показывает, кто действует сейчас, что меняется в
+            системе и почему заявка переходит дальше.
           </p>
         </div>
-        <div className="state-machine-demo__switcher" role="tablist" aria-label="Режим диаграммы">
+        <div
+          className="state-machine-demo__switcher"
+          role="tablist"
+          aria-label="Режим диаграммы"
+        >
           <button
             className={mode === "journey" ? "is-active" : ""}
             type="button"
@@ -151,9 +197,15 @@ export function StateMachineDemo(): JSX.Element {
 
       {mode === "journey" ? (
         <div className="state-machine-demo__journey">
-          <div className="state-machine-demo__rail" aria-label="Шаги основного пути">
+          <div
+            className="state-machine-demo__rail"
+            aria-label="Шаги основного пути"
+          >
             {mainPath.map((status, index) => (
-              <div className="state-machine-demo__rail-item" key={`${status}-${index}`}>
+              <div
+                className="state-machine-demo__rail-item"
+                key={`${status}-${index}`}
+              >
                 <button
                   className={`state-node ${index === stepIndex ? "is-current" : ""} ${index < stepIndex ? "is-past" : ""}`}
                   type="button"
@@ -163,7 +215,9 @@ export function StateMachineDemo(): JSX.Element {
                 >
                   <span>{status}</span>
                 </button>
-                {index < mainPath.length - 1 ? <span className="state-connector" aria-hidden="true" /> : null}
+                {index < mainPath.length - 1 ? (
+                  <span className="state-connector" aria-hidden="true" />
+                ) : null}
               </div>
             ))}
           </div>
@@ -181,32 +235,34 @@ export function StateMachineDemo(): JSX.Element {
             </div>
           </div>
 
+          {renderControls()}
         </div>
       ) : (
-        <div className="state-machine-demo__map" aria-label="Статичная карта состояний">
-          <StateMachineDiagramVertical currentStatus={flowSteps[stepIndex].status} />
+        <div
+          className="state-machine-demo__map"
+          aria-label="Статичная карта состояний"
+        >
+          <StateMachineDiagramVertical
+            currentStatus={flowSteps[stepIndex].status}
+          />
           <div className="state-map-legend" aria-label="Легенда диаграммы">
-            <span><i className="state-map-legend__dot" /> активное состояние</span>
-            <span><i className="state-map-legend__diamond" /> проверка или решение</span>
-            <span><i className="state-map-legend__terminal" /> завершение пути</span>
+            <span>
+              <i className="state-map-legend__dot" /> активное состояние
+            </span>
+            <span>
+              <i className="state-map-legend__diamond" /> проверка или решение
+            </span>
+            <span>
+              <i className="state-map-legend__terminal" /> завершение пути
+            </span>
           </div>
+          {renderControls()}
         </div>
       )}
 
-      <div className="state-machine-demo__controls" aria-label="Управление демонстрацией">
-        <button type="button" onClick={reset} disabled={stepIndex === 0}>
-          В начало
-        </button>
-        <button type="button" onClick={() => moveStep(-1)} disabled={stepIndex === 0}>
-          Назад
-        </button>
-        <button type="button" className="primary" onClick={() => moveStep(1)} disabled={stepIndex === flowSteps.length - 1}>
-          Следующий шаг
-        </button>
-      </div>
-
       <p className="state-machine-demo__footnote">
-        Данные и внешние проверки в демонстрации синтетические. Демо показывает состояние заявки, а не обещание реальной выдачи.
+        Процесс показывает состояние заявки, роль текущего участника и следующее
+        действие на каждом шаге.
       </p>
     </section>
   );
