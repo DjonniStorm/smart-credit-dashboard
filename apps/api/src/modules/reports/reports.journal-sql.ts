@@ -27,8 +27,9 @@ with raw as (
 ), bounded as (
   select raw.* from raw cross join search_term
   where report_seq <= $3::bigint
+    and ($4::bigint is null or report_seq <= $4::bigint)
 ), filtered as (
-  select * from bounded
+  select bounded.* from bounded cross join search_term
   where (cardinality($5::text[]) = 0 or product_id = any($5::text[]))
     and (cardinality($6::text[]) = 0 or status_value = any($6::text[]))
     and (cardinality($7::text[]) = 0 or assignee_value = any($7::text[]))
@@ -79,8 +80,8 @@ with raw as (
   order by occurred_at desc, report_seq desc
   limit $17
 )
-select 'application' as row_type, null::text as event_id, null::text as report_seq,
-  p.id, p.number, p.created_at, p.product_id, p.amount, p.urgent,
+select 'application' as row_type, null::text as event_id, null::bigint as report_seq,
+  p.id, p.number as application_number, p.created_at, p.product_id, p.amount, p.urgent,
   p.status_value, p.stage_value, p.assignee_value,
   null::text as application_id, null::timestamptz as occurred_at,
   null::text as kind, null::jsonb as payload, null::text as event_status,
@@ -94,7 +95,7 @@ select 'application' as row_type, null::text as event_id, null::text as report_s
 from population p
 where $18::text = 'overview'
 union all
-select 'event', event_id, report_seq, null, null, null, product_id, amount, null,
+select 'event', event_id, report_seq, null, application_number, null, product_id, amount, null,
   null, null, null, application_id, occurred_at, kind, payload, event_status,
   event_stage, event_assignee_id, actor_kind, actor_id, actor_name,
   recommendation, autonomy_mode, autonomy_disposition, sla_value,
