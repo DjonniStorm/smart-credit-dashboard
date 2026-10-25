@@ -1,6 +1,7 @@
 import type {
   ApiApplication,
   ApiApplicationManagement,
+  ApiClientEvent,
   ApiDecision,
   ApiJob,
   ApiScoring,
@@ -87,6 +88,7 @@ function clientUrgentRequest(
 export function toApiApplication(
   application: ApplicationWorkflow,
   clientComments: ApplicationComment[] = [],
+  events: ApiClientEvent[] = [],
 ): ApiApplication {
   return {
     id: application.id,
@@ -113,6 +115,7 @@ export function toApiApplication(
       ? (application.urgentSource?.by ?? null)
       : null,
     clientComments,
+    events,
     createdAt: application.createdAt,
     updatedAt: application.updatedAt,
   };

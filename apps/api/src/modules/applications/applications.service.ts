@@ -6,6 +6,7 @@ import type {
   ApiApplicationContext,
   ApiApplicationResponse,
   ApiAutonomySnapshot,
+  ApiClientEvent,
   ApiJob,
   ApiQueueItem,
 } from "@repo/contracts/api";
@@ -35,6 +36,7 @@ import {
 } from "./api-mapper.ts";
 import { buildAutoRequest } from "./auto-request.ts";
 import { AutonomyStore } from "./autonomy.store.ts";
+import { toApiClientEvents } from "./client-events.ts";
 import { decide } from "./decision-engine.ts";
 import {
   MAX_JOB_ATTEMPTS,
@@ -88,8 +90,15 @@ export class ApplicationsService {
     return toApiApplication(
       application,
       await this.store.listComments(id, "client"),
+      await this.getApiApplicationEvents(id),
     );
   }
+
+  /** Публичные события заявки для кабинета клиента. */
+  async getApiApplicationEvents(id: string): Promise<ApiClientEvent[]> {
+    return toApiClientEvents(await this.store.listEvents(id));
+  }
+
   async getApiApplicationContext(id: string): Promise<ApiApplicationContext> {
     await this.store.expireAutoOffer(id);
     const application = await this.getApplication(id);

@@ -46,9 +46,10 @@ import {
   CurrentEmployee,
   EmployeeSessionGuard,
 } from "../auth/employee-session.guard.ts";
+import { toApiApplication } from "./api-mapper.ts";
 import { ApplicationsService } from "./applications.service.ts";
 import { AutonomyStore } from "./autonomy.store.ts";
-import { ClientApplicationsService } from "./client-applications.service.ts";
+import { ClientApplicationScopeService } from "./client-application-scope.service.ts";
 import { ApplyApplicationActionCommand } from "./commands/apply-application-action.command.ts";
 import { ApplyClientActionCommand } from "./commands/apply-client-action.command.ts";
 
@@ -85,7 +86,7 @@ export class ApplicationsController {
   constructor(
     private readonly applications: ApplicationsService,
     private readonly commands: CommandBus,
-    private readonly clientApplications: ClientApplicationsService,
+    private readonly clientScope: ClientApplicationScopeService,
   ) {}
 
   @Get("queue")
@@ -140,33 +141,27 @@ export class ApplicationsController {
 
   @Get()
   @UseGuards(ClientSessionGuard)
-  @ApiUnauthorizedResponse({ description: "Нет сессии клиента" })
   @ApiOkResponse({ type: ApplicationDto, isArray: true })
   @ZodSerializerDto(ApplicationListDto)
   list(@CurrentClient() session: DemoSession): Promise<ApplicationDto[]> {
-    return this.clientApplications.list(session.account.company.inn);
+    return this.clientScope
+      .list(session)
+      .then((items) => items.map((item) => toApiApplication(item)));
   }
 
   @Post()
-  @UseGuards(ClientSessionGuard)
   @ApiOperation({ operationId: "ApplicationsController_create" })
-  @ApiForbiddenResponse({
-    description: "Компания не совпадает с текущей сессией",
-  })
-  @ApiUnauthorizedResponse({ description: "Нет сессии клиента" })
   @ApiOkResponse({ type: CreateApplicationResponseDto })
   @ZodSerializerDto(CreateApplicationResponseDto)
   async create(
     @Body() body: CreateApplicationDto,
-    @CurrentClient() session: DemoSession,
   ): Promise<CreateApplicationResponseDto> {
-    return this.clientApplications.create(body, session.account.company.inn);
+    return this.applications.createApiApplication(body);
   }
 
   @Get(":id/context")
   @UseGuards(EmployeeSessionGuard)
   @ApiOperation({ operationId: "ApplicationsController_context" })
-  @ApiUnauthorizedResponse({ description: "Нет сессии сотрудника" })
   @ApiOkResponse({ type: ApplicationContextDto })
   @ZodSerializerDto(ApplicationContextDto)
   async context(@Param("id") id: string): Promise<ApplicationContextDto> {
@@ -175,54 +170,39 @@ export class ApplicationsController {
 
   @Get(":id")
   @UseGuards(ClientSessionGuard)
-  @ApiUnauthorizedResponse({ description: "Нет сессии клиента" })
-  @ApiNotFoundResponse({ description: "Заявки нет или она чужая" })
   @ApiOkResponse({ type: ApplicationDto })
   @ZodSerializerDto(ApplicationDto)
   async get(
     @Param("id") id: string,
     @CurrentClient() session: DemoSession,
   ): Promise<ApplicationDto> {
-    return this.clientApplications.get(id, session.account.company.inn);
+    const application = await this.clientScope.get(session, id);
+    const events = await this.applications.getApiApplicationEvents(id);
+    return toApiApplication(application, [], events);
   }
 
   @Post(":id/checks")
-  @UseGuards(ClientSessionGuard)
   @HttpCode(202)
   @ApiOperation({ operationId: "ApplicationsController_startCheck" })
-  @ApiUnauthorizedResponse({ description: "Нет сессии клиента" })
-  @ApiNotFoundResponse({
-    description: "Задачи или заявки нет либо она принадлежит другой компании",
-  })
   @ApiOkResponse({ type: JobDto })
   @ZodSerializerDto(JobDto)
   async check(
     @Param("id") id: string,
     @Body() body: ApplicationCheckDto,
-    @CurrentClient() session: DemoSession,
   ): Promise<JobDto> {
-    await this.clientApplications.assertAccess(id, session.account.company.inn);
     return this.applications.startApiCheck(id, body);
   }
 }
 
 @Controller("v1/jobs")
 export class JobsController {
-  constructor(private readonly clientApplications: ClientApplicationsService) {}
+  constructor(private readonly applications: ApplicationsService) {}
 
   @Get(":id")
-  @UseGuards(ClientSessionGuard)
-  @ApiUnauthorizedResponse({ description: "Нет сессии клиента" })
-  @ApiNotFoundResponse({
-    description: "Задачи или заявки нет либо она принадлежит другой компании",
-  })
   @ApiOkResponse({ type: JobDto })
   @ZodSerializerDto(JobDto)
-  async get(
-    @Param("id") id: string,
-    @CurrentClient() session: DemoSession,
-  ): Promise<JobDto> {
-    return this.clientApplications.job(id, session.account.company.inn);
+  async get(@Param("id") id: string): Promise<JobDto> {
+    return this.applications.getApiJob(id);
   }
 }
 

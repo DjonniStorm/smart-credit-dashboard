@@ -234,7 +234,11 @@ export function toCabinetApplication(
     cancelledFrom: application.cancelledFrom,
     urgentRequest: application.urgentRequest,
     urgentBy: application.urgentBy,
-    events: [],
+    events: (application.events ?? []).map((event) => ({
+      at: event.at,
+      text: event.text,
+      actor: event.actor,
+    })),
   };
 }
 
