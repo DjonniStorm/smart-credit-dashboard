@@ -1,0 +1,57 @@
+:where(html:not(.rp-dark)) {
+  --rp-c-brand: #bd252d;
+  --rp-c-brand-light: #d84a51;
+  --rp-c-brand-lighter: #f2c7ca;
+  --rp-c-brand-dark: #9b1e25;
+  --rp-c-brand-darker: #77171d;
+  --rp-c-brand-tint: rgb(189 37 45 / 8%);
+  --rp-c-link: #9b1e25;
+  --rp-home-hero-title-color: #202124;
+  --rp-home-hero-title-bg: none;
+  --rp-home-background-bg: #f7f6f4;
+  --rp-home-feature-bg: #fff;
+}
+
+:where(html.rp-dark) {
+  --rp-c-brand: #ee7379;
+  --rp-c-brand-light: #f08c91;
+  --rp-c-brand-lighter: #63252a;
+  --rp-c-brand-dark: #cf454c;
+  --rp-c-brand-darker: #a32b33;
+  --rp-c-brand-tint: rgb(238 115 121 / 12%);
+  --rp-c-link: #f08c91;
+  --rp-home-hero-title-color: #f5f2ef;
+  --rp-home-hero-title-bg: none;
+  --rp-home-background-bg: #171717;
+  --rp-home-feature-bg: #202020;
+}
+
+.rp-home-hero__title-brand {
+  color: var(--rp-c-brand-dark);
+  background: none;
+  -webkit-text-fill-color: currentcolor;
+}
+
+.rp-home-feature__item {
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.rp-home-feature__item:hover {
+  border-color: var(--rp-c-brand-lighter);
+  box-shadow: none;
+}
+
+.rp-home-hero__actions .rp-button {
+  min-height: 48px;
+  border-radius: 8px;
+}
+
+.rp-nav__title__link:focus-visible,
+.rp-nav-menu__item:focus-visible,
+.rp-home-feature__item:focus-visible,
+.rp-button:focus-visible {
+  outline: 3px solid var(--rp-c-brand);
+  outline-offset: 3px;
+}
