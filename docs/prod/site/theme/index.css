@@ -113,10 +113,6 @@
   outline-offset: 3px;
 }
 
-.docs-home-working-contour .docs-screenshot-slot {
-  max-width: 44rem;
-}
-
 .rp-nav__title__link:focus-visible,
 .rp-nav-menu__item:focus-visible,
 .rp-home-feature__item:focus-visible,

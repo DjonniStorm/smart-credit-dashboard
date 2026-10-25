@@ -7,7 +7,6 @@ import type {
   LayoutProps,
 } from "@rspress/core/theme-original";
 
-import { ScreenshotSlot } from "./ScreenshotSlot";
 import "./index.css";
 
 function HomeWorkingContour(): JSX.Element {
@@ -47,12 +46,6 @@ function HomeWorkingContour(): JSX.Element {
           Swagger API
         </a>
       </div>
-      <ScreenshotSlot
-        id="home-overview"
-        title="Общий экран демонстрации"
-        alt="Скриншот общего экрана демонстрации"
-        description="Место для общего кадра, который связывает кабинет предпринимателя, банковское АРМ и документацию API."
-      />
     </section>
   );
 }

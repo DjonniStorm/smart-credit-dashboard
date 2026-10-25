@@ -5,6 +5,11 @@
     "label": "Главная"
   },
   {
+    "type": "file",
+    "name": "quick-start",
+    "label": "Быстрый старт"
+  },
+  {
     "type": "dir-section-header",
     "name": "submission",
     "label": "Для жюри"
