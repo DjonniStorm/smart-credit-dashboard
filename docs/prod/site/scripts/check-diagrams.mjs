@@ -12,6 +12,11 @@ const buildScript = path.join(siteRoot, "scripts", "build-diagrams.mjs");
 
 async function main() {
   const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
+  if (manifest.version !== 2) {
+    throw new Error(
+      "Неподдерживаемая версия manifest.json; пересоберите диаграммы",
+    );
+  }
   if (manifest.generatedBy !== "@mermaid-js/mermaid-cli@12.0.0") {
     throw new Error(
       "Диаграммы сгенерированы не pinned @mermaid-js/mermaid-cli@12.0.0",
@@ -80,6 +85,10 @@ async function main() {
         throw new Error(
           `${entry.output}: SVG не совпадает с воспроизводимой генерацией`,
         );
+      }
+      const outputHash = createHash("sha256").update(currentSvg).digest("hex");
+      if (outputHash !== entry.outputHash) {
+        throw new Error(`${entry.output}: хэш SVG не совпадает с manifest`);
       }
     }
   } finally {

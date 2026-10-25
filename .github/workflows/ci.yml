@@ -8,6 +8,38 @@ on:
     branches: [main, dev]
 
 jobs:
+  docs:
+    name: documentation site
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PUPPETEER_CACHE_DIR: ${{ runner.temp }}/puppeteer
+    defaults:
+      run:
+        working-directory: docs/prod/site
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: docs/prod/site/package-lock.json
+
+      - run: npm ci
+
+      - name: Install Chromium system dependencies
+        run: >-
+          sudo env "PATH=$PATH"
+          "PUPPETEER_CACHE_DIR=$PUPPETEER_CACHE_DIR"
+          node_modules/.bin/puppeteer browsers install chrome --install-deps
+
+      - name: Check diagram reproducibility
+        run: npm run diagrams:check
+
+      - name: Build documentation site
+        run: npm run build
+
   check:
     name: lint, check-types, build
     runs-on: ubuntu-latest
