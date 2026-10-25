@@ -1,16 +1,24 @@
 services:
   caddy:
     profiles: ["off"]
-  postgres:
-    networks: [edge]
-  scoring:
-    networks: [edge]
   api:
-    networks: [edge]
+    networks:
+      default: {}
+      edge:
+        aliases:
+          - alfa-api
   client:
-    networks: [edge]
+    networks:
+      default: {}
+      edge:
+        aliases:
+          - alfa-client
   backoffice:
-    networks: [edge]
+    networks:
+      default: {}
+      edge:
+        aliases:
+          - alfa-backoffice
 
 networks:
   edge:
