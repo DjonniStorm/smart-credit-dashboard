@@ -1,4 +1,36 @@
+# Закрывает служебные эндпоинты API (метрики, Swagger) на всех публичных доменах.
+(close-api-internal) {
+	@api_metrics path /metrics /metrics*
+	handle @api_metrics {
+		respond 404
+	}
+	@api_docs path /docs /docs*
+	handle @api_docs {
+		respond 404
+	}
+	@api_metrics_proxied path /api/metrics /api/metrics*
+	handle @api_metrics_proxied {
+		respond 404
+	}
+	@api_docs_proxied path /api/docs /api/docs*
+	handle @api_docs_proxied {
+		respond 404
+	}
+}
+
+# Базовые заголовки безопасности для пользовательских сайтов.
+(security-headers) {
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
 {$DOMAIN} {
+	import close-api-internal
+	import security-headers
+
 	handle /api/* {
 		uri strip_prefix /api
 		reverse_proxy api:4000
@@ -9,6 +41,9 @@
 }
 
 {$BACKOFFICE_DOMAIN} {
+	import close-api-internal
+	import security-headers
+
 	handle /api/* {
 		uri strip_prefix /api
 		reverse_proxy api:4000
@@ -19,9 +54,8 @@
 }
 
 {$API_DOMAIN} {
-	handle /metrics {
-		respond 404
-	}
+	import close-api-internal
+
 	handle {
 		reverse_proxy api:4000
 	}
