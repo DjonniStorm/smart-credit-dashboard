@@ -8,10 +8,13 @@
   },
   "scripts": {
     "dev": "rspress dev --host 127.0.0.1",
-    "build": "rspress build",
+    "build": "npm run diagrams:check && rspress build",
+    "diagrams:build": "node scripts/build-diagrams.mjs",
+    "diagrams:check": "node scripts/check-diagrams.mjs",
     "preview": "rspress preview --host 127.0.0.1 --port 4173"
   },
   "devDependencies": {
+    "@mermaid-js/mermaid-cli": "12.0.0",
     "@rspress/core": "2.0.23"
   }
 }
