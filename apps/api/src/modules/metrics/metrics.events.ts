@@ -12,7 +12,7 @@ export async function collectEventsMetrics(
   lines.push(
     "# HELP smart_credit_application_events_total Всего событий по заявкам (переходы, аудит)",
   );
-  lines.push("# TYPE smart_credit_application_events_total counter");
+  lines.push("# TYPE smart_credit_application_events_total gauge");
   lines.push(
     metricLine("smart_credit_application_events_total", number(rows[0]?.n)),
   );

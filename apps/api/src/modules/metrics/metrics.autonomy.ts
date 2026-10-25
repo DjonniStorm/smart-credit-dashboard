@@ -19,7 +19,7 @@ export async function collectAutonomyMetrics(
 
   const policyRows = rowsOf(
     await db.query(
-      "select product_id, payload, revision from autonomy_policies order by product_id",
+      "select product_id, payload from autonomy_policies order by product_id",
     ),
   );
 
@@ -67,7 +67,6 @@ export async function collectAutonomyMetrics(
       metricLine("smart_credit_autonomy_policy_info", 1, {
         product,
         level: String(config.level ?? "unknown"),
-        revision: String(number(row.revision)),
       }),
     );
     lines.push(

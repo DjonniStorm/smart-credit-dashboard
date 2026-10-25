@@ -12,7 +12,10 @@ import { DataSource } from "typeorm";
 import { runMigrations } from "../src/common/database/migration-runner.ts";
 import { DemoDataStore } from "../src/common/demo-data/demo-data.store.ts";
 import { MetricsController } from "../src/modules/metrics/metrics.controller.ts";
+import { collectEventsMetrics } from "../src/modules/metrics/metrics.events.ts";
+import { collectScoringJobsMetrics } from "../src/modules/metrics/metrics.scoring-jobs.ts";
 import { MetricsService } from "../src/modules/metrics/metrics.service.ts";
+import { collectSourceChecksMetrics } from "../src/modules/metrics/metrics.source-checks.ts";
 
 // HTTP-слой GET /metrics против настоящего Postgres: метрики читаются из тех же
 // таблиц, что и приложение, поэтому проверка требует изолированной схемы.
@@ -30,6 +33,72 @@ import { MetricsService } from "../src/modules/metrics/metrics.service.ts";
   ],
 })
 class MetricsTestModule {}
+
+test("scoring gauges include runnable queue age and failures in the last 5 minutes", async () => {
+  const lines: string[] = [];
+  let query = "";
+  const metricsDb = {
+    query: async (sql: string) => {
+      query = sql;
+      return [
+        {
+          total: 4,
+          succeeded: 1,
+          failed: 1,
+          queued: 1,
+          running: 1,
+          avg_duration_ms: 250,
+          max_duration_ms: 400,
+          oldest_ready_age_seconds: 321,
+          failed_5m: 1,
+        },
+      ];
+    },
+  } as DataSource;
+
+  await collectScoringJobsMetrics(metricsDb, lines);
+
+  assert.match(query, /next_attempt_at is null or next_attempt_at <= now\(\)/);
+  assert.match(query, /finished_at >= now\(\) - interval '5 minutes'/);
+  assert.ok(
+    lines.includes("smart_credit_scoring_oldest_ready_job_age_seconds 321"),
+  );
+  assert.ok(lines.includes("smart_credit_scoring_jobs_failed_5m 1"));
+});
+
+test("database row-count metrics are gauges and source labels are bounded", async () => {
+  const lines: string[] = [];
+  const queries: string[] = [];
+  const responses = [
+    [{ total: 3, failed: 1 }],
+    [{ source: "egrul", status: "ok", count: 2 }],
+    [{ n: 3 }],
+  ];
+  const metricsDb = {
+    query: async (sql: string) => {
+      queries.push(sql);
+      return responses[queries.length - 1];
+    },
+  } as DataSource;
+
+  await collectSourceChecksMetrics(metricsDb, lines);
+  await collectEventsMetrics(metricsDb, lines);
+
+  assert.ok(lines.includes("# TYPE smart_credit_source_checks_total gauge"));
+  assert.ok(
+    lines.includes("# TYPE smart_credit_source_checks_failed_total gauge"),
+  );
+  assert.ok(
+    lines.includes("# TYPE smart_credit_application_events_total gauge"),
+  );
+  assert.ok(
+    lines.includes(
+      'smart_credit_source_checks_by_source_status{source="egrul",status="ok"} 2',
+    ),
+  );
+  assert.match(queries[1], /source in \('egrul', 'bki', 'fns'\)/);
+  assert.match(queries[1], /status in \('ok', 'failed'\)/);
+});
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
 const schema = `t_${randomUUID().replaceAll("-", "")}`;
@@ -93,10 +162,10 @@ async function seedMetrics(source: DataSource): Promise<void> {
   const finishedAt = new Date(now).toISOString();
   await source.query(
     `insert into scoring_jobs(id, application_id, status, idempotency_key, created_at, started_at, finished_at, attempts)
-     values
+       values
        ($1, $2, 'succeeded', 'key-job-1', now(), $5, $6, 1),
-       ($3, $2, 'failed', 'key-job-2', now(), null, null, 3),
-       ($4, $2, 'queued', 'key-job-3', now(), null, null, 0)`,
+       ($3, $2, 'failed', 'key-job-2', now(), null, $6, 3),
+       ($4, $2, 'queued', 'key-job-3', now() - interval '2 minutes', null, null, 0)`,
     ["job-m-1", "app-m-1", "job-m-2", "job-m-3", startedAt, finishedAt],
   );
 
@@ -179,18 +248,29 @@ test(
       /smart_credit_scoring_jobs_by_outcome\{outcome="failed"\} 1/,
     );
     assert.match(body, /smart_credit_scoring_queue_depth 1/);
+    assert.match(
+      body,
+      /smart_credit_scoring_oldest_ready_job_age_seconds [1-9]\d{2}/,
+    );
+    assert.match(body, /smart_credit_scoring_jobs_failed_5m 1/);
     assert.match(body, /smart_credit_scoring_job_duration_ms_avg 60000/);
     assert.match(body, /smart_credit_scoring_job_duration_ms_max 60000/);
 
+    assert.match(body, /# TYPE smart_credit_application_events_total gauge/);
     assert.match(body, /smart_credit_application_events_total 3/);
 
+    assert.match(body, /# TYPE smart_credit_source_checks_total gauge/);
     assert.match(body, /smart_credit_source_checks_total 3/);
     assert.match(body, /smart_credit_source_checks_failed_total 1/);
+    assert.match(
+      body,
+      /smart_credit_source_checks_by_source_status\{source="egrul",status="ok"\} 1/,
+    );
 
     assert.match(body, /smart_credit_autonomy_policies 4/);
     assert.match(
       body,
-      /smart_credit_autonomy_policy_info\{product="working_capital",level="stable",revision="0"\} 1/,
+      /smart_credit_autonomy_policy_info\{product="working_capital",level="stable"\} 1/,
     );
     assert.match(
       body,
