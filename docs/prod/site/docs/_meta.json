@@ -1,5 +1,9 @@
 [
-  "index",
+  {
+    "type": "file",
+    "name": "index",
+    "label": "Главная"
+  },
   {
     "type": "dir-section-header",
     "name": "submission",
