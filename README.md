@@ -1,93 +1,143 @@
-Назначение решения, архитектуры, требования к окружению, инструкция по запуску,
-конфигурации и переменные окружения, описание используемых компонентов и пошаговый сценарий проверки.
+# Smart Credit Dashboard
 
-## Требования к окружению
+Прототип кредитного конвейера для малого бизнеса. Предприниматель подаёт заявку и отвечает на запросы, сотрудник банка проверяет сведения и принимает решение. Scoring Service рассчитывает объяснимый результат, API хранит состояние заявки и историю действий.
 
-Поставить один раз:
+В репозитории есть две версии запуска: production Compose для самостоятельной проверки и локальный режим разработки. Источники ЕГРЮЛ, ФНС, БКИ и банковского оборота представлены синтетическими данными; реальные внешние интеграции не подключены. Scoring детерминированный, внешние ML/LLM-модели не используются.
 
-- [Node.js](https://nodejs.org/) 24 или новее
-- pnpm 11.25.0: `npm install -g pnpm@11.25.0` (или `corepack enable`)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/), запущенный
+## Требования
 
-## Запуск для разработки
+- Docker Desktop с включённым Linux engine.
+- Node.js 24.x и pnpm 11.25.0 для локальной разработки.
+- Python 3.12 и `uv` 0.12.21 нужны для локального запуска scoring; в Docker они устанавливаются внутри образа.
+- Для публикации Compose в интернете задайте собственные пароли и домен. Не используйте значения по умолчанию из примеров.
 
-Из корня репозитория:
+Версии JavaScript зависимостей закреплены в `pnpm-lock.yaml`, Python зависимостей scoring в `apps/scoring/uv.lock`, документации в `docs/prod/site/package-lock.json`. Образы сервисов и их версии указаны в `infra/prod/docker-compose.yml`.
+
+## Запуск всего решения в Docker
+
+Из корня репозитория скопируйте шаблон окружения:
+
+```bash
+cp infra/prod/.env.example infra/prod/.env
+```
+
+В PowerShell:
+
+```powershell
+Copy-Item infra/prod/.env.example infra/prod/.env
+```
+
+Перед публикацией замените `POSTGRES_PASSWORD`, `GRAFANA_ADMIN_PASSWORD` и задайте `DOMAIN`. Затем запустите сервисы и один раз загрузите синтетические демонстрационные данные:
+
+```bash
+pnpm docker:up
+pnpm docker:seed
+```
+
+`docker:seed` запускает одноразовый контейнер. Он не создаёт дубликаты, но при каждом запуске возвращает три исходные демо-заявки к начальным статусам. Запускайте seed перед новой демонстрацией, а не при каждом старте приложения.
+
+При значениях `DOMAIN=localhost` и `SCHEME=http` откройте:
+
+| Раздел | Адрес |
+| --- | --- |
+| Кабинет предпринимателя | http://localhost |
+| Кабинет сотрудника банка | http://backoffice.localhost |
+| Swagger API | http://api.localhost/docs |
+| Проверка API | http://api.localhost/health |
+
+Для входа выберите демонстрационный профиль. Тестовые профили: `bakery` (ООО «Пекарня на Лесной»), `workshop` (ИП Столяров) и `logistics` (ООО «Тестовые перевозки»). Сотрудник входит как «Аналитик Демо 1», руководитель для управляющих действий как «Руководитель Демо». Пароли для этих профилей не нужны.
+
+Остановить сервисы, сохранив данные PostgreSQL:
+
+```bash
+pnpm docker:down
+```
+
+Чтобы удалить базу и начать заново, выполните `docker compose --env-file infra/prod/.env -f infra/prod/docker-compose.yml down --volumes`. Команда удаляет сохранённые заявки, события и сессии.
+
+## Основной сценарий проверки
+
+1. В кабинете предпринимателя войдите в профиль `bakery`, создайте заявку на оборотный кредит и отправьте её.
+2. В банковском АРМ войдите как «Аналитик Демо 1», откройте очередь и разберите заявку.
+3. Для существующей заявки попробуйте запросить сведения, ответьте на него из кабинета клиента и продолжите рассмотрение в АРМ.
+4. Проверьте принятие предложения, подготовку договора и моделируемое подписание. В демо после ввода одноразового кода заявка получает статус `FUNDED`; выдача денег реальным банком не выполняется.
+
+Данные для проверки через API: [`docs/api-collection/company-profile.postman_collection.json`](docs/api-collection/company-profile.postman_collection.json). После импорта сначала выполните вход из коллекции: Postman сохранит cookie для запросов к тому же `baseUrl`. Переменные коллекции позволяют выбрать локальный или опубликованный API.
+
+Сквозной тест подачи заявки до `FUNDED`:
+
+Один раз установите пакеты и браузер Playwright:
 
 ```bash
 pnpm install
-pnpm dev
+pnpm exec playwright install chromium
 ```
 
-`pnpm dev` поднимает PostgreSQL в Docker (`infra/dev/docker-compose.yml`) и запускает все приложения через Turborepo:
-
-| Приложение                       | Адрес                      |
-| -------------------------------- | -------------------------- |
-| client: кабинет предпринимателя  | http://localhost:3000      |
-| backoffice: АРМ сотрудника банка | http://localhost:3001      |
-| api, Swagger                     | http://localhost:4000/docs |
-| scoring                          | http://localhost:8000/docs |
-| PostgreSQL                       | localhost:5432             |
-
-Порты должны быть свободны.
-
-Один сервис вместе с PostgreSQL: `pnpm dev --filter=client`.
-
-Остановить PostgreSQL: `pnpm db:down`.
-
-Перед первым запуском API заполнить синтетические данные:
+В первом терминале подготовьте PostgreSQL и синтетические данные:
 
 ```bash
+pnpm db:up
 pnpm --filter api db:seed
 ```
 
-Команда идемпотентна и не запускается автоматически.
-
-Каталог продуктов в базе не хранится: api отдаёт его из `packages/contracts` (`CREDIT_PRODUCTS`). Ключевая ставка для расчёта ставок задаётся переменной `KEY_RATE_PERCENT` (% годовых, по умолчанию 14). Шаблон переменных api: `apps/api/.env.example`.
-
-### Только интерфейс
-
-Посмотреть кабинет и АРМ без Docker и базы:
+Во втором терминале запустите scoring и оставьте его работающим:
 
 ```bash
-pnpm dev:ui
+pnpm --filter scoring dev
 ```
 
-Запускает client (http://localhost:3000) и backoffice (http://localhost:3001). Одно приложение: `pnpm exec turbo run dev --filter=client`. Без api страницы открываются, а запросы к нему показывают ошибку: форма проверки ИНН в client и блок «Состояние api» в backoffice. Это нормально.
+В третьем терминале запустите тест:
 
-Тема Mantine, шрифт и пресеты Motion лежат в `packages/ui`. Светлая или тёмная схема берётся из настроек системы.
+```bash
+pnpm test:e2e tests/e2e/financing-cycle.smoke.mjs
+```
 
-Сквозной сценарий банковского АРМ с тестовыми заявками и ожидаемыми переходами: [`docs/DEMO_ARM_SCENARIO.md`](docs/DEMO_ARM_SCENARIO.md).
-Матрица действий, hold-состояний и правил аудита: [`docs/BACKOFFICE_ACTIONS.md`](docs/BACKOFFICE_ACTIONS.md).
-Клиентский сквозной сценарий и UX-контракты: [`docs/CLIENT_CABINET_PLAN.md`](docs/CLIENT_CABINET_PLAN.md).
-ML/scoring, калибровка, объяснимость и автономность: [`docs/ML_SCORING_PLAN.md`](docs/ML_SCORING_PLAN.md).
-Доменные команды, handoff и аудит: [`docs/application-contracts.md`](docs/application-contracts.md).
+Конфигурация Playwright сама запускает API, Client Web и Backoffice Web. Scoring отвечает на `http://localhost:8000`, PostgreSQL остаётся на `localhost:5432`.
 
-## Проверки
+## Локальная разработка
+
+```bash
+pnpm install
+pnpm db:up
+pnpm --filter api db:seed
+pnpm dev
+```
+
+`pnpm dev` запускает API, оба веб-приложения и scoring через Turborepo. Адреса: Client Web `http://localhost:3000`, Backoffice Web `http://localhost:3001`, API и Swagger `http://localhost:4000/docs`, scoring `http://localhost:8000/docs`. Остановить PostgreSQL: `pnpm db:down`.
+
+Чтобы запустить scoring вручную, перейдите в `apps/scoring` и выполните `uv run --locked uvicorn app.main:app --host 127.0.0.1 --port 8000`. Внешние API-ключи для демо не требуются. Настройки API и Compose описаны в `apps/api/.env.example` и `infra/prod/.env.example`.
+
+## Архитектура и материалы проверки
+
+- [Публичная документация и быстрый старт](docs/prod/site/docs/quick-start.mdx)
+- [Четыре архитектурных представления](docs/prod/site/docs/developers/architecture.mdx)
+- [Модель данных](docs/prod/site/docs/developers/data-model.mdx)
+- [Сценарии проверки](docs/prod/site/docs/developers/verification-scenarios.mdx)
+- [Диаграмма состояний заявки](docs/prod/site/docs/submission/state-machine-demo.mdx)
+- [API и коллекция Postman](docs/prod/site/docs/developers/api.mdx)
+- [Описание сторонних компонентов и лицензий](THIRD_PARTY_NOTICES)
+
+Сайт документации запускается отдельно:
+
+```bash
+cd docs/prod/site
+npm ci
+npm run dev
+```
+
+## Проверки разработки
 
 ```bash
 pnpm lint
 pnpm check-types
 pnpm build
 pnpm boundaries
+pnpm --filter api test
+pnpm --filter client test
 ```
 
-`pnpm boundaries` проверяет правила зависимостей: `apps/*` зависят только от `packages/*`, приложения не зависят друг от друга. Те же проверки запускаются в CI на каждый push и pull request.
+API-тесты, проверяющие транзакции PostgreSQL, требуют работающую базу и `TEST_DATABASE_URL=postgres://alfa:alfa@localhost:5432/alfa`. Точный список проверок и окружение CI см. в [workflow](.github/workflows/ci.yml).
 
-## Запуск всего в Docker
+## Мониторинг
 
-```bash
-pnpm docker:up
-```
-
-То же самое, что `docker compose -f infra/prod/docker-compose.yml up --build -d --wait`. Остановить: `pnpm docker:down`.
-
-### Необязательный мониторинг
-
-Мониторинг рассчитан на Linux-хост с Docker. Node Exporter и cAdvisor показывают ресурсы Linux Docker-хоста и контейнеров; в Docker Desktop на Windows это Linux VM, а не ресурсы Windows.
-
-1. Скопируйте `infra/prod/.env.example` в `infra/prod/.env` и задайте непустой `GRAFANA_ADMIN_PASSWORD` (сильный пароль). Файл `.env` локальный и не коммитится.
-2. Запустите профиль: `pnpm docker:monitoring:up`. Он поднимает обычный production Compose вместе с Prometheus, Grafana и exporters.
-3. На самом сервере откройте `http://127.0.0.1:3002` (Grafana, пользователь `admin`) или `http://127.0.0.1:9090` (Prometheus). Порты доступны только на loopback.
-4. Для удалённого доступа используйте SSH-туннель: `ssh -L 3002:127.0.0.1:3002 -L 9090:127.0.0.1:9090 user@server`, затем откройте эти адреса локально.
-
-Prometheus внутри Docker проверяет API `/health` и `/metrics`, scoring `/health`, а также client и backoffice. Публичный маршрут `api.<domain>/metrics` закрыт ответом 404. Правила alerting видны на дашборде, внешняя доставка уведомлений не настроена. `pnpm docker:monitoring:down` останавливает только monitoring-сервисы, не трогая обычные production-сервисы; named volumes и контейнеры мониторинга остаются для следующего запуска.
+Для необязательного профиля мониторинга задайте `GRAFANA_ADMIN_PASSWORD` в `infra/prod/.env`, затем выполните `pnpm docker:monitoring:up`. Grafana доступна на `http://127.0.0.1:3002`, Prometheus на `http://127.0.0.1:9090`; оба порта привязаны к loopback. Подробности и ограничения метрик приведены в [production Compose](infra/prod/docker-compose.yml).

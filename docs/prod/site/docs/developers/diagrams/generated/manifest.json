@@ -6,7 +6,7 @@
       "id": "component-overview",
       "source": "component-overview.mmd",
       "output": "component-overview.svg",
-      "sourceHash": "f5ffc3c9b29f0a837094426c6969efccc281bc158bd09f87f4176271ea8ff7ec",
+      "sourceHash": "7294165c8eebf1182cddf6c92ff8aee6416c3e143221816943e329bd83eacb06",
       "title": "Component overview",
       "description": "C4 Level 2: предприниматель и сотрудник банка работают через два web-интерфейса, API вызывает scoring и хранит данные в PostgreSQL."
     },
@@ -22,7 +22,7 @@
       "id": "repository",
       "source": "repository.mmd",
       "output": "repository.svg",
-      "sourceHash": "a663e1efbab134d8f1e2f5a45b5c555f16806c3dfcee795a67a88222f6e7e390",
+      "sourceHash": "49f4e94b214332de8f2605781557931d5686faab4fda1d7d15d9dbcc959547c6",
       "title": "Repository and package view",
       "description": "Mermaid flowchart: workspace applications, shared packages, tooling, generated OpenAPI flow и отдельный docs-site."
     },

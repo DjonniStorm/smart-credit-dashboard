@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "Smart Credit Dashboard — профиль компании",
-    "description": "Проверка профиля компании, согласия на БКИ и ручной проверки недоступного источника.",
+    "name": "Smart Credit Dashboard — профиль и проверки компании",
+    "description": "Сначала выполните запросы по порядку: коллекция покажет демо-аккаунты, войдёт как клиент logistics и сохранит alfa_demo_session в cookie jar Postman. Далее проверяются профиль, согласие БКИ, синтетическая проверка источников и валидация ИНН. Для локального API задайте baseUrl=http://localhost:4000, для production: https://api.sales.eegov.net. Используется тестовая компания с ИНН 9903000033; данные полностью синтетические.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -10,29 +10,76 @@
       "value": "http://localhost:4000"
     },
     {
-      "key": "inn",
-      "value": "7707083893"
+      "key": "accountId",
+      "value": "logistics"
     },
     {
-      "key": "unavailableInn",
-      "value": "0000000000"
+      "key": "inn",
+      "value": "9903000033"
     }
   ],
   "item": [
     {
-      "name": "Получить профиль без согласия БКИ",
+      "name": "1. Список демо-аккаунтов",
       "request": {
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/v1/companies/{{inn}}/profile",
-          "host": ["{{baseUrl}}"],
-          "path": ["v1", "companies", "{{inn}}", "profile"]
+          "raw": "{{baseUrl}}/v1/auth/demo-accounts"
         }
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('API отдаёт список демо-аккаунтов', function () { pm.response.to.have.status(200); });",
+              "pm.test('В списке есть логистическая компания для этого сценария', function () { pm.expect(pm.response.json().some(function (account) { return account.id === pm.collectionVariables.get('accountId'); })).to.eql(true); });"
+            ]
+          }
+        }
+      ]
     },
     {
-      "name": "Выдать согласие на БКИ",
+      "name": "2. Войти в кабинет клиента (сохранить cookie)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"accountId\": \"{{accountId}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/auth/demo-sign-in"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Клиентская сессия создана', function () { pm.response.to.have.status(200); });",
+              "pm.test('Ответ установил cookie alfa_demo_session', function () { pm.expect(pm.response.headers.get('Set-Cookie')).to.include('alfa_demo_session='); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Получить профиль до согласия БКИ",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/companies/{{inn}}/profile"
+        }
+      },
+      "event": [{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('С профилем можно работать после входа', function () { pm.response.to.have.status(200); });"]}}]
+    },
+    {
+      "name": "4. Выдать согласие на БКИ",
       "request": {
         "method": "POST",
         "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -41,26 +88,24 @@
           "raw": "{\n  \"granted\": true\n}"
         },
         "url": {
-          "raw": "{{baseUrl}}/v1/companies/{{inn}}/consents/bki",
-          "host": ["{{baseUrl}}"],
-          "path": ["v1", "companies", "{{inn}}", "consents", "bki"]
+          "raw": "{{baseUrl}}/v1/companies/{{inn}}/consents/bki"
         }
-      }
+      },
+      "event": [{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Согласие принято для компании текущей сессии', function () { pm.response.to.have.status(200); });"]}}]
     },
     {
-      "name": "Получить профиль после согласия БКИ",
+      "name": "5. Получить профиль после согласия БКИ",
       "request": {
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/v1/companies/{{inn}}/profile",
-          "host": ["{{baseUrl}}"],
-          "path": ["v1", "companies", "{{inn}}", "profile"]
+          "raw": "{{baseUrl}}/v1/companies/{{inn}}/profile"
         }
-      }
+      },
+      "event": [{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('API возвращает профиль после согласия', function () { pm.response.to.have.status(200); });","pm.test('Статус согласия отмечен как granted', function () { pm.expect(pm.response.json().bkiConsent.status).to.eql('granted'); });"]}}]
     },
     {
-      "name": "Повторить согласие на БКИ",
+      "name": "6. Повторить согласие (проверка повторного запроса)",
       "request": {
         "method": "POST",
         "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -69,39 +114,43 @@
           "raw": "{\n  \"granted\": true\n}"
         },
         "url": {
-          "raw": "{{baseUrl}}/v1/companies/{{inn}}/consents/bki",
-          "host": ["{{baseUrl}}"],
-          "path": ["v1", "companies", "{{inn}}", "consents", "bki"]
+          "raw": "{{baseUrl}}/v1/companies/{{inn}}/consents/bki"
         }
-      }
+      },
+      "event": [{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Повторное согласие не ломает запрос', function () { pm.response.to.have.status(200); });"]}}]
     },
     {
-      "name": "Ошибочный ИНН",
+      "name": "7. Проверить формат ИНН (ожидается HTTP 400)",
       "request": {
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/v1/companies/not-an-inn/profile",
-          "host": ["{{baseUrl}}"],
-          "path": ["v1", "companies", "not-an-inn", "profile"]
+          "raw": "{{baseUrl}}/v1/companies/not-an-inn/profile"
         }
-      }
+      },
+      "event": [{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Неверный ИНН отклоняется валидацией', function () { pm.response.to.have.status(400); });"]}}]
     },
     {
-      "name": "Недоступный источник",
+      "name": "8. Выполнить синтетическую проверку компании и источников",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/companies/{{inn}}/check"
+        }
+      },
+      "event": [{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Синтетическая проверка источников выполнена', function () { pm.response.to.have.status(200); });"]}}]
+    },
+    {
+      "name": "9. Завершить клиентскую сессию",
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"granted\": true\n}"
-        },
+        "header": [],
         "url": {
-          "raw": "{{baseUrl}}/v1/companies/{{unavailableInn}}/consents/bki",
-          "host": ["{{baseUrl}}"],
-          "path": ["v1", "companies", "{{unavailableInn}}", "consents", "bki"]
+          "raw": "{{baseUrl}}/v1/auth/sign-out"
         }
-      }
+      },
+      "event": [{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Клиентская сессия завершена', function () { pm.response.to.have.status(204); });"]}}]
     }
   ]
 }
