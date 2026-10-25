@@ -23,22 +23,21 @@ with raw as (
   ) prior on true
   where v.occurred_at >= $1 and v.occurred_at < $2
 ), search_term as (
-  select replace(replace(replace(lower($14::text), chr(92), chr(92) || chr(92)), chr(37), chr(92) || chr(37)), chr(95), chr(92) || chr(95)) as needle
+  select replace(replace(replace(lower($13::text), chr(92), chr(92) || chr(92)), chr(37), chr(92) || chr(37)), chr(95), chr(92) || chr(95)) as needle
 ), bounded as (
   select raw.* from raw cross join search_term
   where report_seq <= $3::bigint
-    and ($4::bigint is null or report_seq <= $4::bigint)
 ), filtered as (
   select bounded.* from bounded cross join search_term
-  where (cardinality($5::text[]) = 0 or product_id = any($5::text[]))
-    and (cardinality($6::text[]) = 0 or status_value = any($6::text[]))
-    and (cardinality($7::text[]) = 0 or assignee_value = any($7::text[]))
-    and (cardinality($8::text[]) = 0 or stage_value = any($8::text[]))
-    and (cardinality($9::text[]) = 0 or actor_value = any($9::text[]))
-    and (cardinality($10::text[]) = 0 or recommendation = any($10::text[]))
-    and (cardinality($11::text[]) = 0 or autonomy_value = any($11::text[]))
-    and (cardinality($12::text[]) = 0 or autonomy_disposition = any($12::text[]))
-    and (cardinality($13::text[]) = 0 or sla_value = any($13::text[]))
+  where (cardinality($4::text[]) = 0 or product_id = any($4::text[]))
+    and (cardinality($5::text[]) = 0 or status_value = any($5::text[]))
+    and (cardinality($6::text[]) = 0 or assignee_value = any($6::text[]))
+    and (cardinality($7::text[]) = 0 or stage_value = any($7::text[]))
+    and (cardinality($8::text[]) = 0 or actor_value = any($8::text[]))
+    and (cardinality($9::text[]) = 0 or recommendation = any($9::text[]))
+    and (cardinality($10::text[]) = 0 or autonomy_value = any($10::text[]))
+    and (cardinality($11::text[]) = 0 or autonomy_disposition = any($11::text[]))
+    and (cardinality($12::text[]) = 0 or sla_value = any($12::text[]))
     and (search_term.needle = '' or lower(application_number) like '%' || search_term.needle || '%' escape chr(92)
       or lower(coalesce(actor_name, '')) like '%' || search_term.needle || '%' escape chr(92)
       or lower(coalesce(payload->>'title', '')) like '%' || search_term.needle || '%' escape chr(92)
@@ -68,17 +67,17 @@ with raw as (
         order by v.occurred_at desc, v.report_seq desc limit 1) as event_assignee_id
   ) latest on true
   where a.created_at >= $1 and a.created_at < $2
-    and (cardinality($5::text[]) = 0 or a.product_id = any($5::text[]))
-    and (cardinality($6::text[]) = 0 or coalesce(latest.event_status, 'unknown') = any($6::text[]))
-    and (cardinality($7::text[]) = 0 or coalesce(latest.event_assignee_id, 'unassigned') = any($7::text[]))
-    and (cardinality($8::text[]) = 0 or coalesce(latest.event_stage, 'unknown') = any($8::text[]))
-    and ($14::text = '' or lower(a.number) like '%' || (select needle from search_term) || '%' escape chr(92))
+    and (cardinality($4::text[]) = 0 or a.product_id = any($4::text[]))
+    and (cardinality($5::text[]) = 0 or coalesce(latest.event_status, 'unknown') = any($5::text[]))
+    and (cardinality($6::text[]) = 0 or coalesce(latest.event_assignee_id, 'unassigned') = any($6::text[]))
+    and (cardinality($7::text[]) = 0 or coalesce(latest.event_stage, 'unknown') = any($7::text[]))
+    and ($13::text = '' or lower(a.number) like '%' || (select needle from search_term) || '%' escape chr(92))
 ), activity_page as (
   select * from filtered
-  where $15::timestamptz is null
-     or (occurred_at, report_seq) < ($15::timestamptz, $16::bigint)
+  where $14::timestamptz is null
+     or (occurred_at, report_seq) < ($14::timestamptz, $15::bigint)
   order by occurred_at desc, report_seq desc
-  limit $17
+  limit $16
 )
 select 'application' as row_type, null::text as event_id, null::bigint as report_seq,
   p.id, p.number as application_number, p.created_at, p.product_id, p.amount, p.urgent,
@@ -93,7 +92,7 @@ select 'application' as row_type, null::text as event_id, null::bigint as report
   null::integer as sla_target_minutes,
   null::text as source
 from population p
-where $18::text = 'overview'
+where $17::text = 'overview'
 union all
 select 'event', event_id, report_seq, null, application_number, null, product_id, amount, null,
   null, null, null, application_id, occurred_at, kind, payload, event_status,

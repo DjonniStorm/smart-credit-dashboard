@@ -173,7 +173,6 @@ export class ReportsRepository {
         query.from,
         query.to,
         currentWatermark?.snapshotSeq ?? "0",
-        currentWatermark?.eventId ?? null,
         query.productIds,
         query.statuses,
         query.assigneeIds,
