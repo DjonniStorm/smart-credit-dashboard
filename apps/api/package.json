@@ -24,6 +24,7 @@
     "@nestjs/swagger": "12.0.2",
     "@nestjs/typeorm": "12.0.2",
     "@repo/contracts": "workspace:*",
+    "@repo/i18n": "workspace:*",
     "nestjs-zod": "5.5.0",
     "pg": "8.23.1",
     "reflect-metadata": "0.2.2",

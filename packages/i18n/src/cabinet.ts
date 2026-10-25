@@ -453,6 +453,13 @@ const ru = {
       manual_check: "Нужна ручная проверка",
     },
   },
+  applicationEvents: {
+    created: "Заявка создана",
+    checkRequested: "Проверка данных запущена",
+    scoringCompleted: "Проверка данных завершена",
+    statusChanged: "Статус заявки изменён",
+    clientAction: "Действие клиента принято",
+  },
   notFound: {
     title: "Такой страницы нет",
     text: "Ссылка устарела или в адресе опечатка.",

@@ -82,6 +82,9 @@ test("карточка использует уже заблокированну�
     listComments: async () => {
       return [];
     },
+    listEvents: async () => {
+      return [];
+    },
   };
   const service = new ApplicationsService(
     {} as never,
