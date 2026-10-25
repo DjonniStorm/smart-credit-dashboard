@@ -181,17 +181,6 @@ export function StateMachineDemo(): JSX.Element {
             </div>
           </div>
 
-          <div className="state-machine-demo__controls">
-            <button type="button" onClick={reset} disabled={stepIndex === 0}>
-              В начало
-            </button>
-            <button type="button" onClick={() => moveStep(-1)} disabled={stepIndex === 0}>
-              Назад
-            </button>
-            <button type="button" className="primary" onClick={() => moveStep(1)} disabled={stepIndex === flowSteps.length - 1}>
-              Следующий шаг
-            </button>
-          </div>
         </div>
       ) : (
         <div className="state-machine-demo__map" aria-label="Статичная карта состояний">
@@ -203,6 +192,18 @@ export function StateMachineDemo(): JSX.Element {
           </div>
         </div>
       )}
+
+      <div className="state-machine-demo__controls" aria-label="Управление демонстрацией">
+        <button type="button" onClick={reset} disabled={stepIndex === 0}>
+          В начало
+        </button>
+        <button type="button" onClick={() => moveStep(-1)} disabled={stepIndex === 0}>
+          Назад
+        </button>
+        <button type="button" className="primary" onClick={() => moveStep(1)} disabled={stepIndex === flowSteps.length - 1}>
+          Следующий шаг
+        </button>
+      </div>
 
       <p className="state-machine-demo__footnote">
         Данные и внешние проверки в демонстрации синтетические. Демо показывает состояние заявки, а не обещание реальной выдачи.
