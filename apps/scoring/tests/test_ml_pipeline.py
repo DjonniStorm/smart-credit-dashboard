@@ -11,6 +11,14 @@ from app.ml_pipeline import (
     synthetic_pd_dataset,
     drift_report,
     evaluate_model,
+    fit_sigmoid_calibrator,
+    calibrate_sigmoid,
+    select_challenger,
+    temporal_split,
+    bootstrap_confidence_interval,
+    precision_recall_auc,
+    ks_statistic,
+    fairness_audit,
 )
 
 
@@ -44,6 +52,50 @@ class MlPipelineTests(unittest.TestCase):
         self.assertEqual(evaluation.auc, 1.0)
         report = drift_report([0.1, 0.2, 0.3], [0.8, 0.9, 1.0])
         self.assertTrue(report.population_shifted)
+
+    def test_temporal_split_does_not_shuffle(self) -> None:
+        scores = list(range(20))
+        labels = [index % 2 for index in range(20)]
+        split = temporal_split(scores, labels)
+        self.assertEqual(split.train[0], 0)
+        self.assertEqual(split.test[-1], 19)
+        self.assertEqual(len(split.train) + len(split.calibration) + len(split.test), 20)
+
+    def test_sigmoid_calibrator_is_bounded_and_deterministic(self) -> None:
+        scores = [0.1, 0.2, 0.8, 0.9] * 20
+        labels = [0, 0, 1, 1] * 20
+        calibrator = fit_sigmoid_calibrator(scores, labels)
+        first = calibrate_sigmoid(0.8, calibrator)
+        second = calibrate_sigmoid(0.8, calibrator)
+        self.assertEqual(first, second)
+        self.assertGreater(first, 0.5)
+        self.assertLessEqual(first, 1.0)
+
+    def test_challenger_quality_gate_fails_safe(self) -> None:
+        champion = evaluate_model("champion", [0, 0, 1, 1], [0.1, 0.2, 0.7, 0.9])
+        challenger = evaluate_model("challenger", [0, 0, 1, 1], [0.2, 0.3, 0.6, 0.8])
+        selection = select_challenger(champion, challenger)
+        self.assertEqual(selection.selected, "champion")
+        self.assertFalse(selection.challenger_eligible)
+
+    def test_advanced_risk_metrics_and_bootstrap_are_deterministic(self) -> None:
+        labels = [0, 0, 1, 1] * 25
+        probabilities = [0.1, 0.2, 0.7, 0.9] * 25
+        self.assertEqual(precision_recall_auc(labels, probabilities), 1.0)
+        self.assertEqual(ks_statistic(labels, probabilities), 1.0)
+        first = bootstrap_confidence_interval(labels, probabilities, metric="brier", seed=11)
+        second = bootstrap_confidence_interval(labels, probabilities, metric="brier", seed=11)
+        self.assertEqual(first, second)
+        self.assertLessEqual(first.lower, first.estimate)
+        self.assertLessEqual(first.estimate, first.upper)
+
+    def test_fairness_audit_is_grouped_and_audit_only(self) -> None:
+        report = fairness_audit(
+            [0, 1, 0, 1], [0.1, 0.8, 0.7, 0.2], ["a", "a", "b", "b"]
+        )
+        self.assertEqual(set(report), {"a", "b"})
+        self.assertEqual(report["a"]["sample_count"], 2)
+        self.assertGreaterEqual(report["b"]["fpr"], 0)
 
 
 if __name__ == "__main__":

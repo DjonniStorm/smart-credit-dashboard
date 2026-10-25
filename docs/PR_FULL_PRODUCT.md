@@ -30,10 +30,12 @@
 ### 5. ML challenger, calibration, explainability, drift
 
 - Добавлены champion/challenger evaluation.
-- Добавлены Brier, log-loss, ECE, AUC и isotonic calibration.
-- Добавлен PSI drift report.
-- Добавлены explainability metadata и versioned feature snapshot.
-- Добавлены endpoints `/v1/models/evaluation` и `/v1/models/drift`.
+- Добавлены Brier, log-loss, ECE, ROC-AUC, PR-AUC, KS и isotonic calibration.
+- Добавлены temporal train/calibration/test split и bootstrap confidence intervals.
+- Добавлен реальный public-proxy trainer и versioned JSON artifact с holdout validation.
+- Добавлен shadow endpoint `/v1/models/public-proxy/score` с additive explainability contributions.
+- Добавлены PSI drift report, audit-only fairness metrics и artifact validation guards.
+- Добавлены endpoints `/v1/models/evaluation`, `/v1/models/registry`, `/v1/models/drift` и `/v1/models/public-proxy/score`.
 
 ### 6. Autonomy и Alfi
 
@@ -45,7 +47,7 @@
 
 - TypeScript: API, client, backoffice, contracts — passed.
 - ESLint: изменённые TS/TSX/MJS зоны — passed.
-- ML unit tests: 5/5 passed.
+- ML/training unit tests: 12/12 passed.
 - Python syntax compilation — passed.
 - `git diff --check` — passed.
 
