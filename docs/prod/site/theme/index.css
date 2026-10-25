@@ -55,3 +55,1192 @@
   outline: 3px solid var(--rp-c-brand);
   outline-offset: 3px;
 }
+
+.state-machine-demo {
+  --state-ink: #202124;
+  --state-muted: #6f7074;
+  --state-line: #d7d4d0;
+  --state-paper: #fbfaf8;
+  --state-red: #bd252d;
+  --state-red-soft: #f6e4e4;
+  margin: 3rem 0;
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 18px;
+  background: var(--state-paper);
+  color: var(--state-ink);
+  box-shadow: 0 18px 50px rgb(32 33 36 / 8%);
+}
+
+.rp-dark .state-machine-demo {
+  --state-ink: #f5f2ef;
+  --state-muted: #aaa6a1;
+  --state-line: #45413e;
+  --state-paper: #211f1d;
+  --state-red: #ee7379;
+  --state-red-soft: #43282a;
+  box-shadow: 0 18px 50px rgb(0 0 0 / 22%);
+}
+
+.state-machine-demo__topline,
+.state-machine-demo__detail-label,
+.state-machine-demo__controls,
+.state-machine-demo__switcher {
+  display: flex;
+  align-items: center;
+}
+
+.state-machine-demo__topline,
+.state-machine-demo__detail-label {
+  justify-content: space-between;
+}
+
+.state-machine-demo__kicker,
+.state-machine-demo__counter,
+.state-machine-demo__detail-label,
+.state-machine-demo__action span {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.state-machine-demo__kicker {
+  color: var(--state-red);
+  font-weight: 700;
+}
+
+.state-machine-demo__counter,
+.state-machine-demo__detail-label span,
+.state-machine-demo__action span {
+  color: var(--state-muted);
+}
+
+.state-machine-demo__header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin: 1.4rem 0 2rem;
+}
+
+.state-machine-demo__header h2 {
+  max-width: 38rem;
+  margin: 0 0 0.65rem;
+  color: var(--state-ink);
+  font-size: clamp(1.6rem, 4vw, 2.7rem);
+  letter-spacing: -0.035em;
+  line-height: 1.04;
+}
+
+.state-machine-demo__header p,
+.state-machine-demo__detail p,
+.state-map-branches p,
+.state-machine-demo__footnote {
+  color: var(--state-muted);
+  line-height: 1.6;
+}
+
+.state-machine-demo__header p {
+  max-width: 38rem;
+  margin: 0;
+}
+
+.state-machine-demo__switcher {
+  flex: 0 0 auto;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid var(--state-line);
+  border-radius: 10px;
+}
+
+.state-machine-demo button {
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--state-muted);
+  cursor: pointer;
+  font: inherit;
+}
+
+.state-machine-demo button:focus-visible {
+  outline: 3px solid var(--state-red);
+  outline-offset: 2px;
+}
+
+.state-machine-demo__switcher button {
+  padding: 0.55rem 0.8rem;
+  font-size: 0.84rem;
+}
+
+.state-machine-demo__switcher button.is-active {
+  background: var(--state-ink);
+  color: var(--state-paper);
+}
+
+.state-machine-demo__rail {
+  display: flex;
+  max-width: 100%;
+  overflow-x: auto;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 0.65rem;
+  scrollbar-color: var(--state-line) transparent;
+}
+
+.state-machine-demo__rail-item {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.state-node {
+  position: relative;
+  z-index: 1;
+  width: auto;
+  min-width: 5rem;
+  padding: 0.65rem 0.4rem;
+  border: 1px solid var(--state-line) !important;
+  border-radius: 8px !important;
+  background: var(--state-paper) !important;
+  color: var(--state-muted) !important;
+  font-size: 0.66rem !important;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.state-node.is-past {
+  border-color: var(--state-ink) !important;
+  color: var(--state-ink) !important;
+}
+
+.state-node.is-current {
+  border-color: var(--state-red) !important;
+  background: var(--state-red-soft) !important;
+  color: var(--state-red) !important;
+  box-shadow: 0 0 0 4px rgb(189 37 45 / 10%);
+}
+
+.state-connector {
+  width: 1.15rem;
+  flex: 0 0 1.15rem;
+  height: 1px;
+  background: var(--state-line);
+}
+
+.state-machine-demo__detail {
+  min-height: 12rem;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  border-top: 1px solid var(--state-line);
+  border-bottom: 1px solid var(--state-line);
+}
+
+.state-machine-demo__detail-label strong {
+  color: var(--state-red);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+}
+
+.state-machine-demo__detail h3 {
+  margin: 1.1rem 0 0.45rem;
+  color: var(--state-ink);
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  letter-spacing: -0.025em;
+}
+
+.state-machine-demo__detail p {
+  max-width: 42rem;
+  margin: 0;
+}
+
+.state-machine-demo__action {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 1.25rem;
+  padding-left: 0.85rem;
+  border-left: 2px solid var(--state-red);
+}
+
+.state-machine-demo__action strong {
+  color: var(--state-ink);
+  font-size: 0.94rem;
+  font-weight: 600;
+}
+
+.state-machine-demo__controls {
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.state-machine-demo__controls button {
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--state-line);
+  font-size: 0.84rem;
+}
+
+.state-machine-demo__controls button.primary {
+  margin-left: auto;
+  border-color: var(--state-red);
+  background: var(--state-red);
+  color: #fff;
+}
+
+.state-machine-demo__controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.state-machine-demo__map {
+  overflow: hidden;
+  padding: 0.5rem 0 0;
+}
+
+.state-diagram__canvas {
+  overflow-x: auto;
+  padding: 0.5rem 0 0.75rem;
+  scrollbar-color: var(--state-line) transparent;
+}
+
+.state-diagram__canvas svg {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  height: auto;
+}
+
+.state-diagram__canvas .state-diagram__outcome--rejected text {
+  font-size: 9px;
+}
+
+.state-diagram__line {
+  fill: none;
+  stroke: var(--state-line);
+  stroke-width: 1.5;
+}
+
+.state-diagram__line--accent {
+  stroke: var(--state-red);
+}
+
+.state-diagram__line--muted {
+  stroke-dasharray: 5 5;
+}
+
+.state-diagram__line + .state-diagram__transition {
+  dominant-baseline: auto;
+}
+
+.state-diagram__canvas marker path {
+  fill: var(--state-line);
+}
+
+.state-diagram__canvas marker#state-arrow-accent path {
+  fill: var(--state-red);
+}
+
+.state-diagram__state rect,
+.state-diagram__decision polygon {
+  fill: var(--state-paper);
+  stroke: var(--state-line);
+  stroke-width: 1.5;
+}
+
+.state-diagram__state line {
+  stroke: var(--state-line);
+  stroke-width: 1;
+}
+
+.state-diagram__state.is-current rect,
+.state-diagram__decision.is-current polygon {
+  fill: var(--state-red-soft);
+  stroke: var(--state-red);
+  stroke-width: 2;
+}
+
+.state-diagram__state.is-current line {
+  stroke: var(--state-red);
+}
+
+.state-diagram__start {
+  fill: var(--state-red);
+}
+
+.state-diagram__terminal circle {
+  fill: var(--state-paper);
+  stroke: var(--state-line);
+  stroke-width: 1.5;
+}
+
+.state-diagram__terminal circle + circle {
+  fill: none;
+}
+
+.state-diagram__terminal.is-current circle {
+  fill: var(--state-red-soft);
+  stroke: var(--state-red);
+  stroke-width: 2;
+}
+
+.state-diagram__terminal.is-current circle + circle {
+  fill: none;
+}
+
+.state-diagram__status,
+.state-diagram__action,
+.state-diagram__transition,
+.state-diagram__lane-label,
+.state-diagram__outcome text {
+  fill: var(--state-ink);
+  font-family: inherit;
+}
+
+.state-diagram__status,
+.state-diagram__outcome text {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.state-diagram__action {
+  fill: var(--state-muted);
+  font-size: 11px;
+}
+
+.state-diagram__transition {
+  fill: var(--state-muted);
+  font-size: 11px;
+}
+
+.state-diagram__lane-label {
+  fill: var(--state-red);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.state-diagram__outcome polygon,
+.state-diagram__outcome circle {
+  fill: var(--state-paper);
+  stroke: var(--state-line);
+  stroke-width: 1.5;
+}
+
+.state-diagram__outcome--rejected polygon {
+  stroke: var(--state-red);
+}
+
+.state-diagram__outcome--rejected text {
+  fill: var(--state-red);
+  font-size: 9px;
+}
+
+.state-diagram__outcome--blocked polygon {
+  stroke-dasharray: 3 3;
+}
+
+.state-diagram__outcome-action {
+  fill: var(--state-muted);
+  font-family: inherit;
+  font-size: 9px;
+}
+
+.state-diagram__control {
+  fill: var(--state-red-soft);
+  stroke: var(--state-red);
+  stroke-width: 1.5;
+}
+
+.state-diagram__control-label {
+  fill: var(--state-red);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.state-map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.25rem;
+  margin-top: 0.6rem;
+  color: var(--state-muted);
+  font-size: 0.75rem;
+}
+
+.state-map-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.state-map-legend i {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  border: 1px solid var(--state-line);
+}
+
+.state-map-legend__dot {
+  border-color: var(--state-red) !important;
+  border-radius: 50%;
+  background: var(--state-red-soft);
+}
+
+.state-map-legend__diamond {
+  transform: rotate(45deg);
+}
+
+.state-map-legend__terminal {
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 2px var(--state-paper),
+    inset 0 0 0 3px var(--state-line);
+}
+
+.state-machine-demo__footnote {
+  margin: 1.25rem 0 0;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 760px) {
+  .state-machine-demo__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .state-machine-demo__rail {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 0.75rem;
+  }
+
+  .state-machine-demo__rail-item {
+    flex: 0 0 7rem;
+  }
+
+  .state-machine-demo__controls {
+    flex-wrap: wrap;
+  }
+
+  .state-machine-demo__controls button.primary {
+    margin-left: 0;
+  }
+
+  .state-diagram__canvas {
+    margin-inline: -0.25rem;
+  }
+
+  .state-diagram__canvas svg {
+    min-width: 43.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .state-machine-demo *,
+  .state-machine-demo *::before,
+  .state-machine-demo *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+.architecture-diagrams {
+  --architecture-ink: #202124;
+  --architecture-muted: #6f7074;
+  --architecture-line: #d7d4d0;
+  --architecture-paper: #fbfaf8;
+  --architecture-red: #bd252d;
+  --architecture-red-soft: #f6e4e4;
+  margin: 3rem 0;
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 18px;
+  background: var(--rp-c-bg-soft);
+  color: var(--rp-c-text-1);
+  box-shadow: 0 18px 50px rgb(32 33 36 / 8%);
+}
+
+.rp-dark .architecture-diagrams {
+  --architecture-ink: #202124;
+  --architecture-muted: #5e5a56;
+  --architecture-line: #cbc6c0;
+  --architecture-paper: #fbfaf8;
+  --architecture-red: #9b1e25;
+  --architecture-red-soft: #f6e4e4;
+  box-shadow: 0 18px 50px rgb(0 0 0 / 22%);
+}
+
+.architecture-diagrams__intro,
+.architecture-diagrams__panel-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.architecture-diagrams__intro {
+  margin-bottom: 1.75rem;
+}
+
+.architecture-diagrams__eyebrow {
+  margin: 0 0 0.65rem;
+  color: var(--rp-c-brand);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.architecture-diagrams h2,
+.architecture-diagrams h3,
+.architecture-diagrams p {
+  margin-top: 0;
+}
+
+.architecture-diagrams h2 {
+  max-width: 42rem;
+  margin-bottom: 0.65rem;
+  color: var(--rp-c-text-1);
+  font-size: clamp(1.65rem, 4vw, 2.6rem);
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.architecture-diagrams__intro p:not(.architecture-diagrams__eyebrow),
+.architecture-diagrams__panel-heading
+  > div
+  > p:not(.architecture-diagrams__eyebrow) {
+  max-width: 48rem;
+  margin-bottom: 0;
+  color: var(--rp-c-text-2);
+  line-height: 1.6;
+}
+
+.architecture-diagrams__scope {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 0.45rem;
+  min-width: 11rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--rp-c-brand);
+  color: var(--rp-c-text-2);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.architecture-diagrams__tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.35rem;
+  scrollbar-color: var(--rp-c-divider) transparent;
+}
+
+.architecture-diagrams__tabs button,
+.architecture-diagrams__route-button {
+  min-height: 44px;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--rp-c-text-2);
+  cursor: pointer;
+  font: inherit;
+}
+
+.architecture-diagrams__tabs button {
+  display: grid;
+  flex: 1 1 0;
+  min-width: 10rem;
+  gap: 0.2rem;
+  justify-items: start;
+  padding: 0.7rem 0.85rem;
+  text-align: left;
+}
+
+.architecture-diagrams__tabs button span {
+  color: var(--rp-c-text-3);
+  font-size: 0.68rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.architecture-diagrams__tabs button strong {
+  color: inherit;
+  font-size: 0.9rem;
+}
+
+.architecture-diagrams__tabs button:hover,
+.architecture-diagrams__tabs button[aria-selected="true"] {
+  border-color: var(--rp-c-brand);
+  background: var(--rp-c-brand-tint);
+  color: var(--rp-c-brand-dark);
+}
+
+.rp-dark .architecture-diagrams__tabs button:hover,
+.rp-dark .architecture-diagrams__tabs button[aria-selected="true"] {
+  color: var(--rp-c-brand-light);
+}
+
+.architecture-diagrams__tabs button:focus-visible,
+.architecture-diagrams__route-button:focus-visible,
+.architecture-diagrams__canvas:focus-visible,
+.architecture-diagrams__panel:focus-visible {
+  outline: 3px solid var(--rp-c-brand);
+  outline-offset: 3px;
+}
+
+.architecture-diagrams__panel {
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 12px;
+  background: var(--rp-c-bg);
+}
+
+.architecture-diagrams__panel-heading {
+  align-items: start;
+  margin-bottom: 1.25rem;
+}
+
+.architecture-diagrams h3 {
+  margin-bottom: 0.45rem;
+  color: var(--rp-c-text-1);
+  font-size: clamp(1.3rem, 3vw, 1.9rem);
+  letter-spacing: -0.025em;
+}
+
+.architecture-diagrams__route-button {
+  flex: 0 0 auto;
+  padding: 0.7rem 0.9rem;
+  border-color: var(--rp-c-brand);
+  background: var(--rp-c-brand);
+  color: #fff;
+  font-size: 0.84rem;
+}
+
+.architecture-diagrams__route-button:hover {
+  background: var(--rp-c-brand-dark);
+}
+
+.architecture-diagram__figure {
+  margin: 0;
+}
+
+.architecture-diagram__canvas {
+  overflow: auto;
+  position: relative;
+  scroll-margin-top: 1rem;
+  padding: clamp(0.75rem, 2vw, 1.25rem);
+  border: 1px solid var(--architecture-line);
+  border-radius: 8px;
+  background: var(--architecture-paper);
+  color: var(--architecture-ink);
+  scrollbar-color: var(--architecture-line) transparent;
+  touch-action: pan-x pan-y;
+}
+
+.architecture-diagram__canvas.is-route-active {
+  border-color: var(--rp-c-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rp-c-brand) 22%, transparent);
+}
+
+.architecture-diagram__canvas.is-route-active svg path[marker-end],
+.architecture-diagram__canvas.is-route-active svg line[marker-end] {
+  stroke: var(--rp-c-brand) !important;
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(
+    0 0 3px color-mix(in srgb, var(--rp-c-brand) 58%, transparent)
+  );
+}
+
+.architecture-diagram__scroll-hint {
+  display: none;
+  margin: 0.55rem 0 0;
+  color: var(--rp-c-text-3);
+  font-size: 0.75rem;
+}
+
+.architecture-diagram__canvas svg {
+  display: block;
+  width: 100%;
+  min-width: 42rem;
+  height: auto;
+  margin: 0 auto;
+}
+
+.architecture-diagram__figure figcaption {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.8rem;
+  color: var(--rp-c-text-2);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.architecture-diagram__figure figcaption strong {
+  color: var(--rp-c-text-1);
+}
+
+.architecture-diagram__canvas-note {
+  margin: 0.7rem 0 0;
+  color: var(--rp-c-text-3);
+  font-size: 0.75rem;
+}
+
+.architecture-diagrams__route {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1.25rem 0 0;
+  padding: 0 0 0.4rem;
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-color: var(--rp-c-divider) transparent;
+}
+
+.architecture-diagrams__route li {
+  display: flex;
+  min-width: max-content;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 8px;
+  color: var(--rp-c-text-3);
+  font-size: 0.78rem;
+}
+
+.architecture-diagrams__route li span {
+  color: var(--rp-c-text-3);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+
+.architecture-diagrams__route li.is-past {
+  border-color: var(--rp-c-text-2);
+  color: var(--rp-c-text-2);
+}
+
+.architecture-diagrams__route li.is-current {
+  border-color: var(--rp-c-brand);
+  background: var(--rp-c-brand-tint);
+  color: var(--rp-c-brand-dark);
+}
+
+.rp-dark .architecture-diagrams__route li.is-current {
+  color: var(--rp-c-brand-light);
+}
+
+.architecture-diagrams__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.25rem;
+  margin-top: 1rem;
+  color: var(--rp-c-text-3);
+  font-size: 0.75rem;
+}
+
+.architecture-diagrams__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.architecture-diagrams__legend-shape {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.7rem;
+  border: 1px solid var(--architecture-ink);
+  background: var(--architecture-paper);
+}
+
+.architecture-diagrams__legend-shape--service {
+  border-radius: 4px;
+}
+
+.architecture-diagrams__legend-shape--database {
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 2px var(--architecture-paper),
+    inset 0 0 0 3px var(--architecture-ink);
+}
+
+.architecture-diagrams__legend-line {
+  display: inline-block;
+  width: 1rem;
+  height: 1px;
+  background: var(--architecture-ink);
+}
+
+.architecture-diagrams__legend-line--compile {
+  background: repeating-linear-gradient(
+    to right,
+    var(--architecture-ink) 0 4px,
+    transparent 4px 7px
+  );
+}
+
+.architecture-diagrams__fallback {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rp-c-divider);
+}
+
+.architecture-diagrams__fallback h3 {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.architecture-diagrams__fallback details {
+  padding: 0.65rem 0;
+  border-top: 1px solid var(--rp-c-divider);
+}
+
+.architecture-diagrams__fallback summary {
+  cursor: pointer;
+  color: var(--rp-c-text-1);
+  font-weight: 600;
+}
+
+.architecture-diagrams__fallback p,
+.architecture-diagrams__fallback ul {
+  margin: 0.6rem 0 0;
+  color: var(--rp-c-text-2);
+  line-height: 1.55;
+}
+
+.architecture-diagrams__fallback ul {
+  padding-left: 1.2rem;
+}
+
+.architecture-diagrams__noscript {
+  margin-top: 1rem;
+  color: var(--rp-c-text-2);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 760px) {
+  .architecture-diagrams__intro,
+  .architecture-diagrams__panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .architecture-diagrams__scope {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .architecture-diagrams__route-button {
+    width: 100%;
+  }
+
+  .architecture-diagram__canvas svg {
+    min-width: 38rem;
+  }
+}
+
+@media print {
+  .architecture-diagrams {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .architecture-diagrams__tabs,
+  .architecture-diagrams__route-button,
+  .architecture-diagrams__route,
+  .architecture-diagram__canvas-note {
+    display: none;
+  }
+
+  .architecture-diagrams__panel {
+    padding: 0;
+    border: 0;
+  }
+
+  .architecture-diagram__canvas {
+    overflow: visible;
+    border-color: #777;
+  }
+
+  .architecture-diagram__canvas svg {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .architecture-diagrams__fallback details {
+    display: block;
+    break-inside: avoid;
+  }
+
+  .architecture-diagrams__fallback summary {
+    list-style: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .architecture-diagrams * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* The architecture page uses native details so each view can be studied on its own. */
+.architecture-diagrams__index {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.8rem;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--rp-c-divider);
+  border-bottom: 1px solid var(--rp-c-divider);
+  color: var(--rp-c-text-3);
+  font-size: 0.78rem;
+}
+
+.architecture-diagrams__index a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 8px;
+  color: var(--rp-c-text-2);
+  text-decoration: none;
+}
+
+.architecture-diagrams__index a span,
+.architecture-diagrams__card-index {
+  color: var(--rp-c-brand);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}
+
+.architecture-diagrams__index a:hover,
+.architecture-diagrams__index a:focus-visible {
+  border-color: var(--rp-c-brand);
+  color: var(--rp-c-brand-dark);
+}
+
+.rp-dark .architecture-diagrams__index a:hover,
+.rp-dark .architecture-diagrams__index a:focus-visible {
+  color: var(--rp-c-brand-light);
+}
+
+.architecture-diagrams__cards {
+  display: grid;
+  gap: 1rem;
+}
+
+.architecture-diagrams__card {
+  overflow: visible;
+  scroll-margin-top: 1rem;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 12px;
+  background: var(--rp-c-bg);
+}
+
+.architecture-diagrams__card > summary {
+  display: grid;
+  grid-template-columns: auto minmax(10rem, 0.8fr) minmax(0, 1.8fr) auto;
+  min-height: 4.5rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1.1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.architecture-diagrams__card > summary::-webkit-details-marker {
+  display: none;
+}
+
+.architecture-diagrams__card > summary::after {
+  content: "+";
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 50%;
+  color: var(--rp-c-text-2);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.architecture-diagrams__card[open] > summary {
+  border-bottom: 1px solid var(--rp-c-divider);
+  background: var(--rp-c-bg-soft);
+}
+
+.architecture-diagrams__card[open] > summary::after {
+  content: "×";
+}
+
+.architecture-diagrams__card > summary:hover {
+  background: var(--rp-c-bg-soft);
+}
+
+.architecture-diagrams__card > summary:focus-visible,
+.architecture-diagrams__index a:focus-visible,
+.architecture-diagrams__route-button:focus-visible,
+.architecture-diagram__canvas:focus-visible {
+  outline: 3px solid var(--rp-c-brand);
+  outline-offset: 3px;
+}
+
+.architecture-diagrams__card-meta {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.architecture-diagrams__card-meta .architecture-diagrams__eyebrow {
+  margin-bottom: 0;
+  font-size: 0.65rem;
+}
+
+.architecture-diagrams__card-meta strong {
+  color: var(--rp-c-text-1);
+  font-size: 0.95rem;
+}
+
+.architecture-diagrams__card-title {
+  min-width: 0;
+  color: var(--rp-c-text-2);
+  font-size: 0.9rem;
+}
+
+.architecture-diagrams__card-body {
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.architecture-diagrams__card-body .architecture-diagrams__panel-heading {
+  margin-bottom: 1.25rem;
+}
+
+.architecture-diagrams__card-body .architecture-diagrams__panel-heading > p {
+  max-width: 48rem;
+  margin-bottom: 0;
+  color: var(--rp-c-text-2);
+  line-height: 1.6;
+}
+
+.architecture-diagrams__card-body .architecture-diagrams__fallback {
+  margin-top: 1.35rem;
+  padding-top: 1rem;
+}
+
+.architecture-diagrams__fallback h4 {
+  margin: 0 0 0.5rem;
+  color: var(--rp-c-text-1);
+  font-size: 0.9rem;
+}
+
+.architecture-diagrams__fallback ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--rp-c-text-2);
+  line-height: 1.55;
+}
+
+@media (max-width: 760px) {
+  .architecture-diagrams__card > summary {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.7rem;
+    padding: 0.75rem 0.8rem;
+  }
+
+  .architecture-diagrams__card-title {
+    grid-column: 2 / -1;
+    grid-row: 2;
+    margin-top: -0.3rem;
+    font-size: 0.82rem;
+  }
+
+  .architecture-diagrams__card > summary::after {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .architecture-diagrams__index {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .architecture-diagrams__index a {
+    width: 100%;
+  }
+
+  .architecture-diagram__scroll-hint {
+    display: block;
+  }
+}
+
+@media print {
+  .architecture-diagrams__index,
+  .architecture-diagrams__card .architecture-diagrams__route-button,
+  .architecture-diagrams__card .architecture-diagrams__route,
+  .architecture-diagrams__card .architecture-diagram__canvas-note {
+    display: none;
+  }
+
+  .architecture-diagrams__cards {
+    display: block;
+  }
+
+  .architecture-diagrams__card {
+    display: block;
+    margin-bottom: 1.5rem;
+    border: 0;
+    break-inside: auto;
+  }
+
+  .architecture-diagrams__card-body {
+    display: block !important;
+    padding: 0.75rem 0 0;
+  }
+
+  .architecture-diagrams__card > summary {
+    display: block;
+    padding: 0 0 0.5rem;
+    border-bottom: 1px solid #777;
+    list-style: none;
+  }
+
+  .architecture-diagrams__card > summary::after {
+    display: none;
+  }
+
+  .architecture-diagram__canvas {
+    overflow: visible;
+    border-color: #777;
+  }
+
+  .architecture-diagram__canvas svg {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .architecture-diagram__scroll-hint {
+    display: none;
+  }
+}
+
+@media (scripting: none) {
+  .architecture-diagrams__route-button {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .architecture-diagram__canvas.is-route-active svg path[marker-end],
+  .architecture-diagram__canvas.is-route-active svg line[marker-end] {
+    filter: none;
+  }
+}

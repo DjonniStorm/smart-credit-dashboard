@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "generatedBy": "@mermaid-js/mermaid-cli@12.0.0",
+  "diagrams": [
+    {
+      "id": "component-overview",
+      "source": "component-overview.mmd",
+      "output": "component-overview.svg",
+      "sourceHash": "f5ffc3c9b29f0a837094426c6969efccc281bc158bd09f87f4176271ea8ff7ec",
+      "title": "Component overview",
+      "description": "C4 Level 2: предприниматель и сотрудник банка работают через два web-интерфейса, API вызывает scoring и хранит данные в PostgreSQL."
+    },
+    {
+      "id": "api-internals",
+      "source": "api-internals.mmd",
+      "output": "api-internals.svg",
+      "sourceHash": "b99d4b5f79a44f616d24cd280f1fb6b832739ce5ac2325dff07ba73cda049b26",
+      "title": "API internals",
+      "description": "C4 Level 3: API boundary, guards, workflow, QueueWorkerService, scoring_jobs, decision engine, audit и reports."
+    },
+    {
+      "id": "repository",
+      "source": "repository.mmd",
+      "output": "repository.svg",
+      "sourceHash": "a663e1efbab134d8f1e2f5a45b5c555f16806c3dfcee795a67a88222f6e7e390",
+      "title": "Repository and package view",
+      "description": "Mermaid flowchart: workspace applications, shared packages, tooling, generated OpenAPI flow и отдельный docs-site."
+    },
+    {
+      "id": "deployment",
+      "source": "deployment.mmd",
+      "output": "deployment.svg",
+      "sourceHash": "729856a11ff3f0689c09bc83b187a24a2ab304673196df097378276a2fafae30",
+      "title": "Deployment view",
+      "description": "C4 Deployment: browser actors, Docker host, Compose network, runtime containers, volumes и monitoring profile."
+    }
+  ]
+}

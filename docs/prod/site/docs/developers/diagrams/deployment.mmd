@@ -1,0 +1,52 @@
+%% Smart Credit Dashboard | C4 deployment view
+C4Deployment
+UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+title Smart Credit Dashboard | Deployment view
+
+Deployment_Node(browser_actors, "Browser actors", "Web browser") {
+  Container(browser, "Browser", "HTTPS", "Entrepreneur or bank employee")
+}
+
+Deployment_Node(docker_host, "Docker host", "Docker Engine") {
+  Deployment_Node(compose_network, "Docker Compose network", "alfa-future") {
+    Container(caddy, "Caddy", "Reverse proxy", "Routes UI and API traffic")
+    Container(client, "client :3000", "Next.js", "Client Web")
+    Container(backoffice, "backoffice :3001", "Next.js", "Backoffice Web")
+    Container(api, "api :4000", "NestJS", "Application API")
+    Container(scoring, "scoring :8000", "FastAPI", "Scoring HTTP service")
+    ContainerDb(postgres, "postgres :5432", "PostgreSQL", "Application data and scoring_jobs")
+  }
+
+  Deployment_Node(monitoring_profile, "Monitoring profile", "Docker Compose services") {
+    Container(prometheus, "Prometheus", "Monitoring service", "Scrapes metrics and calls blackbox probes")
+    Container(grafana, "Grafana", "Monitoring service", "Reads Prometheus HTTP API")
+    Container(node_exporter, "node-exporter :9100", "Monitoring service", "Docker host metrics")
+    Container(cadvisor, "cAdvisor :8080", "Monitoring service", "Container metrics")
+    Container(blackbox, "blackbox-exporter", "Monitoring service", "Probes health endpoints")
+
+    Container(health_targets, "Health targets", "HTTP endpoints", "client /health; backoffice /health; api /health; scoring /health")
+  }
+
+  Deployment_Node(persistent_volumes, "Persistent Docker volumes", "Docker volumes") {
+    ContainerDb(pgdata, "pgdata", "Docker volume", "Mount: postgres")
+    ContainerDb(caddy_data, "caddy_data", "Docker volume", "Mount: Caddy")
+    ContainerDb(caddy_config, "caddy_config", "Docker volume", "Mount: Caddy")
+    ContainerDb(prometheus_data, "prometheus_data", "Docker volume", "Mount: Prometheus")
+    ContainerDb(grafana_data, "grafana_data", "Docker volume", "Mount: Grafana")
+  }
+}
+
+Rel_D(browser, caddy, "HTTPS UI / API")
+Rel_R(caddy, client, "UI route")
+Rel_R(caddy, backoffice, "UI route")
+Rel_D(caddy, api, "API and Swagger route")
+Rel_D(client, api, "Next rewrite /api/*")
+Rel_D(backoffice, api, "Next rewrite /api/*")
+Rel_D(api, scoring, "HTTP /v1/score")
+Rel_R(api, postgres, "SQL / TypeORM")
+
+Rel_R(prometheus, node_exporter, "scrapes :9100")
+Rel_R(prometheus, cadvisor, "scrapes :8080")
+Rel_D(prometheus, blackbox, "GET /probe")
+Rel_R(blackbox, health_targets, "GET /probe")
+Rel_D(grafana, prometheus, "Prometheus HTTP API")

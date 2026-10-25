@@ -1,20 +1,52 @@
+import { ArchitectureDiagrams } from "../../theme/ArchitectureDiagrams";
+
 # Архитектура
 
-Система состоит из двух интерфейсов, API и отдельного сервиса scoring. Интерфейсы обращаются к серверной части по HTTP, а API владеет состоянием заявки и хранением данных.
+Эта страница показывает Smart Credit Dashboard в четырёх масштабах. Каждый пункт раскрывается отдельно, а исходники Mermaid и собранные SVG остаются частью docs-site и не загружаются с CDN.
 
-```text
-Кабинет предпринимателя ── HTTP ──┐
-                                  ├── API ── PostgreSQL
-Банковское АРМ ────────── HTTP ──┘    ├── фоновые задачи и проверки
-                                      └── scoring
+<ArchitectureDiagrams />
+
+## Как читать набор
+
+### Component overview, C4 Level 2
+
+Это граница основных компонентов. Предприниматель работает в Client Web, сотрудник банка в Backoffice Web. Оба интерфейса говорят с API по HTTP/JSON. API вызывает Scoring Service через `POST /v1/score`, получает результат и его объяснение, затем принимает доменное решение через decision engine. PostgreSQL хранит заявки, workflow, scoring jobs и audit.
+
+Docker, порты, volumes и monitoring намеренно не входят в этот срез. Они нужны для deployment view, а не для объяснения ответственности компонентов.
+
+### API internals, C4 Level 3
+
+Здесь API раскрыт как внутренний контур. HTTP boundary передаёт команды через auth/session guards в command handlers и application workflow. `QueueWorkerService` находится внутри API и забирает записи из таблицы PostgreSQL `scoring_jobs` с блокировкой строки. Отдельного брокера и отдельного worker-контейнера нет.
+
+Decision engine учитывает autonomy policy. Workflow store выполняет транзакционную запись, application events и audit сохраняют доказательства перехода, reports собирают данные для просмотра.
+
+### Repository and package view
+
+Репозиторий показан Mermaid flowchart, потому что packages являются compile-time зависимостями, а не runtime-сервисами. `apps/scoring` входит в workspace, но не импортирует `packages/*`. Client, Backoffice и API используют общие contracts, SDK, UI и i18n через workspace imports.
+
+Generated OpenAPI flow ведёт от contracts к SDK. ESLint, TypeScript config и root tooling выделены отдельно. `docs/prod/site` находится вне pnpm workspace, имеет собственные зависимости и собирает committed SVG из Mermaid исходников.
+
+### Deployment view, C4 Deployment
+
+Текущий контур развёртывания читается сверху вниз: browser actors, Docker host, Docker Compose network и контейнеры. Caddy принимает внешние маршруты UI, API и Swagger. Внутри сети client и backoffice обращаются к API через Next rewrite `/api/*`, API обращается к scoring и PostgreSQL.
+
+Monitoring profile включает Prometheus, Grafana, node-exporter, cAdvisor и blackbox-exporter. Prometheus собирает `/metrics` API и метрики инфраструктуры, blackbox проверяет client, backoffice, API `/health` и scoring `/health`, Grafana читает Prometheus HTTP API.
+
+## Ограничения текущего контура
+
+- Redis, RabbitMQ, Kafka, object storage, standalone mocks и отдельный worker не являются текущими сервисами Compose и не показаны.
+- API имеет локальный filesystem adapter, но он не используется текущим document workflow. Object storage не развёрнут.
+- Старые target-state описания worker и object storage в `docs/ARCHITECTURE.md` относятся к будущему состоянию и не должны читаться как текущий deployment.
+- Диаграмма состояний заявки остаётся custom SVG: её задача показать переходы и роли, а не инфраструктурные границы.
+
+## Сборка диаграмм
+
+Исходники лежат в `docs/developers/diagrams/*.mmd`, а committed SVG и manifest в `docs/developers/diagrams/generated/`.
+
+```bash
+npm run diagrams:build
+npm run diagrams:check
+npm run build
 ```
 
-## Границы компонентов
-
-- **Кабинет предпринимателя** собирает данные, документы и ответы клиента. Источник состояния заявки находится на стороне API.
-- **Банковское АРМ** показывает очередь и отправляет действия сотрудника.
-- **API** проверяет доступ, выполняет допустимые переходы, сохраняет данные и историю действий.
-- **Scoring** рассчитывает результат и объяснение. Сервис не меняет состояние заявки самостоятельно.
-- **PostgreSQL** хранит заявки и связанные с ними сведения.
-
-В демонстрационном окружении часть внешних проверок и переходов смоделирована. Эта схема описывает границы компонентов проекта, а не SLA размещённого сервиса.
+`diagrams:check` повторно запускает pinned `@mermaid-js/mermaid-cli` и сравнивает результат с committed SVG. Так рассинхронизация исходника и артефакта обнаруживается до сборки Rspress.
