@@ -1,15 +1,13 @@
 "use client";
 
-import { AppShell, Badge, NavLink } from "@mantine/core";
+import { AppShell, Badge, Divider, NavLink } from "@mantine/core";
 import {
   IconBuildingSkyscraper,
   IconCreditCard,
   IconFileText,
   IconFiles,
-  IconHelpCircle,
-  IconHome,
-  IconLayoutGrid,
-  IconReceipt2,
+  IconSettings,
+  IconUserCircle,
   type Icon as TablerIcon,
 } from "@tabler/icons-react";
 import Link from "next/link";
@@ -24,24 +22,15 @@ const t = lx.nav;
 type Item = {
   label: string;
   icon: TablerIcon;
-  href?: string;
+  href: string;
   active?: (p: string) => boolean;
 };
 
 const isApplication = (p: string) =>
   p === "/" || (p.startsWith("/applications/") && p !== "/applications/new");
 
-// Порядок как в business.jpg. Разделов банка, которых нет в прототипе,
-// не прячем: подписываем, что их нет в демо.
+// Порядок как в business.jpg. Разделы, которых нет в прототипе, скрыты.
 const items: Item[] = [
-  {
-    label: t.home,
-    icon: IconHome,
-    href: "/home",
-    active: (p) => {
-      return p === "/home";
-    },
-  },
   {
     label: t.credits,
     icon: IconCreditCard,
@@ -66,8 +55,21 @@ const items: Item[] = [
     href: "/company",
     active: (p) => p.startsWith("/company"),
   },
-  { label: t.accounting, icon: IconReceipt2 },
-  { label: t.services, icon: IconLayoutGrid },
+];
+
+const secondary: Item[] = [
+  {
+    label: t.profile,
+    icon: IconUserCircle,
+    href: "/profile",
+    active: (p) => p.startsWith("/profile"),
+  },
+  {
+    label: t.settings,
+    icon: IconSettings,
+    href: "/settings",
+    active: (p) => p.startsWith("/settings"),
+  },
 ];
 
 function Entry({
@@ -75,27 +77,16 @@ function Entry({
   pathname,
   count,
   onNavigate,
+  collapsed,
 }: {
   item: Item;
   pathname: string;
   count: number;
   onNavigate: () => void;
+  collapsed: boolean;
 }) {
   const Icon = item.icon;
   const icon = <Icon size={20} stroke={1.5} aria-hidden />;
-
-  if (!item.href) {
-    return (
-      <NavLink
-        component="div"
-        label={item.label}
-        leftSection={icon}
-        description={t.notInDemo}
-        disabled
-        className={classes.navLink}
-      />
-    );
-  }
 
   const active = item.active?.(pathname) ?? false;
   const counter =
@@ -114,42 +105,53 @@ function Entry({
       rightSection={counter}
       active={active}
       aria-current={active ? "page" : undefined}
+      aria-label={collapsed ? item.label : undefined}
+      title={collapsed ? item.label : undefined}
       onClick={onNavigate}
       className={classes.navLink}
     />
   );
 }
 
-/** Боковое меню 220px: разделы кабинета, «Поддержка» внизу. */
+/** Боковое меню 220px: разделы кабинета. Свёрнутое — только иконки. */
 export function CabinetNav({
   needsYou,
   onNavigate,
+  collapsed,
 }: {
   needsYou: number;
   onNavigate: () => void;
+  collapsed: boolean;
 }) {
   const pathname = usePathname();
   return (
-    <>
-      <AppShell.Section grow component="nav" aria-label={t.label}>
-        {items.map((item) => (
-          <Entry
-            key={item.label}
-            item={item}
-            pathname={pathname}
-            count={needsYou}
-            onNavigate={onNavigate}
-          />
-        ))}
-      </AppShell.Section>
-      <AppShell.Section>
+    <AppShell.Section
+      grow
+      component="nav"
+      aria-label={t.label}
+      className={`${classes.navList} ${collapsed ? classes.railCollapsed : ""}`}
+    >
+      {items.map((item) => (
         <Entry
-          item={{ label: t.support, icon: IconHelpCircle }}
+          key={item.label}
+          item={item}
           pathname={pathname}
-          count={0}
+          count={needsYou}
           onNavigate={onNavigate}
+          collapsed={collapsed}
         />
-      </AppShell.Section>
-    </>
+      ))}
+      <Divider my="sm" color="var(--kk-line)" />
+      {secondary.map((item) => (
+        <Entry
+          key={item.label}
+          item={item}
+          pathname={pathname}
+          count={needsYou}
+          onNavigate={onNavigate}
+          collapsed={collapsed}
+        />
+      ))}
+    </AppShell.Section>
   );
 }

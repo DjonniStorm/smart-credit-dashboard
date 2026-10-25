@@ -6,7 +6,7 @@ const allowedDevOrigins = process.env.ALLOWED_DEV_ORIGINS
   ? process.env.ALLOWED_DEV_ORIGINS.split(",")
       .map((origin) => origin.trim())
       .filter(Boolean)
-  : ["localhost", "127.0.0.1"];
+  : ["localhost", "127.0.0.1", "172.26.33.37"];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
