@@ -1,5 +1,6 @@
 # Сборка из корня репозитория: docker build -f apps/backoffice/Dockerfile .
 FROM node:24-alpine AS base
+RUN apk add --no-cache git
 RUN npm install -g pnpm@11.25.0 turbo@2.11.9
 WORKDIR /app
 
@@ -9,7 +10,7 @@ RUN turbo prune backoffice --docker
 
 FROM base AS build
 COPY --from=prune /app/out/json/ .
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 COPY --from=prune /app/out/full/ .
 RUN turbo run build --filter=backoffice
 
