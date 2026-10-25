@@ -2,6 +2,11 @@
   "index",
   {
     "type": "dir-section-header",
+    "name": "submission",
+    "label": "Для жюри"
+  },
+  {
+    "type": "dir-section-header",
     "name": "entrepreneur",
     "label": "Кабинет предпринимателя"
   },
