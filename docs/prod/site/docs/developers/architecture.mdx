@@ -49,4 +49,4 @@ npm run diagrams:check
 npm run build
 ```
 
-`diagrams:check` повторно запускает pinned `@mermaid-js/mermaid-cli` и сравнивает результат с committed SVG. Так рассинхронизация исходника и артефакта обнаруживается до сборки Rspress.
+`diagrams:build` запускает pinned `@mermaid-js/mermaid-cli` и обновляет SVG, manifest и TypeScript-индекс. `diagrams:check` повторяет рендер и сравнивает его с сохранёнными файлами. Обычная сборка сайта проверяет хэши и согласованность готовых SVG, не запуская Chromium; Vercel публикует те же проверенные артефакты из Git.

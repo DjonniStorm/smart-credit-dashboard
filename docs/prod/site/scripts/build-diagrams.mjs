@@ -205,6 +205,7 @@ async function renderDiagram(diagram, outputRoot, puppeteerConfigPath) {
     source: `${diagram.id}.mmd`,
     output: `${diagram.id}.svg`,
     sourceHash,
+    outputHash: hashSource(svg),
     title: diagram.title,
     description: diagram.description,
   };
@@ -244,7 +245,7 @@ async function main() {
 
     await fs.writeFile(
       path.join(outputRoot, "manifest.json"),
-      `${JSON.stringify({ version: 1, generatedBy: "@mermaid-js/mermaid-cli@12.0.0", diagrams: entries }, null, 2)}\n`,
+      `${JSON.stringify({ version: 2, generatedBy: "@mermaid-js/mermaid-cli@12.0.0", diagrams: entries }, null, 2)}\n`,
       "utf8",
     );
     await writeIndex(entries, outputRoot, generatedModulePath);
