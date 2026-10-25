@@ -143,12 +143,7 @@ function Detail({ app }: { app: Application }) {
 
       <div className={classes.layout}>
         <Stack gap="lg" className={classes.main}>
-          <Stack
-            gap="lg"
-            id="next-step"
-            style={{ scrollMarginTop: 72 }}
-            data-alfi-target={alfiTargets.nextStep}
-          >
+          <Stack gap="lg" id="next-step" style={{ scrollMarginTop: 72 }}>
             <Card component="section" aria-labelledby="path-title">
               <Stack gap="md">
                 <Title order={2} size="h3" id="path-title">

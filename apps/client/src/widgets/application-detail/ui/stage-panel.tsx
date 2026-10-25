@@ -20,6 +20,7 @@ import {
   isDeclinedByClient,
   isWithdrawnByClient,
 } from "@/entities/application";
+import { alfiTargets } from "@/features/alfi-assistant";
 import { AnswerRequestForm } from "@/features/answer-request";
 import { OfferDecision } from "@/features/decide-offer";
 import { formatDate, tx } from "@/shared/i18n";
@@ -75,7 +76,11 @@ export function StagePanel({ app }: { app: Application }) {
 
   if (app.status === "needs_client") {
     const request = app.requests.find((r) => !r.answer);
-    return request ? <AnswerRequestForm app={app} request={request} /> : null;
+    return request ? (
+      <div data-alfi-target={alfiTargets.nextStep}>
+        <AnswerRequestForm app={app} request={request} />
+      </div>
+    ) : null;
   }
 
   if (
@@ -84,11 +89,13 @@ export function StagePanel({ app }: { app: Application }) {
     decision?.offer
   ) {
     return (
-      <OfferDecision
-        app={app}
-        offer={decision.offer}
-        summary={decision.summary}
-      />
+      <div data-alfi-target={alfiTargets.offerDecision}>
+        <OfferDecision
+          app={app}
+          offer={decision.offer}
+          summary={decision.summary}
+        />
+      </div>
     );
   }
 

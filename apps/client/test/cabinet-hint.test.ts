@@ -90,6 +90,16 @@ test("черновик открывается с сохранёнными дан
   );
 });
 
+test("одобренная заявка без сделки ведёт к карточке условий", () => {
+  const hint = cabinetHint("/applications/app-1", [
+    app({ status: "approved" }),
+  ]);
+  assert.equal(
+    hint.action && "target" in hint.action && hint.action.target,
+    alfiTargets.offerDecision,
+  );
+});
+
 test("одобренная заявка на подписании ведёт на страницу подписи", () => {
   const hint = cabinetHint("/applications/app-1", [
     app({
