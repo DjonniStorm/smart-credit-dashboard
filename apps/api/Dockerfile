@@ -19,6 +19,7 @@ FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production     PORT=4000
 COPY --from=build --chown=node:node /prod/api ./
+RUN npm install -g tsx@4.21.0
 USER node
 EXPOSE 4000
-CMD ["node", "dist/main.js"]
+CMD ["npx", "--yes", "tsx", "dist/main.js"]
