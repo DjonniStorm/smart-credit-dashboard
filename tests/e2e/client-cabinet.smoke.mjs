@@ -95,7 +95,7 @@ test("client and backoffice render the same scoring context", async ({
   await expect(options.first()).toContainText("Это не одобрение");
   const apply = options.first().getByRole("button");
   await apply.click();
-  await expect(apply).toContainText("Подставлено в песочницу");
+  await expect(apply).toContainText("Применено");
   expect(clientPage.url()).toBe(applicationUrl);
   await clientPage.close();
 });

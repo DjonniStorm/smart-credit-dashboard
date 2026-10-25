@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, Button, Group, Stack, Text, Title } from "@mantine/core";
+import { Button, Group, Stack, Text, Title } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import Link from "next/link";
 import { useState } from "react";
@@ -64,9 +64,6 @@ export function FinancingDashboard() {
         <Stack gap={6}>
           <Title order={1}>{fx.title}</Title>
           <Text c="dimmed">{account.company.name}</Text>
-          <Badge variant="light" color="gray" w="fit-content">
-            {fx.demo}
-          </Badge>
         </Stack>
         <Button component={Link} href="/products" variant="default">
           {fx.newApplication}

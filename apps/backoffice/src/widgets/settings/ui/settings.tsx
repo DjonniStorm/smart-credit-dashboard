@@ -14,7 +14,7 @@ import classes from "./settings.module.css";
 
 const bx = backofficeText(i18n.defaultLocale);
 
-/** Настройки сотрудника: учётка, тема, сброс демо-данных. */
+/** Настройки сотрудника: учётка, тема, автономия. */
 export function Settings() {
   const employee = useSignedInEmployee();
   const router = useRouter();

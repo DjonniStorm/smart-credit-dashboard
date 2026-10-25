@@ -124,7 +124,7 @@ export const httpArmApi: ArmApi = {
     return employeeSchema.parse(await res.json());
   },
   reset: async () => {
-    throw new Error("Сброс демо-данных выполняется командой db:seed");
+    throw new Error("Сброс данных выполняется командой db:seed");
   },
   listAutonomyPolicies: () =>
     request<ApiAutonomySnapshot[]>(

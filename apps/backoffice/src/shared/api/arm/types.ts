@@ -38,7 +38,7 @@ export interface ArmApi {
   signOutEmployee(): Promise<void>;
   /** Сотрудник текущей сессии, null если сессии нет или она истекла. */
   currentEmployee(): Promise<Employee | null>;
-  /** Вернуть демо-данные к началу. */
+  /** Вернуть данные к началу. */
   reset(): Promise<void>;
   listAutonomyPolicies(): Promise<ApiAutonomySnapshot[]>;
   getAutonomyPolicy(productId: string): Promise<ApiAutonomySnapshot>;
@@ -47,5 +47,7 @@ export interface ArmApi {
     productId: string,
     request: AutonomyPolicyActionRequest,
   ): Promise<ApiAutonomySnapshot>;
-  getManagerReport(query?: Partial<ManagerReportQuery>): Promise<ManagerReportResponse>;
+  getManagerReport(
+    query?: Partial<ManagerReportQuery>,
+  ): Promise<ManagerReportResponse>;
 }

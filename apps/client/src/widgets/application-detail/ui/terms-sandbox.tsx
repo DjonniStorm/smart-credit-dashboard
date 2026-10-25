@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Badge,
   Card,
   Group,
   NumberInput,
@@ -41,7 +40,7 @@ function productOption(product: CreditProduct) {
   );
 }
 
-/** Локальная песочница условий: не меняет заявку и не вызывает API. */
+/** Блок условий заявки: параметры, расчёт платежа и варианты от банка. */
 export function TermsSandbox({
   app,
   catalog,
@@ -57,6 +56,8 @@ export function TermsSandbox({
   );
   const [amount, setAmount] = useState(app.amount);
   const [termMonths, setTermMonths] = useState(app.termMonths);
+  const [appliedVariant, setAppliedVariant] =
+    useState<NegotiationOption | null>(null);
   const product =
     catalog.products.find((item) => item.id === productId) ?? initialProduct;
   if (!initialProduct || !product) return null;
@@ -77,12 +78,14 @@ export function TermsSandbox({
     setTermMonths((current) =>
       clamp(current, next.minTermMonths, next.maxTermMonths),
     );
+    setAppliedVariant(null);
   };
 
   const applyOption = (option: NegotiationOption) => {
     setProductId(option.productId);
     setAmount(option.amount);
     setTermMonths(option.termMonths);
+    setAppliedVariant(option);
   };
 
   return (
@@ -97,9 +100,6 @@ export function TermsSandbox({
               {t.lead}
             </Text>
           </div>
-          <Badge variant="light" color="gray">
-            {t.demo}
-          </Badge>
         </Group>
         <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="sm">
           <Select
@@ -115,7 +115,10 @@ export function TermsSandbox({
           <NumberInput
             label={t.amount}
             value={amount}
-            onChange={(value) => setAmount(Number(value) || 0)}
+            onChange={(value) => {
+              setAmount(Number(value) || 0);
+              setAppliedVariant(null);
+            }}
             min={product.minAmount}
             max={product.maxAmount}
             step={50_000}
@@ -125,13 +128,16 @@ export function TermsSandbox({
           <NumberInput
             label={t.term}
             value={termMonths}
-            onChange={(value) => setTermMonths(Number(value) || 0)}
+            onChange={(value) => {
+              setTermMonths(Number(value) || 0);
+              setAppliedVariant(null);
+            }}
             min={product.minTermMonths}
             max={product.maxTermMonths}
             suffix={t.termSuffix}
           />
         </SimpleGrid>
-        <div className={classes.result}>
+        <div className={classes.result} aria-live="polite">
           <Group justify="space-between" align="flex-end" gap="md">
             <div>
               <Text size="sm" c="dimmed">
@@ -148,6 +154,17 @@ export function TermsSandbox({
               <Text fw={700}>{t.readinessScore(ready)}</Text>
             </div>
           </Group>
+          {appliedVariant && (
+            <Text size="sm" mt="xs" data-testid="applied-variant">
+              {t.appliedBanner(
+                catalog.products.find(
+                  (item) => item.id === appliedVariant.productId,
+                )?.name ?? appliedVariant.productId,
+                formatRub(appliedVariant.amount),
+                tx.common.months(appliedVariant.termMonths),
+              )}
+            </Text>
+          )}
           <Text size="xs" c="dimmed" mt="xs">
             {t.rateNote(result.rate)}
           </Text>
