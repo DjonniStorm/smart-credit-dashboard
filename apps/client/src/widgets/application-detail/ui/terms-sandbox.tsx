@@ -23,15 +23,22 @@ import { formatRub } from "@repo/ui/money";
 
 import { estimate } from "@/entities/product";
 import { NegotiationSimulator } from "@/features/negotiation-sim";
+import { tx } from "@/shared/i18n";
 
 import classes from "./terms-sandbox.module.css";
+
+const t = tx.termsSandbox;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
 function productOption(product: CreditProduct) {
-  return `${product.name} · ${product.minTermMonths}–${product.maxTermMonths} мес.`;
+  return t.productOption(
+    product.name,
+    product.minTermMonths,
+    product.maxTermMonths,
+  );
 }
 
 /** Локальная песочница условий: не меняет заявку и не вызывает API. */
@@ -84,19 +91,20 @@ export function TermsSandbox({
         <Group justify="space-between" align="flex-start" gap="sm">
           <div>
             <Title order={2} size="h3" id="terms-sandbox-title">
-              Песочница условий
+              {t.title}
             </Title>
             <Text size="sm" c="dimmed">
-              Меняйте параметры и смотрите ориентир до отправки новой заявки.
+              {t.lead}
             </Text>
           </div>
           <Badge variant="light" color="gray">
-            Демо-режим
+            {t.demo}
           </Badge>
         </Group>
         <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="sm">
           <Select
-            label="Продукт"
+            label={t.product}
+            size="md"
             value={product.id}
             onChange={selectProduct}
             data={catalog.products.map((item) => ({
@@ -105,44 +113,43 @@ export function TermsSandbox({
             }))}
           />
           <NumberInput
-            label="Сумма"
+            label={t.amount}
             value={amount}
             onChange={(value) => setAmount(Number(value) || 0)}
             min={product.minAmount}
             max={product.maxAmount}
             step={50_000}
             thousandSeparator=" "
-            suffix=" ₽"
+            suffix={t.amountSuffix}
           />
           <NumberInput
-            label="Срок"
+            label={t.term}
             value={termMonths}
             onChange={(value) => setTermMonths(Number(value) || 0)}
             min={product.minTermMonths}
             max={product.maxTermMonths}
-            suffix=" мес."
+            suffix={t.termSuffix}
           />
         </SimpleGrid>
         <div className={classes.result}>
           <Group justify="space-between" align="flex-end" gap="md">
             <div>
               <Text size="sm" c="dimmed">
-                Ориентировочный платёж
+                {t.paymentTitle}
               </Text>
               <Text className={classes.payment}>
-                {formatRub(result.payment)} / мес.
+                {t.paymentValue(formatRub(result.payment))}
               </Text>
             </div>
             <div className={classes.ready}>
               <Text size="sm" c="dimmed">
-                Готовность условий
+                {t.readinessTitle}
               </Text>
-              <Text fw={700}>{ready}/100</Text>
+              <Text fw={700}>{t.readinessScore(ready)}</Text>
             </div>
           </Group>
           <Text size="xs" c="dimmed" mt="xs">
-            Ставка от {result.rate}% годовых. Расчёт ориентировочный и не
-            является обещанием одобрения; параметры заявки не изменены.
+            {t.rateNote(result.rate)}
           </Text>
         </div>
         <NegotiationSimulator

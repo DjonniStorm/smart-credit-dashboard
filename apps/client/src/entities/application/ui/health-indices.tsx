@@ -113,7 +113,9 @@ export function HealthIndices({ app }: { app: Application }) {
           <Index
             label="Готовность заявки"
             value={ready}
-            hint={terminal ? terminalHint : "Показывается после ответа scoring"}
+            hint={
+              terminal ? terminalHint : "Появится после проверки данных банком"
+            }
             emptyLabel={terminal ? terminalHint : undefined}
           />
           {!terminal && (

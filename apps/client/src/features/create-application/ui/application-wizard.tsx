@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ActionIcon,
   Anchor,
   Breadcrumbs,
   Button,
@@ -16,8 +15,7 @@ import {
   Textarea,
   Title,
 } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
-import { IconArrowRight, IconFileText } from "@tabler/icons-react";
+import { IconArrowRight } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
@@ -84,10 +82,10 @@ function initialDraft(
   params: URLSearchParams,
   account: DemoAccount,
 ): ApplicationDraft {
-  if (params.get("draft")) {
-    const saved = loadDraft();
-    if (saved && saved.accountId === account.id) return saved;
-  }
+  // Автосохранение: черновик этого клиента восстанавливается всегда, а не
+  // только по ссылке ?draft=1, чтобы перезагрузка не теряла заполненное.
+  const saved = loadDraft();
+  if (saved && saved.accountId === account.id) return saved;
   const { purpose, productId } = linkedChoice(params);
   return {
     accountId: account.id,
@@ -100,6 +98,7 @@ function initialDraft(
     // Банк знает обороты по счёту клиента: подставляем, клиент правит.
     financials: { ...account.knownFinancials },
     documents: [],
+    consents: { bki: false, pd: false },
     savedAt: new Date().toISOString(),
   };
 }
@@ -139,7 +138,9 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
   const [maxStep, setMaxStep] = useState(draft.step);
   const [dir, setDir] = useState<1 | -1>(1);
   const [errors, setErrors] = useState<Errors>({});
-  const [consents, setConsents] = useState({ bki: false, pd: false });
+  const [consents, setConsents] = useState(
+    () => draft.consents ?? { bki: false, pd: false },
+  );
   const headingRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
 
@@ -157,6 +158,15 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
     }
     headingRef.current?.focus();
   }, [draft.step]);
+
+  // Автосохранение: любое изменение черновика пишется в localStorage. Один
+  // вход в мастер черновик не создаёт, это происходит после первой правки:
+  // сравниваем объект с начальным, пока он тот же, ничего не пишем.
+  const initialDraftRef = useRef(draft);
+  useEffect(() => {
+    if (draft === initialDraftRef.current) return;
+    saveDraft(draft);
+  }, [draft]);
 
   function patch(p: Partial<ApplicationDraft>) {
     setDraft((d) => ({ ...d, ...p }));
@@ -211,15 +221,8 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
     }
     setErrors({});
     setDir(step > draft.step ? 1 : -1);
-    const next = { ...draft, step, savedAt: new Date().toISOString() };
-    setDraft(next);
+    setDraft({ ...draft, step, savedAt: new Date().toISOString() });
     setMaxStep((m) => Math.max(m, step));
-    saveDraft(next);
-  }
-
-  function saveNow() {
-    saveDraft({ ...draft, savedAt: new Date().toISOString() });
-    notifications.show({ message: w.draftSaved });
   }
 
   function submit() {
@@ -440,7 +443,9 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
           checked={consents.bki}
           onChange={(e) => {
             const bki = e.currentTarget.checked;
-            setConsents((c) => ({ ...c, bki }));
+            const next = { bki, pd: consents.pd };
+            setConsents(next);
+            patch({ consents: next });
           }}
           error={errors.bki}
         />
@@ -450,7 +455,9 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
           checked={consents.pd}
           onChange={(e) => {
             const pd = e.currentTarget.checked;
-            setConsents((c) => ({ ...c, pd }));
+            const next = { bki: consents.bki, pd };
+            setConsents(next);
+            patch({ consents: next });
           }}
           error={errors.pd}
         />
@@ -532,26 +539,10 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
             {tx.common.back}
           </Button>
         )}
+        <Text size="sm" c="dimmed" visibleFrom="sm">
+          {w.draftSaved}
+        </Text>
         <Group gap="sm" wrap="nowrap" className={classes.footerEnd}>
-          <Button
-            variant="subtle"
-            leftSection={<IconFileText size={16} stroke={1.5} aria-hidden />}
-            onClick={saveNow}
-            className={classes.saveDraft}
-            visibleFrom="sm"
-          >
-            {w.saveDraft}
-          </Button>
-          <ActionIcon
-            variant="subtle"
-            size={44}
-            onClick={saveNow}
-            className={classes.saveDraft}
-            aria-label={w.saveDraft}
-            hiddenFrom="sm"
-          >
-            <IconFileText size={20} stroke={1.5} aria-hidden />
-          </ActionIcon>
           {draft.step === LAST ? (
             <Button onClick={submit} loading={create.isPending}>
               {t.submit}

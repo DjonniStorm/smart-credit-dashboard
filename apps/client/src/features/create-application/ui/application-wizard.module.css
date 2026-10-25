@@ -1,15 +1,18 @@
 /* Раскладка business.jpg: слева заголовок, степпер и карточка шага,
-   справа сводка 320px, внизу подвал на всю рабочую область. */
+   справа сводка 320px, внизу подвал на всю рабочую область. flex:1
+   растягивает мастера на высоту рабочей области, чтобы подвал прилипал
+   к низу окна, даже когда шаг короткий. */
 .page {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
   grid-template-areas:
     "top side"
     "panel side"
-    "footer footer";
+    "footer side";
   column-gap: 24px;
   row-gap: var(--mantine-spacing-lg);
   align-items: start;
+  flex: 1;
 }
 
 .top {
@@ -53,10 +56,6 @@
 
 .footerEnd {
   margin-inline-start: auto;
-}
-
-.saveDraft {
-  color: var(--kk-link);
 }
 
 .crumbs {
@@ -444,10 +443,6 @@
   .footer {
     margin-inline: -16px;
     padding-inline: 16px;
-  }
-
-  .saveDraft {
-    padding-inline: 8px;
   }
 
   .file {

@@ -28,16 +28,16 @@ export const lx = {
     label: "Разделы кабинета",
     open: "Открыть меню",
     close: "Закрыть меню",
+    collapse: "Свернуть меню",
+    expand: "Развернуть меню",
     home: "Главная",
     credits: "Кредиты",
     applications: "Мои заявки",
     documents: "Документы",
     company: "Компания",
-    accounting: "Бухгалтерия",
-    services: "Сервисы",
-    support: "Поддержка",
+    profile: "Личный кабинет",
+    settings: "Настройки",
     needsYou: (n: number) => `ждут вашего ответа: ${n}`,
-    notInDemo: "нет в демо",
   },
   steps: ["Цель", "Компания", "Финансы", "Документы", "Подтверждение"],
   wizard: {
@@ -45,7 +45,6 @@ export const lx = {
     titleFor: (product: string) =>
       `Заявка на ${product.charAt(0).toLowerCase()}${product.slice(1)}`,
     continue: "Продолжить",
-    saveDraft: "Сохранить черновик",
     draftSaved: "Черновик сохранён на этом устройстве",
     purposeTitle: "Цель и сумма",
     purposeLead:

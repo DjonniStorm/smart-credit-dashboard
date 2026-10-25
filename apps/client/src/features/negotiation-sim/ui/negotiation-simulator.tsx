@@ -167,9 +167,6 @@ export function NegotiationSimulator({
               );
             })}
           </SimpleGrid>
-          <Text size="xs" c="dimmed">
-            {t.applyHint}
-          </Text>
         </>
       )}
     </Stack>
