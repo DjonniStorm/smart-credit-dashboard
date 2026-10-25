@@ -19,9 +19,10 @@ import {
   companyProfileResponseSchema,
 } from "@repo/contracts/company-profile";
 import {
-  managerReportResponseSchema,
   type ManagerReportQuery,
+  managerReportResponseSchema,
 } from "@repo/contracts/reports";
+import { uuid } from "@repo/ui/uuid";
 
 import {
   toArmApplication,
@@ -82,7 +83,7 @@ export const httpArmApi: ArmApi = {
       apiApplicationContextSchema,
       {
         method: "POST",
-        body: JSON.stringify({ action, idempotencyKey: crypto.randomUUID() }),
+        body: JSON.stringify({ action, idempotencyKey: uuid() }),
       },
     );
     return toArmApplicationContext(context);
