@@ -9,7 +9,11 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { IconAlertCircle, IconDotsVertical } from "@tabler/icons-react";
+import {
+  IconAlertCircle,
+  IconCircleCheck,
+  IconDotsVertical,
+} from "@tabler/icons-react";
 import { useState } from "react";
 
 import type {
@@ -17,6 +21,7 @@ import type {
   Employee,
   EmployeeAction,
 } from "@repo/contracts/application";
+import { backofficeText, i18n } from "@repo/i18n";
 
 import { useApplicationAction } from "@/entities/application";
 import type { ArmProduct } from "@/shared/api/arm";
@@ -59,17 +64,22 @@ export function ActionBar({
     setDialog(next);
   }
 
-  const { canDecide, overLimit, primary, secondary, menu, hint } =
-    buildActionLayout({
-      app,
-      employee,
-      employees,
-      pendingType: mutation.isPending
-        ? (mutation.variables?.type ?? null)
-        : null,
-      open,
-      run,
-    });
+  const {
+    canDecide,
+    overLimit,
+    clientReplied,
+    primary,
+    secondary,
+    menu,
+    hint,
+  } = buildActionLayout({
+    app,
+    employee,
+    employees,
+    pendingType: mutation.isPending ? (mutation.variables?.type ?? null) : null,
+    open,
+    run,
+  });
 
   return (
     <Stack gap="xs">
@@ -83,6 +93,21 @@ export function ActionBar({
           <Text size="xs">
             Одобрить {formatRub(app.request.amount)} может руководитель: ваш
             лимит {formatRub(employee.approvalLimit)}.
+          </Text>
+        </Alert>
+      )}
+      {canDecide && clientReplied && (
+        <Alert
+          variant="light"
+          color="green"
+          icon={<IconCircleCheck size={18} aria-hidden />}
+          p="xs"
+        >
+          <Text size="xs">
+            {
+              backofficeText(i18n.defaultLocale).application.decision
+                .clientReplied
+            }
           </Text>
         </Alert>
       )}

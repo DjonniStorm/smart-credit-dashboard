@@ -2,7 +2,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .tiles {
@@ -59,23 +59,6 @@
   font-weight: 600;
 }
 
-.stages {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.stage {
-  display: grid;
-  grid-template-columns: 120px minmax(0, 1fr) 28px;
-  align-items: center;
-  gap: 12px;
-  font-size: 13px;
-}
-
 .track {
   height: 10px;
   border-radius: 5px;
@@ -88,12 +71,6 @@
   height: 100%;
   border-radius: 5px;
   background: var(--mantine-color-text);
-}
-
-.stageCount {
-  text-align: right;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
 }
 
 .decisions {
@@ -173,10 +150,5 @@
   .splitMetrics {
     grid-template-columns: 1fr;
     gap: 12px;
-  }
-
-  .stage {
-    grid-template-columns: 96px minmax(0, 1fr) 24px;
-    gap: 8px;
   }
 }

@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Anchor,
-  Badge,
-  Button,
-  Card,
-  Group,
-  List,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { Anchor, Badge, Card, Group, List, Stack, Text } from "@mantine/core";
 import {
   IconAlertCircle,
   IconArrowRight,
@@ -51,6 +42,7 @@ import { formatRub } from "@/shared/lib/money";
 import { purposeLabel } from "@/shared/lib/purpose";
 
 import classes from "./application-panel.module.css";
+import { WorkflowSteps } from "./workflow-steps";
 
 /** Компания, сумма и срок крупно, продукт и путь по этапам. */
 export function Summary({ app }: { app: Application }) {
@@ -246,42 +238,14 @@ export function WorkflowStateCards({ app }: { app: Application }) {
           {waitingLabel[app.waitingOn]}
         </Text>
       </Group>
-      <ol className={classes.workflowGrid} aria-label={tx.workflow.stepsLabel}>
-        {stageOrder.map((stage, index) => {
-          const isDone = index < current || (isTerminal && index === current);
-          const isCurrent = index === current;
-          const isSelected = stage === selectedStage;
-          return (
-            <li key={stage} className={classes.workflowItem}>
-              <Button
-                variant="subtle"
-                color="dark"
-                className={classes.workflowCard}
-                data-state={
-                  isDone
-                    ? "done"
-                    : isCurrent
-                      ? isTerminal ||
-                        app.waitingOn === "client" ||
-                        app.waitingOn === "system"
-                        ? "waiting"
-                        : "current"
-                      : "next"
-                }
-                data-selected={isSelected}
-                onClick={() => setSelection({ key: selectionKey, stage })}
-                aria-pressed={isSelected}
-                aria-current={isCurrent ? "step" : undefined}
-              >
-                <span className={classes.workflowText}>
-                  <strong>{tx.workflow.stages[stage].label}</strong>
-                  <small>{tx.workflow.stages[stage].short}</small>
-                </span>
-              </Button>
-            </li>
-          );
-        })}
-      </ol>
+      <WorkflowSteps
+        stages={stageOrder}
+        current={current}
+        isTerminal={isTerminal}
+        waitingOn={app.waitingOn}
+        selectedStage={selectedStage}
+        onSelect={(stage) => setSelection({ key: selectionKey, stage })}
+      />
       <div className={classes.workflowDetail} aria-live="polite">
         <div>
           <Text size="xs" fw={700}>
