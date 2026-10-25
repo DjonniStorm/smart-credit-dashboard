@@ -48,6 +48,75 @@
   border-radius: 8px;
 }
 
+.docs-home-working-contour {
+  display: grid;
+  max-width: 1120px;
+  margin: 2.5rem auto 4rem;
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 16px;
+  background: var(--rp-c-bg-soft);
+  color: var(--rp-c-text-1);
+}
+
+.docs-home-working-contour__eyebrow {
+  margin: 0 0 0.55rem;
+  color: var(--rp-c-brand);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.docs-home-working-contour h2 {
+  margin: 0 0 0.55rem;
+  color: var(--rp-c-text-1);
+  font-size: clamp(1.35rem, 3vw, 2rem);
+}
+
+.docs-home-working-contour p:not(.docs-home-working-contour__eyebrow) {
+  max-width: 42rem;
+  margin: 0;
+  color: var(--rp-c-text-2);
+  line-height: 1.6;
+}
+
+.docs-home-working-contour__links {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 1.25rem 0 1.5rem;
+}
+
+.docs-home-working-contour__links a {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 8px;
+  background: var(--rp-c-bg);
+  color: var(--rp-c-text-1);
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.docs-home-working-contour__links a:hover,
+.docs-home-working-contour__links a:focus-visible {
+  border-color: var(--rp-c-brand);
+  background: var(--rp-c-brand-tint);
+}
+
+.docs-home-working-contour__links a:focus-visible {
+  outline: 3px solid var(--rp-c-brand);
+  outline-offset: 3px;
+}
+
+.docs-home-working-contour .docs-screenshot-slot {
+  max-width: 44rem;
+}
+
 .rp-nav__title__link:focus-visible,
 .rp-nav-menu__item:focus-visible,
 .rp-home-feature__item:focus-visible,
@@ -1149,7 +1218,172 @@
   line-height: 1.55;
 }
 
+.architecture-diagrams__live,
+.architecture-diagrams__evidence {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rp-c-divider);
+}
+
+.architecture-diagrams__section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.architecture-diagrams__section-heading h3 {
+  margin: 0;
+  color: var(--rp-c-text-1);
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+}
+
+.architecture-diagrams__section-heading > p {
+  max-width: 32rem;
+  margin: 0;
+  color: var(--rp-c-text-2);
+  line-height: 1.55;
+}
+
+.architecture-diagrams__live-links {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.architecture-diagrams__live-link {
+  display: grid;
+  min-height: 8.5rem;
+  gap: 0.45rem;
+  align-content: start;
+  padding: 1rem;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 10px;
+  background: var(--rp-c-bg);
+  color: var(--rp-c-text-1);
+  text-decoration: none;
+}
+
+.architecture-diagrams__live-link span {
+  color: var(--rp-c-brand);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.architecture-diagrams__live-link strong {
+  overflow-wrap: anywhere;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.architecture-diagrams__live-link small {
+  color: var(--rp-c-text-2);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.architecture-diagrams__live-link:hover,
+.architecture-diagrams__live-link:focus-visible {
+  border-color: var(--rp-c-brand);
+  background: var(--rp-c-brand-tint);
+}
+
+.architecture-diagrams__live-link:focus-visible {
+  outline: 3px solid var(--rp-c-brand);
+  outline-offset: 3px;
+}
+
+.architecture-diagrams__evidence-group
+  + .architecture-diagrams__evidence-group {
+  margin-top: 1.5rem;
+}
+
+.architecture-diagrams__evidence-group h4 {
+  margin: 0 0 0.65rem;
+  color: var(--rp-c-text-1);
+  font-size: 0.92rem;
+}
+
+.architecture-diagrams__evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.architecture-diagrams__evidence-grid--single {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 32rem;
+}
+
+.docs-screenshot-slot {
+  min-width: 0;
+  margin: 0;
+}
+
+.docs-screenshot-slot__media {
+  display: grid;
+  overflow: hidden;
+  min-height: 10rem;
+  aspect-ratio: 16 / 10;
+  place-items: stretch;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 10px;
+  background: var(--rp-c-bg-soft);
+}
+
+.docs-screenshot-slot__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.docs-screenshot-slot__placeholder {
+  display: grid;
+  min-height: 10rem;
+  align-content: center;
+  justify-items: center;
+  gap: 0.45rem;
+  padding: 1rem;
+  border: 1px dashed var(--rp-c-brand);
+  color: var(--rp-c-text-2);
+  text-align: center;
+}
+
+.docs-screenshot-slot__placeholder span {
+  color: var(--rp-c-brand);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.docs-screenshot-slot__placeholder strong {
+  max-width: 14rem;
+  color: var(--rp-c-text-1);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.docs-screenshot-slot figcaption {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 0.55rem;
+  color: var(--rp-c-text-2);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.docs-screenshot-slot figcaption strong {
+  color: var(--rp-c-text-1);
+}
+
 @media (max-width: 760px) {
+  .docs-home-working-contour__links {
+    grid-template-columns: 1fr;
+  }
+
   .architecture-diagrams__card > summary {
     grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 0.7rem;
@@ -1179,6 +1413,21 @@
 
   .architecture-diagram__scroll-hint {
     display: block;
+  }
+
+  .architecture-diagrams__section-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .architecture-diagrams__live-links,
+  .architecture-diagrams__evidence-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .architecture-diagrams__evidence-grid--single {
+    max-width: none;
   }
 }
 
@@ -1229,6 +1478,24 @@
 
   .architecture-diagram__scroll-hint {
     display: none;
+  }
+
+  .architecture-diagrams__live,
+  .architecture-diagrams__evidence {
+    break-inside: avoid;
+  }
+
+  .architecture-diagrams__live-link {
+    min-height: 0;
+    border-color: #777;
+  }
+
+  .docs-screenshot-slot__media {
+    min-height: 8rem;
+  }
+
+  .docs-screenshot-slot__placeholder {
+    min-height: 8rem;
   }
 }
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { ScreenshotSlot } from "./ScreenshotSlot";
 import {
   type ArchitectureDiagramId,
   diagramSvgs,
@@ -24,19 +25,85 @@ type DiagramFrameProps = {
   activeStep: number;
 };
 
+type ExternalLink = {
+  label: string;
+  href: string;
+  description: string;
+};
+
+type EvidenceSlot = {
+  id: string;
+  title: string;
+  description: string;
+  alt: string;
+  group: "web" | "infrastructure";
+  src?: string;
+};
+
+const externalLinks: ExternalLink[] = [
+  {
+    label: "Кабинет предпринимателя",
+    href: "https://sales.eegov.net/login",
+    description: "Создание заявки и просмотр её текущего состояния.",
+  },
+  {
+    label: "Кабинет сотрудника банка",
+    href: "https://backoffice.sales.eegov.net/login",
+    description: "Проверка заявки, запрос сведений и принятие решения.",
+  },
+  {
+    label: "Swagger API",
+    href: "https://api.sales.eegov.net/docs",
+    description: "Операции API, схемы запросов и ответы сервиса.",
+  },
+];
+
+const evidenceSlots: EvidenceSlot[] = [
+  {
+    id: "client-web",
+    title: "Client Web",
+    description: "Экран создания заявки и её движение по статусам.",
+    alt: "Скриншот Client Web",
+    group: "web",
+  },
+  {
+    id: "backoffice-web",
+    title: "Backoffice Web",
+    description: "Рабочее место банка для проверки и решения по заявке.",
+    alt: "Скриншот Backoffice Web",
+    group: "web",
+  },
+  {
+    id: "swagger",
+    title: "Swagger",
+    description: "Документация API, которую можно открыть по рабочей ссылке.",
+    alt: "Скриншот Swagger API",
+    group: "web",
+  },
+  {
+    id: "grafana",
+    title: "Grafana",
+    description: "Дашборд состояния API, сервисов и инфраструктурных метрик.",
+    alt: "Скриншот Grafana",
+    group: "infrastructure",
+  },
+];
+
 const tabs: DiagramTab[] = [
   {
     id: "component-overview",
     label: "Компоненты",
     eyebrow: "C4 Level 2",
-    title: "Кто с кем разговаривает",
+    title: "Кто ведёт заявку и принимает решение",
     description:
-      "Внешняя граница системы: два web-интерфейса обращаются к API, API вызывает scoring и сохраняет данные в PostgreSQL.",
+      "Предприниматель начинает заявку в Client Web, сотрудник банка проверяет её в Backoffice Web. API хранит состояние, вызывает scoring и применяет decision engine.",
     fallback: [
       "Предприниматель работает в Client Web.",
       "Сотрудник банка работает в Backoffice Web.",
       "Оба интерфейса обращаются к API по HTTP/JSON.",
-      "API вызывает Scoring Service по POST /v1/score и пишет в PostgreSQL через SQL/TypeORM.",
+      "API вызывает Scoring Service по POST /v1/score и получает score, recommendation и explainability metadata.",
+      "Полный ответ включает factors, reasons, next actions, explainability и model metadata.",
+      "API принимает доменное решение и пишет заявку, workflow, scoring jobs и audit в PostgreSQL.",
     ],
     routeLabel: "Маршрут заявки",
     route: [
@@ -53,12 +120,13 @@ const tabs: DiagramTab[] = [
     eyebrow: "C4 Level 3",
     title: "Как API проводит заявку через workflow",
     description:
-      "Внутри API видны guards, команды, state machine, очередь scoring_jobs, decision engine, audit и отчёты.",
+      "После HTTP-запроса API проходит guards и command handlers, проверяет переход state machine, ставит scoring job и фиксирует результат.",
     fallback: [
       "HTTP boundary передаёт команду через auth/session guards.",
       "Command handlers вызывают application workflow и state machine.",
-      "QueueWorkerService забирает запись scoring_jobs внутри API.",
-      "Decision engine учитывает autonomy policy, а workflow store сохраняет транзакцию и audit.",
+      "QueueWorkerService забирает запись scoring_jobs внутри API с блокировкой строки PostgreSQL.",
+      "Decision engine учитывает autonomy policy и результат scoring.",
+      "Workflow store сохраняет транзакцию, application events и audit, reports готовят данные для просмотра.",
     ],
     routeLabel: "Путь решения",
     route: [
@@ -76,7 +144,7 @@ const tabs: DiagramTab[] = [
     eyebrow: "Flowchart",
     title: "Где живут приложения и контракты",
     description:
-      "Workspace imports, generated OpenAPI flow и tooling показаны отдельно от runtime-сервисов. docs/prod/site остаётся внешней границей.",
+      "Схема разделяет runtime-приложения, compile-time packages, generated OpenAPI и tooling. docs/prod/site находится за пределами pnpm workspace.",
     fallback: [
       "apps/client, apps/backoffice и apps/api используют shared packages через workspace imports.",
       "apps/scoring остаётся workspace-приложением без зависимости от packages/*.",
@@ -96,9 +164,9 @@ const tabs: DiagramTab[] = [
     id: "deployment",
     label: "Развёртывание",
     eyebrow: "C4 Deployment",
-    title: "Как Compose собирает рабочий контур",
+    title: "Как внешний запрос доходит до сервисов",
     description:
-      "Браузер приходит на Caddy, дальше запросы идут к UI или API внутри Docker Compose network. Monitoring profile показан рядом с runtime.",
+      "Caddy принимает внешний HTTPS-трафик и направляет его в client, backoffice или API. Внутри Compose API обращается к scoring и PostgreSQL, а monitoring profile проверяет контур.",
     fallback: [
       "Browser actors входят через Caddy на Docker host.",
       "Caddy маршрутизирует UI к client:3000 и backoffice:3001, API и Swagger к api:4000.",
@@ -319,6 +387,98 @@ function DiagramCard({
   );
 }
 
+function LiveContour(): JSX.Element {
+  return (
+    <section
+      className="architecture-diagrams__live"
+      aria-labelledby="architecture-live-title"
+    >
+      <div className="architecture-diagrams__section-heading">
+        <div>
+          <p className="architecture-diagrams__eyebrow">Рабочий контур</p>
+          <h3 id="architecture-live-title">Ссылки для проверки</h3>
+        </div>
+        <p>
+          Эти адреса ведут в те же части продукта, которые показаны в component
+          и deployment view.
+        </p>
+      </div>
+      <div className="architecture-diagrams__live-links">
+        {externalLinks.map((link) => (
+          <a
+            key={link.href}
+            className="architecture-diagrams__live-link"
+            href={link.href}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <span>{link.label}</span>
+            <strong>{link.href.replace("https://", "")}</strong>
+            <small>{link.description}</small>
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function EvidenceSlotFigure({ slot }: { slot: EvidenceSlot }): JSX.Element {
+  return (
+    <ScreenshotSlot
+      id={slot.id}
+      title={slot.title}
+      description={slot.description}
+      alt={slot.alt}
+      src={slot.src}
+    />
+  );
+}
+
+function EvidenceSection(): JSX.Element {
+  const webSlots = evidenceSlots.filter((slot) => slot.group === "web");
+  const infrastructureSlots = evidenceSlots.filter(
+    (slot) => slot.group === "infrastructure",
+  );
+
+  return (
+    <section
+      className="architecture-diagrams__evidence"
+      aria-labelledby="architecture-evidence-title"
+    >
+      <div className="architecture-diagrams__section-heading">
+        <div>
+          <p className="architecture-diagrams__eyebrow">
+            Что показать на защите
+          </p>
+          <h3 id="architecture-evidence-title">Скрины рабочего контура</h3>
+        </div>
+        <p>
+          Здесь будут реальные кадры интерфейсов и мониторинга. Пока для них
+          оставлены честные места, чтобы структура страницы уже была готова.
+        </p>
+      </div>
+
+      <div className="architecture-diagrams__evidence-group">
+        <h4>Web-контур</h4>
+        <div className="architecture-diagrams__evidence-grid">
+          {webSlots.map((slot) => (
+            <EvidenceSlotFigure key={slot.id} slot={slot} />
+          ))}
+        </div>
+      </div>
+
+      <div className="architecture-diagrams__evidence-group architecture-diagrams__evidence-group--infrastructure">
+        <h4>Инфраструктура</h4>
+        <div className="architecture-diagrams__evidence-grid architecture-diagrams__evidence-grid--single">
+          {infrastructureSlots.map((slot) => (
+            <EvidenceSlotFigure key={slot.id} slot={slot} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function ArchitectureDiagrams(): JSX.Element {
   return (
     <section
@@ -327,16 +487,14 @@ export function ArchitectureDiagrams(): JSX.Element {
     >
       <div className="architecture-diagrams__intro">
         <div>
-          <p className="architecture-diagrams__eyebrow">
-            Архитектура в четырёх срезах
-          </p>
+          <p className="architecture-diagrams__eyebrow">Как проходит заявка</p>
           <h2 id="architecture-diagrams-title">
-            Одна система, четыре полезных масштаба
+            От кабинета предпринимателя до работающего контура
           </h2>
           <p>
-            Каждый срез теперь открыт отдельным пунктом. Можно развернуть только
-            нужную схему, изучить её связи и свернуть перед переходом к
-            следующей.
+            Начните с component view, чтобы увидеть границы ответственности,
+            затем проверьте внутренний workflow API, структуру репозитория и
+            реальный deployment в Docker Compose.
           </p>
         </div>
         <div
@@ -374,6 +532,9 @@ export function ArchitectureDiagrams(): JSX.Element {
           <DiagramCard key={tab.id} tab={tab} defaultOpen={index === 0} />
         ))}
       </div>
+
+      <LiveContour />
+      <EvidenceSection />
 
       <noscript>
         <p className="architecture-diagrams__noscript">

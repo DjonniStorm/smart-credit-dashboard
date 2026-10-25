@@ -1,6 +1,15 @@
+import { ScreenshotSlot } from "../../theme/ScreenshotSlot";
+
 # Локальная разработка
 
-Для запуска нужны Node.js 24 или новее, pnpm 11.25.0 и запущенный Docker.
+Локальный контур поднимает те же роли, которые описаны в пользовательских разделах: Client Web, банковское АРМ, API и scoring. Для запуска нужны Node.js 24 или новее, pnpm 11.25.0 и запущенный Docker.
+
+<ScreenshotSlot
+  id="developers-local-development"
+  title="Локальный контур разработки"
+  alt="Скриншот локального контура разработки"
+  description="Место для кадра с запущенными сервисами и локальными адресами Client Web, Backoffice и Swagger."
+/>
 
 Из корня репозитория выполните:
 
@@ -17,6 +26,12 @@ pnpm dev
 | Банковское АРМ | `http://localhost:3001` |
 | Swagger UI API | `http://localhost:4000/docs` |
 | Scoring Swagger UI | `http://localhost:8000/docs` |
+
+Опубликованные адреса для проверки интерфейсов и API:
+
+- [Кабинет предпринимателя](https://sales.eegov.net/login)
+- [Кабинет сотрудника банка](https://backoffice.sales.eegov.net/login)
+- [Swagger API](https://api.sales.eegov.net/docs)
 
 Для заполнения демонстрационных данных выполните `pnpm --filter api db:seed`. Команда идемпотентна. Чтобы остановить локальную PostgreSQL, используйте `pnpm db:down`.
 
