@@ -1,5 +1,6 @@
 # Сборка из корня репозитория: docker build -f apps/api/Dockerfile .
 FROM node:24-alpine AS base
+RUN apk add --no-cache git
 RUN npm install -g pnpm@11.25.0 turbo@2.11.9
 WORKDIR /app
 
@@ -9,10 +10,10 @@ RUN turbo prune api --docker
 
 FROM base AS build
 COPY --from=prune /app/out/json/ .
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 COPY --from=prune /app/out/full/ .
 RUN turbo run build --filter=api
-RUN pnpm --filter=api deploy --prod --legacy /prod/api
+RUN pnpm --filter=api deploy --prod --legacy --ignore-scripts /prod/api
 
 # Separate one-shot image for creating reproducible demo data in Compose.
 FROM build AS seed
@@ -22,6 +23,7 @@ FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production     PORT=4000
 COPY --from=build --chown=node:node /prod/api ./
+RUN npm install -g tsx@4.21.0
 USER node
 EXPOSE 4000
-CMD ["node", "dist/main.js"]
+CMD ["npx", "--yes", "tsx", "dist/main.js"]

@@ -1,0 +1,18 @@
+services:
+  caddy:
+    profiles: ["off"]
+  postgres:
+    networks: [edge]
+  scoring:
+    networks: [edge]
+  api:
+    networks: [edge]
+  client:
+    networks: [edge]
+  backoffice:
+    networks: [edge]
+
+networks:
+  edge:
+    name: hh-edge
+    external: true
