@@ -19,7 +19,10 @@ export function Providers({ children }: PropsWithChildren) {
     <QueryClientProvider client={queryClient}>
       <UiProvider density="compact">
         {/* 440px по умолчанию шире телефона и растягивает вьюпорт. */}
-        <Notifications containerWidth="min(440px, calc(100vw - 32px))" />
+        <Notifications
+          position="top-right"
+          containerWidth="min(440px, calc(100vw - 32px))"
+        />
         <NavigationProgress />
         <DatesProvider settings={{ locale: "ru", firstDayOfWeek: 1 }}>
           <ModalsProvider>{children}</ModalsProvider>

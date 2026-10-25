@@ -1,40 +1,42 @@
 // Контракты кабинета клиента: продукты, заявка, решение банка, подписание.
-// Кабинет пока работает на мок-адаптере (apps/client/src/shared/api/cabinet),
-// api должен отдавать те же формы.
+// Кабинет получает данные через API-адаптер; формы сохраняют совместимость UI.
 import { z } from "zod";
 
 import { applicationStatusSchema, innSchema } from "@repo/contracts";
 
-/** Зачем нужны деньги. С цели начинается подбор продукта. */
-export const creditPurposeSchema = z.enum([
-  "working_capital",
-  "cash_gap",
-  "equipment",
-  "development",
-]);
-export type CreditPurpose = z.infer<typeof creditPurposeSchema>;
+import { apiScoringSchema } from "./api.ts";
+import {
+  attachedDocumentSchema,
+  clientReplySchema,
+  urgentRequestSchema,
+  urgentSourceSchema,
+  workflowStatusSchema,
+} from "./application-parts.ts";
+import {
+  creditProductIdSchema,
+  creditProductSchema,
+  creditPurposeSchema,
+} from "./product-catalog.ts";
+
+export {
+  creditProductSchema,
+  creditPurposeSchema,
+  type CreditProduct,
+  type CreditPurpose,
+} from "./product-catalog.ts";
+
+export {
+  attachedDocumentSchema,
+  clientAnswerSchema,
+  type AttachedDocument,
+  type ClientAnswer,
+} from "./application-parts.ts";
 
 export const legalFormSchema = z.enum(["ip", "ooo"]);
 export type LegalForm = z.infer<typeof legalFormSchema>;
 
-/** Кредитный продукт. Ставка = ключевая ставка ЦБ + надбавка продукта. */
-export const creditProductSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  purposes: z.array(creditPurposeSchema).min(1),
-  description: z.string(),
-  minAmount: z.number().int().positive(),
-  maxAmount: z.number().int().positive(),
-  minTermMonths: z.number().int().positive(),
-  maxTermMonths: z.number().int().positive(),
-  /** Надбавка к ключевой ставке, п. п. */
-  spreadPp: z.number(),
-  collateral: z.string().nullable(),
-});
-export type CreditProduct = z.infer<typeof creditProductSchema>;
-
 export const productCatalogSchema = z.object({
-  /** Ключевая ставка ЦБ, от которой считаются ставки, % годовых. */
+  /** Ключевая ставка ЦБ, от которой считаются ставки, % годовых. Берётся из конфигурации. */
   keyRate: z.number(),
   keyRateDate: z.string(),
   products: z.array(creditProductSchema),
@@ -77,15 +79,6 @@ export const demoAccountSchema = z.object({
 });
 export type DemoAccount = z.infer<typeof demoAccountSchema>;
 
-export const attachedDocumentSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  kind: z.enum(["statement", "reporting", "tax_certificate", "other"]),
-  sizeBytes: z.number().int().nonnegative(),
-  addedAt: z.string(),
-});
-export type AttachedDocument = z.infer<typeof attachedDocumentSchema>;
-
 export const consentsSchema = z.object({
   bki: z.literal(true),
   personalData: z.literal(true),
@@ -95,7 +88,7 @@ export type Consents = z.infer<typeof consentsSchema>;
 /** Тело запроса на создание заявки. */
 export const applicationInputSchema = z.object({
   purpose: creditPurposeSchema,
-  productId: z.string(),
+  productId: creditProductIdSchema,
   amount: z.number().int().positive(),
   termMonths: z.number().int().positive(),
   comment: z.string().max(500),
@@ -141,13 +134,7 @@ export const clientRequestSchema = z.object({
   question: z.string(),
   why: z.string(),
   documentKind: attachedDocumentSchema.shape.kind.nullable(),
-  answer: z
-    .object({
-      text: z.string(),
-      documents: z.array(attachedDocumentSchema),
-      answeredAt: z.string(),
-    })
-    .nullable(),
+  answer: clientReplySchema.nullable(),
 });
 export type ClientRequest = z.infer<typeof clientRequestSchema>;
 
@@ -179,6 +166,7 @@ export const applicationSchema = applicationInputSchema.extend({
   company: companyProfileSchema,
   /** Сколько этапов автоматической проверки уже пройдено (0..3). */
   checksPassed: z.number().int().min(0).max(3),
+  scoring: apiScoringSchema.nullable().optional(),
   requests: z.array(clientRequestSchema),
   decision: decisionSchema.nullable(),
   deal: z
@@ -191,6 +179,17 @@ export const applicationSchema = applicationInputSchema.extend({
       account: z.string(),
     })
     .nullable(),
+  /** Кто закрыл заявку отменой: клиент отказался от предложения или отозвал её, сотрудник банка отменил. */
+  cancelledBy: z.enum(["client", "employee"]).nullable().default(null),
+  /** Статус до отмены: на каком этапе заявка была закрыта. */
+  cancelledFrom: workflowStatusSchema.nullable().default(null),
+  /** Запрос клиента на срочный режим и решение банка по нему. */
+  urgentRequest: urgentRequestSchema
+    .omit({ resolvedBy: true })
+    .nullable()
+    .default(null),
+  /** Кто включил срочный режим: клиент или банк. Банк показываем клиенту без подробностей. */
+  urgentBy: urgentSourceSchema.shape.by.nullable().default(null),
   events: z.array(applicationEventSchema),
 });
 export type Application = z.infer<typeof applicationSchema>;
@@ -200,9 +199,3 @@ export const signRequestSchema = z.object({
   code: z.string().regex(/^\d{6}$/),
 });
 export type SignRequest = z.infer<typeof signRequestSchema>;
-
-export const clientAnswerSchema = z.object({
-  text: z.string().min(1).max(1000),
-  documents: z.array(attachedDocumentSchema),
-});
-export type ClientAnswer = z.infer<typeof clientAnswerSchema>;

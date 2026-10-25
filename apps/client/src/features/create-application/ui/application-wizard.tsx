@@ -31,6 +31,7 @@ import {
   type Financials,
   creditPurposeSchema,
 } from "@repo/contracts/cabinet";
+import { CREDIT_PRODUCTS } from "@repo/contracts/product-catalog";
 import { AmountInput } from "@repo/ui/amount-input";
 import { amountError, formatRub } from "@repo/ui/money";
 import { stepVariants } from "@repo/ui/motion";
@@ -87,12 +88,12 @@ function initialDraft(
     const saved = loadDraft();
     if (saved && saved.accountId === account.id) return saved;
   }
-  const purpose = creditPurposeSchema.safeParse(params.get("purpose"));
+  const { purpose, productId } = linkedChoice(params);
   return {
     accountId: account.id,
     step: 0,
-    purpose: purpose.success ? purpose.data : "working_capital",
-    productId: params.get("product") ?? "",
+    purpose,
+    productId,
     amount: Number(params.get("amount")) || "",
     termMonths: Number(params.get("term")) || "",
     comment: "",
@@ -101,6 +102,26 @@ function initialDraft(
     documents: [],
     savedAt: new Date().toISOString(),
   };
+}
+
+/**
+ * Цель и продукт из ссылки. Продукт без цели задаёт свою основную цель,
+ * продукт, не подходящий под цель из ссылки, сбрасывается.
+ */
+function linkedChoice(params: URLSearchParams): {
+  purpose: CreditPurpose;
+  productId: string;
+} {
+  const purpose = creditPurposeSchema.safeParse(params.get("purpose"));
+  const product = CREDIT_PRODUCTS.find((p) => p.id === params.get("product"));
+  if (!purpose.success) {
+    return {
+      purpose: product?.purposes[0] ?? "working_capital",
+      productId: product?.id ?? "",
+    };
+  }
+  const fits = product && fitsPurpose(product, purpose.data);
+  return { purpose: purpose.data, productId: fits ? product.id : "" };
 }
 
 /** Мастер заявки по business.jpg: степпер, карточка шага, сводка справа, подвал. */
@@ -126,7 +147,7 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
     draft.financials ?? account.knownFinancials;
   const products = catalog.data?.products ?? [];
   const available = products.filter((p) => fitsPurpose(p, draft.purpose));
-  const product = products.find((p) => p.id === draft.productId);
+  const product = available.find((p) => p.id === draft.productId);
 
   // Фокус на заголовок нового шага: клавиатура и скринридер начинают с него.
   useEffect(() => {
@@ -501,7 +522,7 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
         </AnimatePresence>
       </Card>
 
-      <div className={classes.footer}>
+      <div className={classes.footer} data-alfi-avoid="bottom">
         {draft.step > 0 ? (
           <Button variant="default" onClick={() => go(draft.step - 1)}>
             {tx.common.back}

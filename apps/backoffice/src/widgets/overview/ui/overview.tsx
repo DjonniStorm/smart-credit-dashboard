@@ -1,120 +1,141 @@
 "use client";
 
-import { Anchor, Button, Text } from "@mantine/core";
+import { Anchor, Button, Group, Progress, Text } from "@mantine/core";
 import Link from "next/link";
 
-import type { ApplicationStatus } from "@repo/contracts";
 import { StateBlock } from "@repo/ui/state-block";
 
 import {
-  countByGroup,
-  formatDateTime,
-  queueGroupLabel,
+  productLabel,
   stageLabel,
-  stageOrder,
   statusLabel,
-  useApplications,
+  useManagerReport,
 } from "@/entities/application";
 
 import classes from "./overview.module.css";
 
-const decided: ApplicationStatus[] = [
-  "approved",
-  "counter_offer",
-  "needs_client",
-  "rejected",
-];
-
-const tiles = [
-  { key: "decision", href: "/?tab=decision" },
-  { key: "review", href: "/?tab=review" },
-  { key: "client", href: "/?tab=client" },
-  { key: "closed", href: "/?tab=closed" },
+const decisionLabels = [
+  ["approve", "Одобрено"],
+  ["counterOffer", "Встречное предложение"],
+  ["reject", "Отказ"],
 ] as const;
 
-/** Обзор конвейера: сколько заявок на каждом этапе и последние решения. */
-export function Overview() {
-  const apps = useApplications();
+const reportStatusLabel: Record<string, string> = {
+  ...statusLabel,
+  accepted: "Принята",
+  signing: "Подписание",
+  funded: "Выдан",
+  cancelled: "Отменена",
+  unknown: "Неизвестно",
+};
 
-  if (apps.isPending) {
-    return <StateBlock kind="loading" title="Загружаем заявки" />;
+function formatShare(value: number): string {
+  return `${Math.round(value * 100)}%`;
+}
+
+function formatDate(value: string, timezone?: string): string {
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "short",
+    timeZone: timezone,
+  }).format(new Date(value));
+}
+
+/** Обзор менеджера по агрегированному read-only отчёту API. */
+export function Overview() {
+  const report = useManagerReport("overview");
+
+  if (report.isPending) {
+    return <StateBlock kind="loading" title="Загружаем отчёт" />;
   }
-  if (apps.isError) {
+  if (report.isError) {
     return (
       <StateBlock
         kind="error"
-        title="Заявки не загрузились"
+        title="Отчёт не загрузился"
         action={
-          <Button variant="default" onClick={() => void apps.refetch()}>
+          <Button variant="default" onClick={() => void report.refetch()}>
             Повторить
           </Button>
         }
       >
-        {apps.error.message}
-      </StateBlock>
-    );
-  }
-  if (apps.data.length === 0) {
-    return (
-      <StateBlock kind="empty" title="Заявок пока нет">
-        Когда клиент подаст заявку, здесь появится её путь по конвейеру.
+        {report.error.message}
       </StateBlock>
     );
   }
 
-  const counts = countByGroup(apps.data);
-  const open = apps.data.filter((a) => a.waitingOn !== "nobody");
-  const byStage = stageOrder.map((s) => ({
-    stage: s,
-    count: open.filter((a) => a.stage === s).length,
-  }));
-  const max = Math.max(1, ...byStage.map((s) => s.count));
-  const decisions = apps.data
-    .flatMap((a) =>
-      a.events
-        .filter(
-          (e) =>
-            e.actor.kind === "employee" &&
-            e.toStatus !== null &&
-            decided.includes(e.toStatus),
-        )
-        .map((e) => ({ ...e, app: a })),
-    )
-    .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
-    .slice(0, 6);
+  const data = report.data;
+  const maxStage = Math.max(
+    1,
+    ...data.population.byStage.map((item) => item.count),
+  );
+  const latestBucket = data.timeseries.at(-1);
+  const journalParams = new URLSearchParams({
+    from: data.query.from,
+    to: data.query.to,
+    timezone: data.query.timezone,
+    view: "journal",
+    bucket: data.query.bucket,
+  });
+  if (data.query.search) {
+    journalParams.set("search", data.query.search);
+  }
+  const journalHref = `/journal?${journalParams.toString()}`;
 
   return (
     <div className={classes.grid}>
+      <Group justify="space-between" align="center" wrap="wrap">
+        <Text size="sm" c="dimmed">
+          Отчёт за период {formatDate(data.query.from, data.query.timezone)} — {formatDate(data.query.to, data.query.timezone)}.
+        </Text>
+        <Anchor component={Link} href={journalHref} underline="always">
+          Открыть журнал событий
+        </Anchor>
+      </Group>
       <section
         className={classes.tiles}
-        aria-label="Заявки по вкладкам очереди"
+        aria-label="Ключевые показатели отчёта"
       >
-        {tiles.map((t) => (
-          <Link key={t.key} href={t.href} className={classes.tile}>
-            <span className={classes.tileValue}>{counts[t.key]}</span>
-            <span className={classes.tileLabel}>{queueGroupLabel[t.key]}</span>
-          </Link>
-        ))}
+        <article className={classes.tile}>
+          <span className={classes.tileValue}>
+            {data.population.applications}
+          </span>
+          <span className={classes.tileLabel}>Заявок в периоде</span>
+        </article>
+        <article className={classes.tile}>
+          <span className={classes.tileValue}>{data.activity.events}</span>
+          <span className={classes.tileLabel}>Событий активности</span>
+        </article>
+        <article className={classes.tile}>
+          <span className={classes.tileValue}>{data.decisions.total}</span>
+          <span className={classes.tileLabel}>Решений сотрудников</span>
+        </article>
+        <article className={classes.tile}>
+          <span className={classes.tileValue}>
+            {data.sla.byState.find((item) => item.state === "overdue")?.count ??
+              0}
+          </span>
+          <span className={classes.tileLabel}>Просроченных SLA-срезов</span>
+        </article>
       </section>
 
       <section className={classes.card} aria-labelledby="stages-title">
         <h2 id="stages-title" className={classes.cardTitle}>
-          Где сейчас заявки
+          Путь заявок
         </h2>
         <Text size="sm" c="dimmed" mb="md">
-          Открытые заявки по этапам конвейера, от приёма до выдачи
+          Текущий срез по этапам, без пересчёта на клиенте.
         </Text>
         <ol className={classes.stages}>
-          {byStage.map(({ stage, count }) => (
-            <li key={stage} className={classes.stage}>
-              <span>{stageLabel[stage]}</span>
-              <span className={classes.track} aria-hidden>
-                <span
-                  className={classes.bar}
-                  style={{ width: `${(count / max) * 100}%` }}
-                />
-              </span>
-              <span className={classes.stageCount}>{count}</span>
+          {data.population.byStage.map((item) => (
+            <li key={item.stage} className={classes.stage}>
+              <span>{stageLabel[item.stage]}</span>
+              <Progress
+                value={(item.count / maxStage) * 100}
+                color="dark"
+                aria-label={`${stageLabel[item.stage]}: ${item.count}`}
+              />
+              <span className={classes.stageCount}>{item.count}</span>
             </li>
           ))}
         </ol>
@@ -122,39 +143,144 @@ export function Overview() {
 
       <section className={classes.card} aria-labelledby="decisions-title">
         <h2 id="decisions-title" className={classes.cardTitle}>
-          Последние решения сотрудников
+          Решения и расхождения
         </h2>
-        {decisions.length === 0 ? (
-          <Text size="sm" c="dimmed" mt="xs">
-            Решений пока не было. Они появятся после первого одобрения, запроса
-            документов или отказа.
+        <Text size="sm" c="dimmed" mb="md">
+          Решения считаются по событиям. Рекомендация берётся из события
+          скоринга или помечается как неизвестная, если исторического контекста нет.
+        </Text>
+        <div className={classes.metricList}>
+          {decisionLabels.map(([key, label]) => {
+            const item = data.decisions[key];
+            return (
+              <div key={key} className={classes.metricRow}>
+                <span>{label}</span>
+                <strong>{item.count}</strong>
+                <span className={classes.metricShare}>
+                  {formatShare(item.share)}
+                </span>
+              </div>
+            );
+          })}
+          <div className={classes.metricRow}>
+            <span>Расхождение с рекомендацией</span>
+            <strong>{data.recommendation.overridden}</strong>
+            <span className={classes.metricShare}>
+              {data.recommendation.overrideRate === null
+                ? "—"
+                : formatShare(data.recommendation.overrideRate)}
+            </span>
+          </div>
+          <div className={classes.metricRow}>
+            <span>Совпало с рекомендацией</span>
+            <strong>{data.recommendation.matched}</strong>
+            <span className={classes.metricShare}>
+              {formatShare(
+                data.recommendation.matched /
+                  Math.max(
+                    1,
+                    data.recommendation.matched +
+                      data.recommendation.overridden,
+                  ),
+              )}
+            </span>
+          </div>
+          <div className={classes.metricRow}>
+            <span>Без исторической рекомендации</span>
+            <strong>{data.recommendation.unknown}</strong>
+            <span className={classes.metricShare}>
+              {data.coverage.recommendation.quality === "complete"
+                ? "—"
+                : "неполно"}
+            </span>
+          </div>
+        </div>
+        {data.decisions.total === 0 && (
+          <Text size="sm" c="dimmed" mt="md">
+            Решений за выбранный период нет.
           </Text>
-        ) : (
-          <ul className={classes.decisions}>
-            {decisions.map((e) => (
-              <li key={e.id} className={classes.decision}>
-                <div>
-                  <Anchor
-                    component={Link}
-                    href={`/?open=${e.app.id}`}
-                    size="sm"
-                    fw={500}
-                    c="var(--mantine-color-text)"
-                    underline="always"
-                  >
-                    № {e.app.number} · {e.app.applicant.name}
-                  </Anchor>
-                  <Text size="xs" c="dimmed">
-                    {e.actor.name}, {formatDateTime(e.at)}
-                  </Text>
-                </div>
-                <Text size="sm" className={classes.decisionStatus}>
-                  {e.toStatus && statusLabel[e.toStatus]}
-                </Text>
-              </li>
-            ))}
-          </ul>
         )}
+      </section>
+
+      <section className={classes.card} aria-labelledby="sla-title">
+        <h2 id="sla-title" className={classes.cardTitle}>
+          SLA и автономность
+        </h2>
+        <div className={classes.splitMetrics}>
+          <div>
+            <Text size="sm" c="dimmed">
+              SLA
+            </Text>
+            <Text fw={600} mt={4}>
+              {data.sla.byState.find((item) => item.state === "on_track")
+                ?.count ?? 0}{" "}
+              в срок
+            </Text>
+            <Text size="xs" c="dimmed" mt={4}>
+              {data.coverage.sla.quality === "complete"
+                ? "Данные полные"
+                : "Есть события без контекста"}
+            </Text>
+          </div>
+          <div>
+            <Text size="sm" c="dimmed">
+              Автономность
+            </Text>
+            <Text fw={600} mt={4}>
+              {data.autonomy.byMode.find((item) => item.mode === "controlled")
+                ?.count ?? 0}{" "}
+              controlled
+            </Text>
+            <Text size="xs" c="dimmed" mt={4}>
+              {data.coverage.autonomy.quality === "unknown"
+                ? "Нет контекста"
+                : "Событийный ряд"}
+            </Text>
+          </div>
+        </div>
+        {latestBucket && (
+          <Text size="xs" c="dimmed" mt="md">
+            Последний бакет: {formatDate(latestBucket.bucketStart, data.query.timezone)} ·{" "}
+            {latestBucket.events} событий
+          </Text>
+        )}
+      </section>
+
+      <section className={classes.card} aria-labelledby="products-title">
+        <h2 id="products-title" className={classes.cardTitle}>
+          Продукты
+        </h2>
+        <div className={classes.metricList}>
+          {data.population.byProduct.map((item) => (
+            <div key={item.productId} className={classes.metricRow}>
+              <span>{productLabel[item.productId]}</span>
+              <strong>{item.applications}</strong>
+              <span className={classes.metricShare}>{item.overdue} проср.</span>
+            </div>
+          ))}
+        </div>
+        {data.population.byProduct.length === 0 && (
+          <Text size="sm" c="dimmed">
+            Нет данных по продуктам.
+          </Text>
+        )}
+      </section>
+
+      <section className={classes.card} aria-labelledby="status-title">
+        <h2 id="status-title" className={classes.cardTitle}>
+          Статусы
+        </h2>
+        <div className={classes.metricList}>
+          {data.population.byStatus.map((item) => (
+            <div key={item.status} className={classes.metricRow}>
+            <span>{reportStatusLabel[item.status] ?? "Неизвестно"}</span>
+              <strong>{item.count}</strong>
+              <span className={classes.metricShare}>
+                {formatShare(item.share)}
+              </span>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   );

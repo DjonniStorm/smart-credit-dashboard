@@ -1,0 +1,108 @@
+/* Угол выбран, чтобы не перекрывать меню слева и действия в шапке. */
+.dock {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 190;
+  width: min(340px, calc(100vw - 32px));
+  padding: 12px;
+  border: 1px solid var(--kk-line);
+  border-radius: 12px;
+  background: var(--kk-surface);
+  /* Тень отделяет плавающий слой от контента под ним. */
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.12);
+}
+
+.body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.action {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.collapsed {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 190;
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--kk-line);
+  border-radius: 50%;
+  background: var(--kk-surface);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.12);
+  cursor: pointer;
+}
+
+.collapsed:focus-visible {
+  outline: 2px solid var(--kk-brand);
+  outline-offset: 2px;
+}
+
+/* Точка появляется, когда у скрытого Альфи сменилась подсказка. */
+.collapsed[data-fresh]::after {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--kk-surface);
+  border-radius: 50%;
+  background: var(--kk-brand);
+  content: "";
+}
+
+/*
+ * Страница помечает элементы, которые Альфи не должен закрывать:
+ * липкий подвал мастера заявки (bottom) и панель заявки в очереди АРМ (right).
+ * Отступы повторяют их размеры: подвал до 80px, панель 360px, уже 1200px 380px,
+ * на телефоне панель во всю ширину, и Альфи поднимается над её действиями.
+ */
+:global(body:has([data-alfi-avoid~="bottom"])) .dock,
+:global(body:has([data-alfi-avoid~="bottom"])) .collapsed {
+  bottom: 96px;
+}
+
+:global(body:has([data-alfi-avoid~="right"])) .dock,
+:global(body:has([data-alfi-avoid~="right"])) .collapsed {
+  right: 376px;
+}
+
+@media (max-width: 74.99em) {
+  :global(body:has([data-alfi-avoid~="right"])) .dock,
+  :global(body:has([data-alfi-avoid~="right"])) .collapsed {
+    right: 396px;
+  }
+}
+
+@media (max-width: 48em) {
+  :global(body:has([data-alfi-avoid~="right"])) .dock,
+  :global(body:has([data-alfi-avoid~="right"])) .collapsed {
+    right: 8px;
+    bottom: 96px;
+  }
+}
+
+/* Подсветка места, куда ведёт подсказка «Показать». */
+:global([data-alfi-highlight]) {
+  outline: 3px solid var(--kk-brand);
+  outline-offset: 4px;
+  border-radius: 8px;
+  transition: outline-color 300ms ease;
+}
+
+/* На телефоне от края до края; 100vw здесь не подходит: он включает полосу прокрутки. */
+@media (max-width: 36em) {
+  .dock {
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    width: auto;
+  }
+}

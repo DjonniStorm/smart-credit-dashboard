@@ -2,15 +2,24 @@ import { BadGatewayException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
 import type {
-  BkiReport,
   CompanyCheckResponse,
-  EgrulRecord,
-  FnsProfile,
   ScoreRequest,
   ScoreResponse,
 } from "@repo/contracts";
+import type { ApplicationWorkflow } from "@repo/contracts/workflow";
 
 import type { Env } from "../../common/config/env.schema.ts";
+import { DemoDataStore } from "../../common/demo-data/demo-data.store.ts";
+
+/** Ошибка конкретного источника проверки: по `source` пишется строка в `source_checks`. */
+export class SourceCheckError extends BadGatewayException {
+  constructor(
+    readonly source: "sources" | "scoring",
+    message: string,
+  ) {
+    super(message);
+  }
+}
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -27,23 +36,42 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 
 @Injectable()
 export class CompaniesService {
-  constructor(private readonly config: ConfigService<Env, true>) {}
+  constructor(
+    private readonly config: ConfigService<Env, true>,
+    private readonly data: DemoDataStore,
+  ) {}
 
-  async check(inn: string): Promise<CompanyCheckResponse> {
-    const mocksUrl = this.config.getOrThrow("MOCKS_URL", { infer: true });
+  async check(
+    inn: string,
+    application?: Pick<ApplicationWorkflow, "amount" | "termMonths">,
+  ): Promise<CompanyCheckResponse> {
     const scoringUrl = this.config.getOrThrow("SCORING_URL", { infer: true });
-    const id = encodeURIComponent(inn);
-    const [egrul, bki, fns] = await Promise.all([
-      request<EgrulRecord>(`${mocksUrl}/egrul/${id}`),
-      request<BkiReport>(`${mocksUrl}/bki/${id}`),
-      request<FnsProfile>(`${mocksUrl}/fns/${id}`),
-    ]);
+    const sources = await this.data.getSources(inn);
+    if (!sources) {
+      throw new SourceCheckError(
+        "sources",
+        `Синтетические источники не найдены для ${inn}`,
+      );
+    }
+    const { egrul, bki, fns } = sources;
 
-    const body: ScoreRequest = { inn, egrul, bki, fns };
+    const body: ScoreRequest = {
+      inn,
+      egrul,
+      bki,
+      fns,
+      requestedAmount: application?.amount,
+      termMonths: application?.termMonths,
+    };
     const scoring = await request<ScoreResponse>(`${scoringUrl}/v1/score`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
+    }).catch((error: unknown) => {
+      throw new SourceCheckError(
+        "scoring",
+        error instanceof Error ? error.message : String(error),
+      );
     });
 
     return { inn, sources: { egrul, bki, fns }, scoring };

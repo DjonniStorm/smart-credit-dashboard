@@ -16,7 +16,7 @@ export function Providers({ children }: PropsWithChildren) {
   return (
     <QueryClientProvider client={queryClient}>
       <UiProvider>
-        <Notifications />
+        <Notifications position="top-right" />
         <NavigationProgress />
         <ModalsProvider>{children}</ModalsProvider>
       </UiProvider>

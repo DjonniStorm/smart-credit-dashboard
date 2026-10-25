@@ -12,8 +12,8 @@
 ### 2. Client и backoffice API integration
 
 - HTTP adapter включён по умолчанию в client cabinet и backoffice.
-- Мок включается только явным флагом `NEXT_PUBLIC_CABINET_API=mock` или `NEXT_PUBLIC_ARM_API=mock`.
-- Существующие UI могут работать с теми же контрактами без переключения кода.
+- Client и backoffice всегда используют HTTP-адаптеры.
+- Синтетические данные загружаются явной идемпотентной командой `pnpm --filter api db:seed`.
 
 ### 3. E2E без моков
 
@@ -53,7 +53,7 @@
 
 - Полный E2E требует установленного Playwright browser package и поднятого compose-стека.
 - Интеграционный сценарий рассчитан на Postgres и локальные API/client/backoffice; в CI он должен запускаться после установки браузеров и seed данных.
-- LLM Alfi остаётся behind adapter: shadow/controlled режимы готовы, production credentials и policy остаются конфигурацией окружения.
+- Альфи работает через детерминированный fallback; LLM и внешний endpoint в API-first срез не входят.
 
 ## Как проверить
 

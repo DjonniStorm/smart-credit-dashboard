@@ -12,18 +12,19 @@ import {
 import { IconArrowUpRight } from "@tabler/icons-react";
 import Link from "next/link";
 import { type Ref, useState } from "react";
-
+import { backofficeText, i18n } from "@repo/i18n";
 import { StateBlock } from "@repo/ui/state-block";
 
 import {
   EventTimeline,
   StatusTag,
   formatDateTimeFull,
-  useCompanyProfile,
   useApplication,
+  useCompanyProfile,
   useProducts,
 } from "@/entities/application";
 import { useEmployees, useSignedInEmployee } from "@/entities/employee";
+import { armActionsTarget } from "@/features/alfi-assistant";
 import { ActionBar } from "@/features/application-actions";
 
 import classes from "./application-panel.module.css";
@@ -47,32 +48,33 @@ export function ApplicationPanel({
   const products = useProducts();
   const employees = useEmployees();
   const [tab, setTab] = useState<Tab>("checks");
+  const tx = backofficeText(i18n.defaultLocale);
 
   const app = query.data;
   const companyProfile = useCompanyProfile(app?.applicant.inn);
   const assignee = app?.assigneeId
     ? app.assigneeId === employee.id
-      ? "Вы"
+      ? tx.application.assigneeSelf
       : (employees.data?.find((e) => e.id === app.assigneeId)?.name ??
-        "Неизвестен")
-    : "Не назначен";
+        tx.application.assigneeUnknown)
+    : tx.application.card.unassigned;
 
   return (
     <div className={classes.panel}>
       <div className={classes.head}>
         <Group justify="space-between" wrap="nowrap" gap="xs">
           <h2 ref={titleRef} tabIndex={-1} className={classes.title}>
-            {app ? `Заявка № ${app.number}` : "Заявка"}
+            {app ? tx.application.number(app.number) : tx.application.unnamed}
           </h2>
           <Group gap={4} wrap="nowrap">
-            <Tooltip label="Открыть страницей">
+            <Tooltip label={tx.application.aria.openPage}>
               <ActionIcon
                 component={Link}
                 href={`/applications/${id}`}
                 variant="subtle"
                 color="gray"
                 size={36}
-                aria-label="Открыть заявку отдельной страницей"
+                aria-label={tx.application.aria.openPage}
               >
                 <IconArrowUpRight size={18} stroke={1.5} />
               </ActionIcon>
@@ -80,7 +82,7 @@ export function ApplicationPanel({
             <CloseButton
               size={36}
               onClick={onClose}
-              aria-label="Закрыть панель заявки"
+              aria-label={tx.application.aria.close}
             />
           </Group>
         </Group>
@@ -88,7 +90,7 @@ export function ApplicationPanel({
           <Group gap="sm" mt={8}>
             <StatusTag status={app.status} />
             <Text size="xs" c="dimmed" className={classes.num}>
-              Подана {formatDateTimeFull(app.createdAt)}
+              {tx.application.submitted(formatDateTimeFull(app.createdAt))}
             </Text>
           </Group>
         )}
@@ -96,14 +98,14 @@ export function ApplicationPanel({
 
       <div className={classes.body}>
         {query.isPending ? (
-          <StateBlock kind="loading" title="Загружаем заявку" />
+          <StateBlock kind="loading" title={tx.application.loading} />
         ) : query.isError ? (
           <StateBlock
             kind="error"
-            title="Заявка не загрузилась"
+            title={tx.application.error}
             action={
               <Button variant="default" onClick={() => void query.refetch()}>
-                Повторить
+                {tx.application.retry}
               </Button>
             }
           >
@@ -113,7 +115,9 @@ export function ApplicationPanel({
           <>
             <Summary app={query.data} />
             {companyProfile.data && (
-              <CompanyProfileContext profile={companyProfile.data} />
+              <CompanyProfileContext
+                profile={companyProfile.data}
+              />
             )}
             <Tabs
               value={tab}
@@ -122,16 +126,16 @@ export function ApplicationPanel({
               classNames={{ list: classes.tabsList, tab: classes.tab }}
             >
               <Tabs.List>
-                <Tabs.Tab value="data">Данные</Tabs.Tab>
-                <Tabs.Tab value="checks">Проверки</Tabs.Tab>
-                <Tabs.Tab value="history">История</Tabs.Tab>
+                <Tabs.Tab value="data">{tx.application.tabs.data}</Tabs.Tab>
+                <Tabs.Tab value="checks">{tx.application.tabs.checks}</Tabs.Tab>
+                <Tabs.Tab value="history">{tx.application.tabs.history}</Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel value="data" pt="md">
                 <DataList app={query.data} assignee={assignee} />
               </Tabs.Panel>
               <Tabs.Panel value="checks" pt="md">
                 <Text size="sm" fw={600} mb="xs">
-                  Результаты проверок
+                  {tx.application.tabs.checkResults}
                 </Text>
                 <CheckResults app={query.data} employee={employee} />
                 <RiskBlock app={query.data} />
@@ -149,10 +153,11 @@ export function ApplicationPanel({
       </div>
 
       {app && (
-        <div className={classes.foot}>
+        <div className={classes.foot} data-alfi-target={armActionsTarget}>
           <ActionBar
             app={app}
             employee={employee}
+            employees={employees.data ?? []}
             products={products.data ?? []}
           />
         </div>

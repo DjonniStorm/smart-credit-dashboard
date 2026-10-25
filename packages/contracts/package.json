@@ -6,9 +6,15 @@
   "exports": {
     ".": "./src/index.ts",
     "./cabinet": "./src/cabinet.ts",
+    "./negotiation": "./src/negotiation.ts",
     "./application": "./src/application.ts",
+    "./product-catalog": "./src/product-catalog.ts",
     "./workflow": "./src/workflow.ts",
-    "./company-profile": "./src/company-profile.ts"
+    "./company-profile": "./src/company-profile.ts",
+    "./api": "./src/api.ts",
+    "./client-actions": "./src/client-actions.ts",
+    "./reports": "./src/reports.ts",
+    "./client-reports": "./src/client-reports.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",

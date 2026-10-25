@@ -1,14 +1,40 @@
 import { Module } from "@nestjs/common";
 
+import { DemoDataModule } from "../../common/demo-data/demo-data.module.ts";
+import { AuthModule } from "../auth/auth.module.ts";
+import { CatalogModule } from "../catalog/catalog.module.ts";
 import { CompaniesModule } from "../companies/companies.module.ts";
-import { ApplicationsController, JobsController } from "./applications.controller.ts";
+import { ApplicationActionsService } from "./application-actions.service.ts";
+import {
+  ApplicationsController,
+  AutonomyController,
+  JobsController,
+} from "./applications.controller.ts";
 import { ApplicationsService } from "./applications.service.ts";
-import { WorkflowStore } from "./workflow-store.ts";
+import { AutonomyStore } from "./autonomy.store.ts";
+import { ClientActionsService } from "./client-actions.service.ts";
+import { ClientApplicationScopeService } from "./client-application-scope.service.ts";
+import { ClientApplicationsService } from "./client-applications.service.ts";
+import { ApplyApplicationActionHandler } from "./commands/apply-application-action.handler.ts";
+import { ApplyClientActionHandler } from "./commands/apply-client-action.handler.ts";
 import { QueueWorkerService } from "./queue-worker.service.ts";
+import { WorkflowStore } from "./workflow-store.ts";
 
 @Module({
-  imports: [CompaniesModule],
-  controllers: [ApplicationsController, JobsController],
-  providers: [ApplicationsService, WorkflowStore, QueueWorkerService],
+  imports: [CompaniesModule, AuthModule, CatalogModule, DemoDataModule],
+  controllers: [ApplicationsController, AutonomyController, JobsController],
+  providers: [
+    ClientApplicationScopeService,
+    ApplicationsService,
+    ClientApplicationsService,
+    ApplicationActionsService,
+    WorkflowStore,
+    QueueWorkerService,
+    AutonomyStore,
+    ApplyApplicationActionHandler,
+    ClientActionsService,
+    ApplyClientActionHandler,
+  ],
+  exports: [ApplicationsService, WorkflowStore, ClientApplicationScopeService],
 })
 export class ApplicationsModule {}

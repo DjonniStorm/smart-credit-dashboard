@@ -28,6 +28,7 @@ const recommendationTone = {
   approve: "success",
   counter_offer: "action",
   request_info: "action",
+  manual_review: "action",
   reject: "danger",
 } as const;
 

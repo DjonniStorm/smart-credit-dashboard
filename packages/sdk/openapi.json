@@ -18,7 +18,9 @@
           }
         },
         "summary": "",
-        "tags": ["Health"]
+        "tags": [
+          "Health"
+        ]
       }
     },
     "/v1/companies/{inn}/check": {
@@ -45,7 +47,9 @@
           }
         },
         "summary": "",
-        "tags": ["Companies"]
+        "tags": [
+          "Companies"
+        ]
       }
     },
     "/v1/companies/{inn}/profile": {
@@ -72,7 +76,9 @@
           }
         },
         "summary": "",
-        "tags": ["Companies"]
+        "tags": [
+          "Companies"
+        ]
       }
     },
     "/v1/companies/{inn}/consents/bki": {
@@ -109,7 +115,441 @@
           }
         },
         "summary": "",
-        "tags": ["Companies"]
+        "tags": [
+          "Companies"
+        ]
+      }
+    },
+    "/v1/autonomy/policies": {
+      "get": {
+        "operationId": "AutonomyController_policies",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutonomySnapshotListDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Autonomy"
+        ]
+      }
+    },
+    "/v1/autonomy/policies/{productId}": {
+      "get": {
+        "operationId": "AutonomyController_policy",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutonomySnapshotDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Autonomy"
+        ]
+      }
+    },
+    "/v1/autonomy/policies/{productId}/audit": {
+      "get": {
+        "operationId": "AutonomyController_audit",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutonomyAuditListDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Autonomy"
+        ]
+      }
+    },
+    "/v1/autonomy/policies/{productId}/actions": {
+      "post": {
+        "operationId": "AutonomyController_action",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutonomyPolicyActionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutonomySnapshotDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Autonomy"
+        ]
+      }
+    },
+    "/v1/reports/manager": {
+      "get": {
+        "operationId": "ReportsController_manager",
+        "parameters": [
+          {
+            "name": "sla",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "autonomyDisposition",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "autonomy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "recommendation",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "actor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "stage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "assignee",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "product",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bucket",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "day",
+                "week"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "view",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "overview",
+                "journal"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "timezone",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerReportDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Reports"
+        ]
+      }
+    },
+    "/v1/client-reports": {
+      "get": {
+        "operationId": "ClientReportsController_list",
+        "parameters": [
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientReportListDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "ClientReportsOpenApi"
+        ]
+      }
+    },
+    "/v1/client-reports/export.csv": {
+      "get": {
+        "operationId": "ClientReportsController_export",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "CSV-выгрузка отчётов клиента",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "ClientReportsOpenApi"
+        ]
+      }
+    },
+    "/v1/client-reports/{id}": {
+      "get": {
+        "operationId": "ClientReportsController_detail",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientReportDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "ClientReportsOpenApi"
+        ]
       }
     }
   },
@@ -128,21 +568,33 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["ok", "degraded"]
+            "enum": [
+              "ok",
+              "degraded"
+            ]
           },
           "service": {
             "type": "string",
-            "enum": ["api", "scoring", "mocks"]
+            "enum": [
+              "api",
+              "scoring"
+            ]
           },
           "checks": {
             "type": "object",
             "additionalProperties": {
               "type": "string",
-              "enum": ["up", "down"]
+              "enum": [
+                "up",
+                "down"
+              ]
             }
           }
         },
-        "required": ["status", "service"]
+        "required": [
+          "status",
+          "service"
+        ]
       },
       "CompanyCheckDto": {
         "type": "object",
@@ -241,7 +693,11 @@
                 ]
               }
             },
-            "required": ["egrul", "bki", "fns"]
+            "required": [
+              "egrul",
+              "bki",
+              "fns"
+            ]
           },
           "scoring": {
             "type": "object",
@@ -251,16 +707,172 @@
                 "pattern": "^\\d{10,12}$"
               },
               "score": {
-                "type": "number"
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
               },
               "model": {
                 "type": "string"
+              },
+              "factors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    },
+                    "impact": {
+                      "type": "number"
+                    },
+                    "effect": {
+                      "type": "string",
+                      "enum": [
+                        "positive",
+                        "negative",
+                        "neutral"
+                      ]
+                    },
+                    "confidence": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "nullable": true
+                    },
+                    "missing_reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "observed_at": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "source": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "label",
+                    "value",
+                    "impact"
+                  ]
+                }
+              },
+              "model_version": {
+                "type": "string"
+              },
+              "grade": {
+                "type": "string",
+                "enum": [
+                  "A",
+                  "B",
+                  "C",
+                  "D"
+                ]
+              },
+              "pd": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "risk_band": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "moderate",
+                  "high"
+                ]
+              },
+              "health_index": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "readiness_index": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "missing_sources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "recommendation": {
+                "type": "string",
+                "enum": [
+                  "approve",
+                  "counter_offer",
+                  "request_info",
+                  "manual_review",
+                  "reject"
+                ]
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "next_actions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "explainability": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "autonomy_mode": {
+                "type": "string",
+                "enum": [
+                  "shadow",
+                  "assist",
+                  "controlled"
+                ]
+              },
+              "policy_version": {
+                "type": "string"
+              },
+              "feature_snapshot_id": {
+                "type": "string"
+              },
+              "computed_at": {
+                "type": "string"
               }
             },
-            "required": ["inn", "score", "model"]
+            "required": [
+              "inn",
+              "score",
+              "model"
+            ]
           }
         },
-        "required": ["inn", "sources", "scoring"]
+        "required": [
+          "inn",
+          "sources",
+          "scoring"
+        ]
       },
       "CompanyProfileDto": {
         "type": "object",
@@ -282,7 +894,10 @@
               },
               "legalForm": {
                 "type": "string",
-                "enum": ["ip", "ooo"]
+                "enum": [
+                  "ip",
+                  "ooo"
+                ]
               },
               "registeredAt": {
                 "type": "string",
@@ -324,7 +939,12 @@
               "properties": {
                 "source": {
                   "type": "string",
-                  "enum": ["egrul", "fns", "bki", "bank_turnover"]
+                  "enum": [
+                    "egrul",
+                    "fns",
+                    "bki",
+                    "bank_turnover"
+                  ]
                 },
                 "state": {
                   "type": "string",
@@ -358,7 +978,12 @@
                       },
                       "source": {
                         "type": "string",
-                        "enum": ["egrul", "fns", "bki", "bank_turnover"]
+                        "enum": [
+                          "egrul",
+                          "fns",
+                          "bki",
+                          "bank_turnover"
+                        ]
                       },
                       "state": {
                         "type": "string",
@@ -371,7 +996,10 @@
                         ]
                       },
                       "checkedAt": {
-                        "type": ["string", "null"]
+                        "type": [
+                          "string",
+                          "null"
+                        ]
                       }
                     },
                     "required": [
@@ -384,11 +1012,91 @@
                     ]
                   }
                 },
+                "discrepancies": {
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "label": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "firstValue": {
+                        "type": "string"
+                      },
+                      "secondValue": {
+                        "type": "string"
+                      },
+                      "firstSource": {
+                        "type": "string",
+                        "enum": [
+                          "egrul",
+                          "fns",
+                          "bki",
+                          "bank_turnover"
+                        ]
+                      },
+                      "secondSource": {
+                        "type": "string",
+                        "enum": [
+                          "egrul",
+                          "fns",
+                          "bki",
+                          "bank_turnover"
+                        ]
+                      },
+                      "nextStep": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "label",
+                      "firstValue",
+                      "secondValue",
+                      "firstSource",
+                      "secondSource",
+                      "nextStep"
+                    ]
+                  }
+                },
+                "action": {
+                  "default": "none",
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "grant_bki_consent",
+                    "retry_source",
+                    "manual_review"
+                  ]
+                },
+                "reason": {
+                  "default": null,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "checkedAt": {
-                  "type": ["string", "null"]
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
-              "required": ["source", "state", "summary", "facts", "checkedAt"]
+              "required": [
+                "source",
+                "state",
+                "summary",
+                "facts",
+                "checkedAt"
+              ]
             }
           },
           "bkiConsent": {
@@ -396,26 +1104,2549 @@
             "properties": {
               "status": {
                 "type": "string",
-                "enum": ["required", "granted"]
+                "enum": [
+                  "required",
+                  "granted"
+                ]
               },
               "grantedAt": {
-                "type": ["string", "null"]
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
-            "required": ["status", "grantedAt"]
+            "required": [
+              "status",
+              "grantedAt"
+            ]
           }
         },
-        "required": ["profile", "sources", "bkiConsent"]
+        "required": [
+          "profile",
+          "sources",
+          "bkiConsent"
+        ]
       },
       "BkiConsentDto": {
         "type": "object",
         "properties": {
           "granted": {
             "type": "boolean",
-            "enum": [true]
+            "enum": [
+              true
+            ]
           }
         },
-        "required": ["granted"]
+        "required": [
+          "granted"
+        ]
+      },
+      "AutonomySnapshotListDto": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "config": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "modelVersion": {
+                  "type": "string"
+                },
+                "productId": {
+                  "type": "string"
+                },
+                "policyVersion": {
+                  "type": "string"
+                },
+                "amountBand": {
+                  "type": "object",
+                  "properties": {
+                    "min": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "max": {
+                      "type": "number",
+                      "exclusiveMinimum": true,
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "min",
+                    "max"
+                  ]
+                },
+                "level": {
+                  "type": "string",
+                  "enum": [
+                    "new",
+                    "verified",
+                    "stable",
+                    "paused"
+                  ]
+                },
+                "controlWindowEndsAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "minClosedCases": {
+                  "default": 100,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "maxManualOverrideRate": {
+                  "default": 0.1,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "maxCalibrationError": {
+                  "default": 0.05,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "minConfidence": {
+                  "default": 0.8,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "minGrade": {
+                  "default": "B",
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "C",
+                    "D"
+                  ]
+                },
+                "controlWindowMinutes": {
+                  "default": 30,
+                  "type": "integer",
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991,
+                  "minimum": 0
+                },
+                "revision": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "id",
+                "modelVersion",
+                "productId",
+                "policyVersion",
+                "amountBand",
+                "level",
+                "controlWindowEndsAt"
+              ]
+            },
+            "metrics": {
+              "type": "object",
+              "properties": {
+                "closedCases": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "manualOverrideRate": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "calibrationError": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "driftDetected": {
+                  "type": "boolean"
+                },
+                "manualHold": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "eligibleCases": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "manualOverrides": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "calibrationSamples": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "calibrationStatus": {
+                  "default": "available",
+                  "type": "string",
+                  "enum": [
+                    "available",
+                    "unavailable"
+                  ]
+                },
+                "driftStatus": {
+                  "default": "clear",
+                  "type": "string",
+                  "enum": [
+                    "clear",
+                    "detected",
+                    "unavailable"
+                  ]
+                },
+                "computedAt": {
+                  "default": "1970-01-01T00:00:00.000Z",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "closedCases",
+                "manualOverrideRate",
+                "calibrationError",
+                "driftDetected"
+              ]
+            },
+            "case": {
+              "type": "object",
+              "properties": {
+                "policyId": {
+                  "type": "string"
+                },
+                "policyVersion": {
+                  "type": "string"
+                },
+                "policyRevision": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "shadow",
+                    "assist",
+                    "controlled"
+                  ]
+                },
+                "recommendation": {
+                  "type": "string"
+                },
+                "eligible": {
+                  "type": "boolean"
+                },
+                "reasons": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "disposition": {
+                  "type": "string",
+                  "enum": [
+                    "manual_required",
+                    "auto_offer_sent",
+                    "confirmed",
+                    "intercepted",
+                    "expired",
+                    "declined"
+                  ]
+                },
+                "controlWindowOpenedAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "controlWindowEndsAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "overrideCounted": {
+                  "type": "boolean"
+                },
+                "closed": {
+                  "type": "boolean"
+                },
+                "autoDecisionAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "policyId",
+                "policyVersion",
+                "policyRevision",
+                "mode",
+                "recommendation",
+                "eligible",
+                "reasons",
+                "disposition",
+                "controlWindowOpenedAt",
+                "controlWindowEndsAt",
+                "overrideCounted",
+                "closed",
+                "autoDecisionAt"
+              ],
+              "default": null,
+              "nullable": true
+            },
+            "eligibility": {
+              "type": "object",
+              "properties": {
+                "eligible": {
+                  "type": "boolean"
+                },
+                "reasons": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "controlWindow": {
+                  "type": "string",
+                  "enum": [
+                    "open",
+                    "closed"
+                  ]
+                }
+              },
+              "required": [
+                "eligible",
+                "reasons",
+                "controlWindow"
+              ]
+            }
+          },
+          "required": [
+            "config",
+            "metrics",
+            "eligibility"
+          ]
+        }
+      },
+      "AutonomySnapshotDto": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "modelVersion": {
+                "type": "string"
+              },
+              "productId": {
+                "type": "string"
+              },
+              "policyVersion": {
+                "type": "string"
+              },
+              "amountBand": {
+                "type": "object",
+                "properties": {
+                  "min": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "max": {
+                    "type": "number",
+                    "exclusiveMinimum": true,
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "min",
+                  "max"
+                ]
+              },
+              "level": {
+                "type": "string",
+                "enum": [
+                  "new",
+                  "verified",
+                  "stable",
+                  "paused"
+                ]
+              },
+              "controlWindowEndsAt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "minClosedCases": {
+                "default": 100,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "maxManualOverrideRate": {
+                "default": 0.1,
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "maxCalibrationError": {
+                "default": 0.05,
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minConfidence": {
+                "default": 0.8,
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minGrade": {
+                "default": "B",
+                "type": "string",
+                "enum": [
+                  "A",
+                  "B",
+                  "C",
+                  "D"
+                ]
+              },
+              "controlWindowMinutes": {
+                "default": 30,
+                "type": "integer",
+                "exclusiveMinimum": true,
+                "maximum": 9007199254740991,
+                "minimum": 0
+              },
+              "revision": {
+                "default": 0,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "id",
+              "modelVersion",
+              "productId",
+              "policyVersion",
+              "amountBand",
+              "level",
+              "controlWindowEndsAt"
+            ]
+          },
+          "metrics": {
+            "type": "object",
+            "properties": {
+              "closedCases": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "manualOverrideRate": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "calibrationError": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "driftDetected": {
+                "type": "boolean"
+              },
+              "manualHold": {
+                "default": false,
+                "type": "boolean"
+              },
+              "eligibleCases": {
+                "default": 0,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "manualOverrides": {
+                "default": 0,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "calibrationSamples": {
+                "default": 0,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "calibrationStatus": {
+                "default": "available",
+                "type": "string",
+                "enum": [
+                  "available",
+                  "unavailable"
+                ]
+              },
+              "driftStatus": {
+                "default": "clear",
+                "type": "string",
+                "enum": [
+                  "clear",
+                  "detected",
+                  "unavailable"
+                ]
+              },
+              "computedAt": {
+                "default": "1970-01-01T00:00:00.000Z",
+                "type": "string"
+              }
+            },
+            "required": [
+              "closedCases",
+              "manualOverrideRate",
+              "calibrationError",
+              "driftDetected"
+            ]
+          },
+          "case": {
+            "type": "object",
+            "properties": {
+              "policyId": {
+                "type": "string"
+              },
+              "policyVersion": {
+                "type": "string"
+              },
+              "policyRevision": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "shadow",
+                  "assist",
+                  "controlled"
+                ]
+              },
+              "recommendation": {
+                "type": "string"
+              },
+              "eligible": {
+                "type": "boolean"
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "disposition": {
+                "type": "string",
+                "enum": [
+                  "manual_required",
+                  "auto_offer_sent",
+                  "confirmed",
+                  "intercepted",
+                  "expired",
+                  "declined"
+                ]
+              },
+              "controlWindowOpenedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "controlWindowEndsAt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "overrideCounted": {
+                "type": "boolean"
+              },
+              "closed": {
+                "type": "boolean"
+              },
+              "autoDecisionAt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "policyId",
+              "policyVersion",
+              "policyRevision",
+              "mode",
+              "recommendation",
+              "eligible",
+              "reasons",
+              "disposition",
+              "controlWindowOpenedAt",
+              "controlWindowEndsAt",
+              "overrideCounted",
+              "closed",
+              "autoDecisionAt"
+            ],
+            "default": null,
+            "nullable": true
+          },
+          "eligibility": {
+            "type": "object",
+            "properties": {
+              "eligible": {
+                "type": "boolean"
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "controlWindow": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "closed"
+                ]
+              }
+            },
+            "required": [
+              "eligible",
+              "reasons",
+              "controlWindow"
+            ]
+          }
+        },
+        "required": [
+          "config",
+          "metrics",
+          "eligibility"
+        ]
+      },
+      "AutonomyAuditListDto": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "productId": {
+              "type": "string"
+            },
+            "policyId": {
+              "type": "string"
+            },
+            "applicationId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "actorId": {
+              "type": "string"
+            },
+            "actorRole": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            },
+            "fromLevel": {
+              "type": "string",
+              "enum": [
+                "new",
+                "verified",
+                "stable",
+                "paused"
+              ]
+            },
+            "toLevel": {
+              "type": "string",
+              "enum": [
+                "new",
+                "verified",
+                "stable",
+                "paused"
+              ]
+            },
+            "reason": {
+              "type": "string"
+            },
+            "idempotencyKey": {
+              "type": "string"
+            },
+            "metricsBefore": {
+              "type": "object",
+              "properties": {
+                "closedCases": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "manualOverrideRate": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "calibrationError": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "driftDetected": {
+                  "type": "boolean"
+                },
+                "manualHold": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "eligibleCases": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "manualOverrides": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "calibrationSamples": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "calibrationStatus": {
+                  "default": "available",
+                  "type": "string",
+                  "enum": [
+                    "available",
+                    "unavailable"
+                  ]
+                },
+                "driftStatus": {
+                  "default": "clear",
+                  "type": "string",
+                  "enum": [
+                    "clear",
+                    "detected",
+                    "unavailable"
+                  ]
+                },
+                "computedAt": {
+                  "default": "1970-01-01T00:00:00.000Z",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "closedCases",
+                "manualOverrideRate",
+                "calibrationError",
+                "driftDetected"
+              ]
+            },
+            "metricsAfter": {
+              "type": "object",
+              "properties": {
+                "closedCases": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "manualOverrideRate": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "calibrationError": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "driftDetected": {
+                  "type": "boolean"
+                },
+                "manualHold": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "eligibleCases": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "manualOverrides": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "calibrationSamples": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "calibrationStatus": {
+                  "default": "available",
+                  "type": "string",
+                  "enum": [
+                    "available",
+                    "unavailable"
+                  ]
+                },
+                "driftStatus": {
+                  "default": "clear",
+                  "type": "string",
+                  "enum": [
+                    "clear",
+                    "detected",
+                    "unavailable"
+                  ]
+                },
+                "computedAt": {
+                  "default": "1970-01-01T00:00:00.000Z",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "closedCases",
+                "manualOverrideRate",
+                "calibrationError",
+                "driftDetected"
+              ]
+            },
+            "createdAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "productId",
+            "policyId",
+            "applicationId",
+            "actorId",
+            "actorRole",
+            "action",
+            "fromLevel",
+            "toLevel",
+            "reason",
+            "idempotencyKey",
+            "metricsBefore",
+            "metricsAfter",
+            "createdAt"
+          ]
+        }
+      },
+      "AutonomyPolicyActionDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "pause"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "type",
+                  "reason"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "set_level"
+                    ]
+                  },
+                  "level": {
+                    "type": "string",
+                    "enum": [
+                      "new",
+                      "verified",
+                      "stable"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "type",
+                  "level",
+                  "reason"
+                ]
+              }
+            ]
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "action",
+          "idempotencyKey",
+          "expectedRevision"
+        ]
+      },
+      "ManagerReportDto": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "to": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "timezone": {
+                "type": "string"
+              },
+              "view": {
+                "type": "string",
+                "enum": [
+                  "overview",
+                  "journal"
+                ]
+              },
+              "bucket": {
+                "type": "string",
+                "enum": [
+                  "day",
+                  "week"
+                ]
+              },
+              "search": {
+                "type": "string"
+              },
+              "filters": {
+                "type": "object",
+                "properties": {
+                  "productIds": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "working_capital",
+                        "cash_gap",
+                        "equipment",
+                        "development"
+                      ]
+                    }
+                  },
+                  "statuses": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "draft",
+                            "in_review",
+                            "needs_client",
+                            "approved",
+                            "counter_offer",
+                            "accepted",
+                            "signing",
+                            "funded",
+                            "rejected",
+                            "cancelled"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "unknown"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "assigneeIds": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "stages": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "intake",
+                        "completeness",
+                        "enrichment",
+                        "scoring",
+                        "decision",
+                        "signing",
+                        "disbursement"
+                      ]
+                    }
+                  },
+                  "actorKinds": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "employee",
+                        "system",
+                        "client",
+                        "unknown"
+                      ]
+                    }
+                  },
+                  "recommendations": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "approve",
+                        "counter_offer",
+                        "request_info",
+                        "manual_review",
+                        "reject",
+                        "unknown"
+                      ]
+                    }
+                  },
+                  "autonomyModes": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "shadow",
+                        "assist",
+                        "controlled"
+                      ]
+                    }
+                  },
+                  "autonomyDispositions": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "manual_required",
+                        "auto_offer_sent",
+                        "confirmed",
+                        "intercepted",
+                        "expired",
+                        "declined"
+                      ]
+                    }
+                  },
+                  "slaStates": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "on_track",
+                        "at_risk",
+                        "overdue",
+                        "paused",
+                        "unknown"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "required": [
+              "from",
+              "to",
+              "timezone",
+              "view",
+              "bucket",
+              "search",
+              "filters"
+            ]
+          },
+          "eventWatermark": {
+            "type": "object",
+            "properties": {
+              "snapshotSeq": {
+                "type": "string"
+              },
+              "occurredAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                "nullable": true
+              },
+              "eventId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "snapshotSeq",
+              "occurredAt",
+              "eventId"
+            ],
+            "nullable": true
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "population": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "known": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "unknown": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "quality": {
+                    "type": "string",
+                    "enum": [
+                      "complete",
+                      "partial",
+                      "unknown"
+                    ]
+                  }
+                },
+                "required": [
+                  "total",
+                  "known",
+                  "unknown",
+                  "quality"
+                ]
+              },
+              "activity": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "known": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "unknown": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "quality": {
+                    "type": "string",
+                    "enum": [
+                      "complete",
+                      "partial",
+                      "unknown"
+                    ]
+                  }
+                },
+                "required": [
+                  "total",
+                  "known",
+                  "unknown",
+                  "quality"
+                ]
+              },
+              "recommendation": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "known": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "unknown": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "quality": {
+                    "type": "string",
+                    "enum": [
+                      "complete",
+                      "partial",
+                      "unknown"
+                    ]
+                  }
+                },
+                "required": [
+                  "total",
+                  "known",
+                  "unknown",
+                  "quality"
+                ]
+              },
+              "sla": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "known": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "unknown": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "quality": {
+                    "type": "string",
+                    "enum": [
+                      "complete",
+                      "partial",
+                      "unknown"
+                    ]
+                  }
+                },
+                "required": [
+                  "total",
+                  "known",
+                  "unknown",
+                  "quality"
+                ]
+              },
+              "autonomy": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "known": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "unknown": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "quality": {
+                    "type": "string",
+                    "enum": [
+                      "complete",
+                      "partial",
+                      "unknown"
+                    ]
+                  }
+                },
+                "required": [
+                  "total",
+                  "known",
+                  "unknown",
+                  "quality"
+                ]
+              }
+            },
+            "required": [
+              "population",
+              "activity",
+              "recommendation",
+              "sla",
+              "autonomy"
+            ]
+          },
+          "population": {
+            "type": "object",
+            "properties": {
+              "applications": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "byStatus": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "share": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "draft",
+                            "in_review",
+                            "needs_client",
+                            "approved",
+                            "counter_offer",
+                            "accepted",
+                            "signing",
+                            "funded",
+                            "rejected",
+                            "cancelled"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "unknown"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "count",
+                    "share",
+                    "status"
+                  ]
+                }
+              },
+              "byProduct": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "productId": {
+                      "type": "string",
+                      "enum": [
+                        "working_capital",
+                        "cash_gap",
+                        "equipment",
+                        "development"
+                      ]
+                    },
+                    "applications": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "active": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "closed": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "urgentOpen": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "overdue": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "productId",
+                    "applications",
+                    "active",
+                    "closed",
+                    "urgentOpen",
+                    "overdue"
+                  ]
+                }
+              },
+              "byStage": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "intake",
+                        "completeness",
+                        "enrichment",
+                        "scoring",
+                        "decision",
+                        "signing",
+                        "disbursement"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "share": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "stage",
+                    "count",
+                    "share"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "applications",
+              "byStatus",
+              "byProduct",
+              "byStage"
+            ]
+          },
+          "activity": {
+            "type": "object",
+            "properties": {
+              "events": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "applications": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "byActor": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "actorKind": {
+                      "type": "string",
+                      "enum": [
+                        "employee",
+                        "system",
+                        "client",
+                        "unknown"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "actorKind",
+                    "count"
+                  ]
+                }
+              },
+              "byStage": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "intake",
+                        "completeness",
+                        "enrichment",
+                        "scoring",
+                        "decision",
+                        "signing",
+                        "disbursement"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "share": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "stage",
+                    "count",
+                    "share"
+                  ]
+                }
+              },
+              "byStatus": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "share": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "draft",
+                            "in_review",
+                            "needs_client",
+                            "approved",
+                            "counter_offer",
+                            "accepted",
+                            "signing",
+                            "funded",
+                            "rejected",
+                            "cancelled"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "unknown"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "count",
+                    "share",
+                    "status"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "events",
+              "applications",
+              "byActor",
+              "byStage",
+              "byStatus"
+            ]
+          },
+          "decisions": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "approve": {
+                "type": "object",
+                "properties": {
+                  "count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "share": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "medianMinutes": {
+                    "type": "number",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "p90Minutes": {
+                    "type": "number",
+                    "minimum": 0,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "count",
+                  "share",
+                  "medianMinutes",
+                  "p90Minutes"
+                ]
+              },
+              "counterOffer": {
+                "type": "object",
+                "properties": {
+                  "count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "share": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "medianMinutes": {
+                    "type": "number",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "p90Minutes": {
+                    "type": "number",
+                    "minimum": 0,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "count",
+                  "share",
+                  "medianMinutes",
+                  "p90Minutes"
+                ]
+              },
+              "reject": {
+                "type": "object",
+                "properties": {
+                  "count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "share": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "medianMinutes": {
+                    "type": "number",
+                    "minimum": 0,
+                    "nullable": true
+                  },
+                  "p90Minutes": {
+                    "type": "number",
+                    "minimum": 0,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "count",
+                  "share",
+                  "medianMinutes",
+                  "p90Minutes"
+                ]
+              },
+              "requestInfo": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "byProduct": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "productId": {
+                      "type": "string",
+                      "enum": [
+                        "working_capital",
+                        "cash_gap",
+                        "equipment",
+                        "development"
+                      ]
+                    },
+                    "decisions": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "approve": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "counterOffer": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "reject": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "requestInfo": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "productId",
+                    "decisions",
+                    "approve",
+                    "counterOffer",
+                    "reject",
+                    "requestInfo"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "total",
+              "approve",
+              "counterOffer",
+              "reject",
+              "requestInfo",
+              "byProduct"
+            ]
+          },
+          "recommendation": {
+            "type": "object",
+            "properties": {
+              "matched": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "overridden": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "unknown": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "overrideRate": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "nullable": true
+              },
+              "matrix": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "recommendation": {
+                      "type": "string",
+                      "enum": [
+                        "approve",
+                        "counter_offer",
+                        "request_info",
+                        "manual_review",
+                        "reject",
+                        "unknown"
+                      ]
+                    },
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "approve",
+                        "counter_offer",
+                        "request_info",
+                        "manual_review",
+                        "reject",
+                        "unknown"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "recommendation",
+                    "decision",
+                    "count"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "matched",
+              "overridden",
+              "unknown",
+              "overrideRate",
+              "matrix"
+            ]
+          },
+          "sla": {
+            "type": "object",
+            "properties": {
+              "policyVersion": {
+                "type": "string"
+              },
+              "targets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "intake",
+                        "completeness",
+                        "enrichment",
+                        "scoring",
+                        "decision",
+                        "signing",
+                        "disbursement"
+                      ]
+                    },
+                    "targetMinutes": {
+                      "type": "integer",
+                      "exclusiveMinimum": true,
+                      "maximum": 9007199254740991,
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "stage",
+                    "targetMinutes"
+                  ]
+                }
+              },
+              "byState": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "on_track",
+                        "at_risk",
+                        "overdue",
+                        "paused",
+                        "unknown"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "share": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "count",
+                    "share"
+                  ]
+                }
+              },
+              "series": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "bucketStart": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "eligible": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "met": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "overdue": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "paused": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "unknown": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "bucketStart",
+                    "eligible",
+                    "met",
+                    "overdue",
+                    "paused",
+                    "unknown"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "policyVersion",
+              "targets",
+              "byState",
+              "series"
+            ]
+          },
+          "autonomy": {
+            "type": "object",
+            "properties": {
+              "byMode": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "shadow",
+                        "assist",
+                        "controlled"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "share": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "mode",
+                    "count",
+                    "share"
+                  ]
+                }
+              },
+              "byDisposition": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "disposition": {
+                      "type": "string",
+                      "enum": [
+                        "manual_required",
+                        "auto_offer_sent",
+                        "confirmed",
+                        "intercepted",
+                        "expired",
+                        "declined"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "share": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "disposition",
+                    "count",
+                    "share"
+                  ]
+                }
+              },
+              "series": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "bucketStart": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "candidates": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "autoOffers": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "confirmed": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "intercepted": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "expired": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "declined": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "overrides": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "bucketStart",
+                    "candidates",
+                    "autoOffers",
+                    "confirmed",
+                    "intercepted",
+                    "expired",
+                    "declined",
+                    "overrides"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "byMode",
+              "byDisposition",
+              "series"
+            ]
+          },
+          "timeseries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bucketStart": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "applications": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "events": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "decisions": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "overdue": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "bucketStart",
+                "applications",
+                "events",
+                "decisions",
+                "overdue"
+              ]
+            }
+          },
+          "journal": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "applicationId": {
+                      "type": "string"
+                    },
+                    "applicationNumber": {
+                      "type": "string"
+                    },
+                    "occurredAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "actor": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "employee",
+                            "system",
+                            "client",
+                            "unknown"
+                          ]
+                        },
+                        "id": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "id",
+                        "name"
+                      ]
+                    },
+                    "productId": {
+                      "type": "string",
+                      "enum": [
+                        "working_capital",
+                        "cash_gap",
+                        "equipment",
+                        "development"
+                      ]
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "draft",
+                            "in_review",
+                            "needs_client",
+                            "approved",
+                            "counter_offer",
+                            "accepted",
+                            "signing",
+                            "funded",
+                            "rejected",
+                            "cancelled"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "unknown"
+                          ]
+                        }
+                      ],
+                      "nullable": true
+                    },
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "intake",
+                        "completeness",
+                        "enrichment",
+                        "scoring",
+                        "decision",
+                        "signing",
+                        "disbursement",
+                        null
+                      ],
+                      "nullable": true
+                    },
+                    "assigneeId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "recommendation": {
+                      "type": "string",
+                      "enum": [
+                        "approve",
+                        "counter_offer",
+                        "request_info",
+                        "manual_review",
+                        "reject",
+                        "unknown"
+                      ]
+                    },
+                    "autonomyMode": {
+                      "type": "string",
+                      "enum": [
+                        "shadow",
+                        "assist",
+                        "controlled",
+                        null
+                      ],
+                      "nullable": true
+                    },
+                    "autonomyDisposition": {
+                      "type": "string",
+                      "enum": [
+                        "manual_required",
+                        "auto_offer_sent",
+                        "confirmed",
+                        "intercepted",
+                        "expired",
+                        "declined",
+                        null
+                      ],
+                      "nullable": true
+                    },
+                    "slaState": {
+                      "type": "string",
+                      "enum": [
+                        "on_track",
+                        "at_risk",
+                        "overdue",
+                        "paused",
+                        "unknown"
+                      ]
+                    },
+                    "metadataQuality": {
+                      "type": "string",
+                      "enum": [
+                        "complete",
+                        "partial",
+                        "unknown"
+                      ]
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "comment": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "applicationId",
+                    "applicationNumber",
+                    "occurredAt",
+                    "kind",
+                    "actor",
+                    "productId",
+                    "status",
+                    "stage",
+                    "assigneeId",
+                    "recommendation",
+                    "autonomyMode",
+                    "autonomyDisposition",
+                    "slaState",
+                    "metadataQuality",
+                    "title",
+                    "comment"
+                  ]
+                }
+              },
+              "nextCursor": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "hasMore": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "items",
+              "nextCursor",
+              "hasMore"
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "query",
+          "eventWatermark",
+          "coverage",
+          "population",
+          "activity",
+          "decisions",
+          "recommendation",
+          "sla",
+          "autonomy",
+          "timeseries",
+          "journal"
+        ]
+      },
+      "ClientReportListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "number": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "draft",
+                    "in_review",
+                    "needs_client",
+                    "counter_offer",
+                    "approved",
+                    "accepted",
+                    "signing",
+                    "funded",
+                    "rejected",
+                    "cancelled"
+                  ]
+                },
+                "productId": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number"
+                },
+                "termMonths": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "updatedAt": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "number",
+                "status",
+                "productId",
+                "amount",
+                "termMonths",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "watermark": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "watermark"
+        ]
+      },
+      "ClientReportDetailDto": {
+        "type": "object",
+        "properties": {
+          "application": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "number": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "draft",
+                  "in_review",
+                  "needs_client",
+                  "counter_offer",
+                  "approved",
+                  "accepted",
+                  "signing",
+                  "funded",
+                  "rejected",
+                  "cancelled"
+                ]
+              },
+              "productId": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "number"
+              },
+              "termMonths": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "createdAt": {
+                "type": "string"
+              },
+              "updatedAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "number",
+              "status",
+              "productId",
+              "amount",
+              "termMonths",
+              "createdAt",
+              "updatedAt"
+            ]
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "at",
+                "text"
+              ]
+            }
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "at",
+                "text"
+              ]
+            }
+          }
+        },
+        "required": [
+          "application",
+          "events",
+          "changes"
+        ]
       }
     }
   }

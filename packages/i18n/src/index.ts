@@ -1,5 +1,9 @@
-export { i18n, openGraphLocale } from "./config";
-export { Locale } from "./locale";
-export { Message } from "./message";
-export { createTranslator, t, type MessageVars } from "./t";
-export { cabinetText, type CabinetText } from "./cabinet";
+export { i18n, openGraphLocale } from "./config.ts";
+export { Locale } from "./locale.ts";
+export { Message } from "./message.ts";
+export { createTranslator, t, type MessageVars } from "./t.ts";
+export { cabinetText, type CabinetText } from "./cabinet.ts";
+export { backofficeText, type BackofficeText } from "./backoffice.ts";
+export { alfiText, type AlfiText } from "./alfi.ts";
+
+export { financingText } from "./financing.ts";

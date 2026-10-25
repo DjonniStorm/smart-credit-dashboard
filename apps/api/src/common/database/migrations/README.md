@@ -1,8 +1,9 @@
 # Database migrations
 
-`001_workflow.sql` is the canonical schema for the workflow store. The current
-demo bootstrap keeps an idempotent `CREATE TABLE` fallback in `WorkflowStore`;
-production startup must apply numbered files before enabling the API.
+Схема меняется только новыми файлами `NNN_name.sql`; применённые файлы не правятся.
+`runMigrations` (`../migration-runner.ts`) запускается при старте API, держит advisory lock,
+применяет каждый файл один раз в своей транзакции и пишет его имя в `schema_migrations`.
+`nest build` копирует `*.sql` в `dist` (`assets` в `nest-cli.json`).
 
-The queue is PostgreSQL-backed and uses `FOR UPDATE SKIP LOCKED`, so multiple
-worker replicas can safely consume jobs without duplicate execution.
+Очередь работает на PostgreSQL через `FOR UPDATE SKIP LOCKED`: несколько реплик API не берут одну задачу дважды.
+Задачи в `running` дольше `JOB_LEASE_MS` возвращаются в очередь или переходят в `failed`.

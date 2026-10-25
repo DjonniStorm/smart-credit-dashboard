@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="t d">
+  <title id="t">От вас нужен ответ</title><desc id="d">Рядом с Альфи вопросительный знак: нужно уточнить поле.</desc>
+  <style>
+  .antenna{transform-box:view-box;transform-origin:64px 24px;animation:antenna .9s ease-out 1}
+  .eyes{transform-box:fill-box;transform-origin:center;animation:blink 6s 1.2s infinite}
+  @keyframes antenna{0%{transform:rotate(0)}30%{transform:rotate(-12deg)}60%{transform:rotate(8deg)}100%{transform:rotate(0)}}
+  @keyframes blink{0%,95%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  .bubble{transform-box:view-box;transform-origin:90px 38px;animation:pop .6s cubic-bezier(.3,1.6,.5,1) 1 both, bob 1.2s .6s ease-in-out 2 alternate}
+  @keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes bob{from{transform:translateY(0)}to{transform:translateY(-3px)}}
+  </style>
+  <g class="alfi">
+  <path d="M20 52 C20 6 108 6 108 52" fill="none" stroke="#2A2D34" stroke-width="6" stroke-linecap="round"/>
+  <g class="antenna"><path d="M64 24 V14" stroke="#8F1A12" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="64" cy="10" r="7" fill="#FFB81C"/><circle cx="62" cy="8" r="2.4" fill="#fff" opacity=".8"/></g>
+  <ellipse cx="64" cy="104" rx="30" ry="22" fill="#EF3124"/>
+  <path d="M36 112 Q64 134 92 112 Q92 126 64 126 Q36 126 36 112Z" fill="#C42318"/>
+  <ellipse cx="30" cy="102" rx="11" ry="19" transform="rotate(14 30 102)" fill="#C42318"/>
+    <circle cx="27" cy="118" r="8" fill="#EF3124"/>
+  <ellipse cx="98" cy="102" rx="11" ry="19" transform="rotate(-14 98 102)" fill="#C42318"/>
+    <circle cx="101" cy="118" r="8" fill="#EF3124"/>
+  <circle cx="64" cy="102" r="11" fill="#FFF4EE"/><path d="M64 109 C55 102 56 94 61 94 C63 94 64 95.5 64 96.5 C64 95.5 65 94 67 94 C72 94 73 102 64 109Z" fill="#EF3124"/>
+  <ellipse cx="64" cy="58" rx="42" ry="36" fill="#EF3124"/>
+  <path d="M26 66 Q30 92 64 94 Q98 92 102 66 Q96 86 64 88 Q32 86 26 66Z" fill="#C42318"/>
+  <ellipse cx="38" cy="38" rx="14" ry="7" transform="rotate(-35 38 38)" fill="#FF6B58" opacity=".75"/>
+  <ellipse cx="18" cy="60" rx="9" ry="17" fill="#2A2D34"/><ellipse cx="110" cy="60" rx="9" ry="17" fill="#2A2D34"/>
+  <ellipse cx="16" cy="56" rx="2.6" ry="7" fill="#656B78"/><ellipse cx="108" cy="56" rx="2.6" ry="7" fill="#656B78"/>
+  <ellipse cx="64" cy="61" rx="32" ry="25" fill="#FFF4EE"/>
+  <g class="eyes"><ellipse cx="51" cy="58" rx="6" ry="7.5" fill="#1F1416"/><ellipse cx="77" cy="58" rx="6" ry="7.5" fill="#1F1416"/>
+    <circle cx="53" cy="55" r="2.4" fill="#fff"/><circle cx="79" cy="55" r="2.4" fill="#fff"/></g>
+  <circle cx="42" cy="70" r="5.5" fill="#FF9C8C" opacity=".85"/><circle cx="86" cy="70" r="5.5" fill="#FF9C8C" opacity=".85"/>
+  <path d="M57 68 Q64 76 71 68" fill="none" stroke="#1F1416" stroke-width="3.5" stroke-linecap="round"/>
+  
+  <g class="bubble"><path d="M84 34 L90 26 H112 a8 8 0 0 0 8 -8 V12 a8 8 0 0 0 -8 -8 H90 a8 8 0 0 0 -8 8 V18" fill="none"/>
+    <path d="M90 4 H114 a8 8 0 0 1 8 8 V22 a8 8 0 0 1 -8 8 H100 L90 38 L92 30 H90 a8 8 0 0 1 -8 -8 V12 a8 8 0 0 1 8 -8Z" fill="#FFF4EE" stroke="#8F1A12" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M97 13 Q97 8 102 8 Q107 8 107 13 Q107 16.5 102 18.5 V21" fill="none" stroke="#1F1416" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="102" cy="26" r="2.2" fill="#1F1416"/></g>
+</g>
+</svg>

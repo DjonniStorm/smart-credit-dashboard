@@ -1,68 +1,101 @@
 import { expect, test } from "@playwright/test";
 
-const baseURL = process.env.CLIENT_BASE_URL ?? "http://localhost:3000";
+const apiBase = process.env.API_BASE_URL ?? "http://localhost:4000";
+const clientBase = process.env.CLIENT_BASE_URL ?? "http://localhost:3000";
+const backofficeBase =
+  process.env.BACKOFFICE_BASE_URL ?? "http://localhost:3001";
 
-test.describe("client cabinet application lifecycle", () => {
-  async function signIn(page, person) {
-    await page.goto(`${baseURL}/login`);
-    await page.getByRole("button", { name: new RegExp(person, "i") }).click();
-    await expect(page).toHaveURL(/\/$/);
-  }
-
-  async function createApplication(page, amount) {
-    await page.goto(
-      `${baseURL}/applications/new?purpose=working_capital&product=working-capital&amount=${amount}&term=12`,
-    );
-    for (let step = 0; step < 4; step += 1) {
-      await page.getByRole("button", { name: "Продолжить" }).click();
+async function waitForJob(request, jobId) {
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    const response = await request.get(`${apiBase}/v1/jobs/${jobId}`);
+    expect(response.ok()).toBeTruthy();
+    const job = await response.json();
+    if (["succeeded", "failed"].includes(job.status)) {
+      return job;
     }
-    await page.getByRole("checkbox", { name: /БКИ/i }).check();
-    await page.getByRole("checkbox", { name: /персональн/i }).check();
-    await page.getByRole("button", { name: /отправить/i }).click();
-    await expect(page).toHaveURL(/applications\//);
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  throw new Error(`Job ${jobId} did not finish in time`);
+}
+
+test("client and backoffice render the same scoring context", async ({
+  request,
+  page,
+  browser,
+}) => {
+  const applicationId = "seed-app-bakery";
+
+  // Контекст заявки доступен только под сессией сотрудника.
+  const employeeSignIn = await request.post(
+    `${apiBase}/v1/auth/employee-sign-in`,
+    { data: { employeeId: "an-1" } },
+  );
+  expect(employeeSignIn.ok()).toBeTruthy();
+
+  const contextBefore = await request.get(
+    `${apiBase}/v1/applications/${applicationId}/context`,
+  );
+  expect(contextBefore.ok()).toBeTruthy();
+  const before = await contextBefore.json();
+
+  if (!before.application.scoring) {
+    const started = await request.post(
+      `${apiBase}/v1/applications/${applicationId}/checks`,
+      { data: { idempotencyKey: `e2e-context-${Date.now()}` } },
+    );
+    expect(started.status()).toBe(202);
+    const job = await started.json();
+    const finished = await waitForJob(request, job.id);
+    expect(finished.status).toBe("succeeded");
   }
 
-  test("answers a bank request and exposes the uploaded document", async ({
-    page,
-  }) => {
-    await signIn(page, "Дмитрий Столяров");
-    await createApplication(page, 1_000_000);
-    await expect(page.locator('[data-testid="answer-request"]')).toBeVisible({
-      timeout: 15_000,
-    });
+  const contextResponse = await request.get(
+    `${apiBase}/v1/applications/${applicationId}/context`,
+  );
+  expect(contextResponse.ok()).toBeTruthy();
+  const context = await contextResponse.json();
+  expect(context.application.scoring).toBeTruthy();
+  expect(context.autonomy.config.productId).toBe(context.application.productId);
+  const bki = context.checks.find((check) => check.source === "bki");
+  expect(bki.state).toBe("pending");
+  expect(bki.facts).toHaveLength(0);
 
-    await page
-      .locator('[data-testid="answer-request"] textarea')
-      .fill("Справка получена, задолженность погашена.");
-    await page.locator('[data-testid="answer-request-submit"]').click();
-    await expect(page.locator('[data-testid="answer-request"]')).toHaveCount(0);
+  await page.goto(`${backofficeBase}/login`);
+  await page.getByText("Аналитик Демо 1").click();
+  await page.getByRole("button", { name: "Войти" }).click();
+  await page.goto(`${backofficeBase}/applications/${applicationId}`);
+  await expect(page.getByText("Кредитный риск")).toBeVisible();
+  await expect(page.getByText("Автономность решения")).toBeVisible();
+  await expect(
+    page
+      .getByText(String(context.application.scoring.score), { exact: false })
+      .first(),
+  ).toBeVisible();
 
-    await page.goto(`${baseURL}/documents`);
-    await expect(
-      page.locator('[data-testid="document-application-link"]'),
-    ).toHaveCount(1);
-  });
+  const clientPage = await browser.newPage();
+  await clientPage.goto(`${clientBase}/login`);
+  await clientPage.getByRole("button", { name: /Анна Лесовая/i }).click();
+  await clientPage.goto(`${clientBase}/applications/${applicationId}`);
+  await expect(clientPage.getByText("Индексы компании")).toBeVisible();
+  await expect(
+    clientPage
+      .getByText(String(context.application.scoring.healthIndex), {
+        exact: true,
+      })
+      .first(),
+  ).toBeVisible();
 
-  test("accepts a counter-offer and signs with the demo code", async ({
-    page,
-  }) => {
-    await signIn(page, "Анна Лесовая");
-    await createApplication(page, 10_000_000);
-    await expect(page.locator('[data-testid="offer-decision"]')).toBeVisible({
-      timeout: 15_000,
-    });
-    await page.locator('[data-testid="offer-accept"]').click();
-    await expect(page.getByRole("link", { name: /подпис/i })).toBeVisible();
-
-    await page.getByRole("link", { name: /подпис/i }).click();
-    await page.getByRole("button", { name: /получить код/i }).click();
-    const demoCode = await page
-      .locator('[data-testid="sign-demo-code"]')
-      .innerText();
-    const code = demoCode.match(/\d{6}/)?.[0];
-    expect(code).toHaveLength(6);
-    await page.locator('[data-testid="sign-code"]').fill(code);
-    await page.locator('[data-testid="sign-submit"]').click();
-    await expect(page).toHaveURL(/applications\//);
-  });
+  const applicationUrl = clientPage.url();
+  await clientPage
+    .getByRole("group", { name: "Что для вас важнее" })
+    .getByText("Сумма", { exact: true })
+    .click();
+  const options = clientPage.locator('[data-testid="negotiation-option"]');
+  await expect(options.first()).toBeVisible();
+  await expect(options.first()).toContainText("Это не одобрение");
+  const apply = options.first().getByRole("button");
+  await apply.click();
+  await expect(apply).toContainText("Подставлено в песочницу");
+  expect(clientPage.url()).toBe(applicationUrl);
+  await clientPage.close();
 });

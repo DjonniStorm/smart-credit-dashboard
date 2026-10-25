@@ -3,23 +3,28 @@
 // На api: createZodDto(schema) из nestjs-zod.
 import { z } from "zod";
 
-export enum ServiceName {
-  Api = "api",
-  Scoring = "scoring",
-  Mocks = "mocks",
-}
+// Объект вместо enum: Node запускает workspace-пакеты без трансформации типов.
+export const ServiceName = {
+  Api: "api",
+  Scoring: "scoring",
+} as const;
+export type ServiceName = (typeof ServiceName)[keyof typeof ServiceName];
 
-export * from "./autonomy.js";
+export * from "./autonomy.ts";
+export * from "./product-catalog.ts";
+export * from "./reports.ts";
 
-export enum HealthStatus {
-  Ok = "ok",
-  Degraded = "degraded",
-}
+export const HealthStatus = {
+  Ok: "ok",
+  Degraded: "degraded",
+} as const;
+export type HealthStatus = (typeof HealthStatus)[keyof typeof HealthStatus];
 
-export enum CheckState {
-  Up = "up",
-  Down = "down",
-}
+export const CheckState = {
+  Up: "up",
+  Down: "down",
+} as const;
+export type CheckState = (typeof CheckState)[keyof typeof CheckState];
 
 export const serviceNameSchema = z.enum(ServiceName);
 
@@ -87,6 +92,11 @@ export const scoreFactorResponseSchema = z.object({
   label: z.string(),
   value: z.string(),
   impact: z.number(),
+  effect: z.enum(["positive", "negative", "neutral"]).optional(),
+  confidence: z.number().min(0).max(1).nullable().optional(),
+  missing_reason: z.string().nullable().optional(),
+  observed_at: z.string().nullable().optional(),
+  source: z.string().optional(),
 });
 export type ScoreFactorResponse = z.infer<typeof scoreFactorResponseSchema>;
 
@@ -103,15 +113,28 @@ export const scoreResponseSchema = z.object({
   health_index: z.number().min(0).max(100).optional(),
   readiness_index: z.number().min(0).max(100).optional(),
   confidence: z.number().min(0).max(1).optional(),
+  /** Источники со стоп-факторами без данных: approve при непустом списке запрещён. */
+  missing_sources: z.array(z.string()).optional(),
   recommendation: z
-    .enum(["approve", "counter_offer", "request_info", "manual_review", "reject"])
+    .enum([
+      "approve",
+      "counter_offer",
+      "request_info",
+      "manual_review",
+      "reject",
+    ])
     .optional(),
   reasons: z.array(z.string()).optional(),
   next_actions: z.array(z.string()).optional(),
+  explainability: z.array(z.string()).optional(),
+  autonomy_mode: z.enum(["shadow", "assist", "controlled"]).optional(),
+  policy_version: z.string().optional(),
+  feature_snapshot_id: z.string().optional(),
+  computed_at: z.string().optional(),
 });
 export type ScoreResponse = z.infer<typeof scoreResponseSchema>;
 
-/** Сквозная ручка client -> api -> mocks + scoring. */
+/** Сквозная ручка client -> api -> scoring. */
 export const companyCheckResponseSchema = z.object({
   inn: innSchema,
   sources: z.object({
@@ -132,5 +155,6 @@ export const applicationStatusSchema = z.enum([
   "approved",
   "disbursed",
   "rejected",
+  "blocked",
 ]);
 export type ApplicationStatus = z.infer<typeof applicationStatusSchema>;

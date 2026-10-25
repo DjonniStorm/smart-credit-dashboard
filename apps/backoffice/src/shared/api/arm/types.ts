@@ -1,13 +1,25 @@
 import type {
+  ApiAutonomyAudit,
+  ApiAutonomySnapshot,
+  AutonomyPolicyActionRequest,
+} from "@repo/contracts/api";
+import type {
   Application,
   ClientResponse,
-  CreditProduct,
   Employee,
   EmployeeAction,
 } from "@repo/contracts/application";
 import type { CompanyProfileResponse } from "@repo/contracts/company-profile";
+import type { CreditProduct } from "@repo/contracts/product-catalog";
+import type {
+  ManagerReportQuery,
+  ManagerReportResponse,
+} from "@repo/contracts/reports";
 
-/** Всё, что АРМ спрашивает у бэкенда. Мок и HTTP реализуют один интерфейс. */
+/** Продукт каталога и его ставка при текущей ключевой: ключевая + спред. */
+export type ArmProduct = CreditProduct & { ratePct: number };
+
+/** Всё, что АРМ спрашивает у бэкенда через HTTP API. */
 export interface ArmApi {
   listApplications(): Promise<Application[]>;
   getApplication(id: string): Promise<Application>;
@@ -19,8 +31,21 @@ export interface ArmApi {
   ): Promise<Application>;
   /** Ответ клиента вместо кабинета клиента. В HTTP-режиме его делает кабинет. */
   simulateClient(id: string, response: ClientResponse): Promise<Application>;
-  listProducts(): Promise<CreditProduct[]>;
+  listProducts(): Promise<ArmProduct[]>;
   listEmployees(): Promise<Employee[]>;
+  /** Открыть сессию сотрудника: без неё API не принимает команды. */
+  signInEmployee(employeeId: string): Promise<Employee>;
+  signOutEmployee(): Promise<void>;
+  /** Сотрудник текущей сессии, null если сессии нет или она истекла. */
+  currentEmployee(): Promise<Employee | null>;
   /** Вернуть демо-данные к началу. */
   reset(): Promise<void>;
+  listAutonomyPolicies(): Promise<ApiAutonomySnapshot[]>;
+  getAutonomyPolicy(productId: string): Promise<ApiAutonomySnapshot>;
+  listAutonomyAudit(productId: string): Promise<ApiAutonomyAudit[]>;
+  applyAutonomyPolicyAction(
+    productId: string,
+    request: AutonomyPolicyActionRequest,
+  ): Promise<ApiAutonomySnapshot>;
+  getManagerReport(query?: Partial<ManagerReportQuery>): Promise<ManagerReportResponse>;
 }

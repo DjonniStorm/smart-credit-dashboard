@@ -1,7 +1,10 @@
-import { cabinetText, i18n } from "@repo/i18n";
+import { alfiText, cabinetText, financingText, i18n } from "@repo/i18n";
 
 /** Тексты кабинета на языке по умолчанию. */
 export const tx = cabinetText(i18n.defaultLocale);
+
+/** Тексты Альфи и бренда, общие с АРМ. */
+export const ax = alfiText(i18n.defaultLocale);
 
 const date = new Intl.DateTimeFormat("ru-RU", {
   day: "numeric",
@@ -25,3 +28,5 @@ export const formatDateTime = (iso: string) => dateTime.format(new Date(iso));
 export const formatTime = (iso: string) => time.format(new Date(iso));
 
 export { lx } from "./layout-text";
+
+export const fx = financingText(i18n.defaultLocale);

@@ -1,0 +1,15 @@
+.priorities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mantine-spacing-xs);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+}
+
+.chip {
+  min-height: 44px;
+  padding-inline: var(--mantine-spacing-md);
+}

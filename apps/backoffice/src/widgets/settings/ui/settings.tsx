@@ -10,21 +10,18 @@ import {
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
 import { useRouter } from "next/navigation";
 
-import { useResetDemo } from "@/entities/application";
 import { roleLabel, signOut, useSignedInEmployee } from "@/entities/employee";
-import { armApiMode } from "@/shared/api/arm";
 import { formatRub } from "@/shared/lib/money";
 
+import { AutonomyPolicySettings } from "./autonomy-policy-settings";
 import classes from "./settings.module.css";
 
 /** Настройки сотрудника: учётка, тема, сброс демо-данных. */
 export function Settings() {
   const employee = useSignedInEmployee();
   const router = useRouter();
-  const reset = useResetDemo();
   const { colorScheme, setColorScheme } = useMantineColorScheme();
 
   return (
@@ -70,40 +67,7 @@ export function Settings() {
         </Stack>
       </Card>
 
-      {armApiMode === "mock" && (
-        <Card>
-          <Stack gap="xs" align="flex-start">
-            <Title order={2} fz={16}>
-              Демо-данные
-            </Title>
-            <Text size="sm" c="dimmed">
-              Заявки синтетические и хранятся в этом браузере. Сброс вернёт их к
-              начальным этапам и очистит журнал.
-            </Text>
-            <Button
-              variant="default"
-              mt="xs"
-              loading={reset.isPending}
-              onClick={() =>
-                reset.mutate(undefined, {
-                  onSuccess: () =>
-                    notifications.show({
-                      message: "Демо-данные вернулись к началу",
-                      withBorder: true,
-                    }),
-                })
-              }
-            >
-              Вернуть демо-данные к началу
-            </Button>
-            {reset.error && (
-              <Text size="sm" c="var(--kk-danger)" role="alert">
-                {reset.error.message}
-              </Text>
-            )}
-          </Stack>
-        </Card>
-      )}
+      <AutonomyPolicySettings />
     </div>
   );
 }

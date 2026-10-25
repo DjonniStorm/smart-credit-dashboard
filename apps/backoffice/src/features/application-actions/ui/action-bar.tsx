@@ -10,260 +10,66 @@ import {
   Text,
 } from "@mantine/core";
 import { IconAlertCircle, IconDotsVertical } from "@tabler/icons-react";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 
 import type {
   Application,
-  ClientResponse,
-  CreditProduct,
   Employee,
   EmployeeAction,
 } from "@repo/contracts/application";
-import { alfi } from "@repo/ui/alfi";
 
-import {
-  clientResponseLabel,
-  useApplicationAction,
-  useClientSimulation,
-} from "@/entities/application";
-import { useEmployees } from "@/entities/employee";
-import { armApiMode } from "@/shared/api/arm";
+import { useApplicationAction } from "@/entities/application";
+import type { ArmProduct } from "@/shared/api/arm";
 import { formatRub } from "@/shared/lib/money";
 
-import {
-  ApproveDialog,
-  CancelDialog,
-  CommentDialog,
-  CounterDialog,
-  HandoffDialog,
-  HoldDialog,
-  RejectDialog,
-  RejectIcon,
-  RequestDialog,
-} from "./dialogs";
-
-type Dialog = "approve" | "counter" | "request" | "reject" | "pause" | "block" | "comment" | "handoff" | "cancel";
-
-const recommendedDialog = {
-  approve: "approve",
-  counter_offer: "counter",
-  request_info: "request",
-  reject: "reject",
-} as const;
-
-const dialogLabel: Record<Dialog, string> = {
-  approve: "Одобрить",
-  counter: "Другие условия",
-  request: "Запросить документы",
-  reject: "Отказать",
-  pause: "Поставить на паузу",
-  block: "Заблокировать",
-  comment: "Добавить комментарий",
-  handoff: "Передать с резюме",
-  cancel: "Отменить заявку",
-};
-
-/** Ответ клиента, которого ждёт заявка. В демо его делает сотрудник. */
-const expectedResponse: Partial<Record<Application["status"], ClientResponse>> =
-  {
-    needs_client: "documents_sent",
-    counter_offer: "offer_accepted",
-    approved: "contract_signed",
-  };
-
-interface Item {
-  key: string;
-  label: string;
-  run: () => void;
-  disabled?: boolean;
-  loading?: boolean;
-  icon?: ReactNode;
-}
+import { type DialogKind, buildActionLayout } from "../model/action-items";
+import { ActionDialogs } from "./action-dialogs";
+import { showActionFeedback } from "./alfi-feedback";
+import { RejectIcon } from "./dialogs";
 
 /**
  * Действия по заявке одной строкой: красная кнопка следующего шага,
- * вторичная и меню с остальным. Каждое действие меняет статус и пишется в журнал.
+ * вторичная и меню с остальным. Каждое действие уходит в API, меняет заявку
+ * и пишется в журнал.
  */
 export function ActionBar({
   app,
   employee,
+  employees,
   products,
 }: {
   app: Application;
   employee: Employee;
-  products: CreditProduct[];
+  employees: Employee[];
+  products: ArmProduct[];
 }) {
-  const [dialog, setDialog] = useState<Dialog | null>(null);
+  const [dialog, setDialog] = useState<DialogKind | null>(null);
   const mutation = useApplicationAction(app.id, employee.id);
-  const simulation = useClientSimulation(app.id);
-  const employees = useEmployees();
 
   function run(action: EmployeeAction, done: string) {
     mutation.mutate(action, {
       onSuccess: () => {
         setDialog(null);
-        showAlfiActionFeedback(action, done);
+        showActionFeedback(action, done);
       },
     });
   }
-  function open(next: Dialog) {
+  function open(next: DialogKind) {
     mutation.reset();
     setDialog(next);
   }
 
-  const canDecide =
-    !app.hold && app.stage === "decision" && app.waitingOn === "employee";
-  const overLimit = app.request.amount > employee.approvalLimit;
-  const lead = employees.data?.find(
-    (e) => e.role === "lead" && e.id !== employee.id,
-  );
-  const assigning = mutation.isPending && mutation.variables?.type === "assign";
-  const holding =
-    mutation.isPending &&
-    ["pause", "block", "resume"].includes(mutation.variables?.type ?? "");
-
-  const take: Item | null =
-    !app.hold && app.assigneeId !== employee.id && app.waitingOn !== "nobody"
-      ? {
-          key: "take",
-          label: "Взять в работу",
-          loading: assigning,
-          run: () =>
-            run(
-              { type: "assign", assigneeId: employee.id },
-              "Заявка у вас в работе",
-            ),
-        }
-      : null;
-
-  const toLead: Item | null =
-    canDecide && overLimit && lead
-      ? {
-          key: "lead",
-          label: "Передать руководителю",
-          run: () =>
-            run(
-              { type: "assign", assigneeId: lead.id },
-              `Передано: ${lead.name}`,
-            ),
-        }
-      : null;
-
-  const recommended =
-    recommendedDialog[app.decision?.recommendation ?? "approve"];
-  const decisions: Item[] = canDecide
-    ? [
-        recommended,
-        ...(["approve", "counter", "request", "reject"] as const).filter(
-          (k) => k !== recommended,
-        ),
-      ].map((k) => ({
-        key: k,
-        label: dialogLabel[k],
-        disabled: k === "approve" && overLimit,
-        icon: k === "reject" ? <RejectIcon /> : undefined,
-        run: () => open(k),
-      }))
-    : [];
-
-  const response = expectedResponse[app.status];
-  const demo: Item | null =
-    armApiMode === "mock" && !app.hold && response && app.waitingOn === "client"
-      ? {
-          key: "demo",
-          label: `Демо: ${clientResponseLabel[response].toLowerCase()}`,
-          loading: simulation.isPending,
-          run: () => simulation.mutate(response),
-        }
-      : null;
-
-  const transfers: Item[] =
-    app.hold || app.waitingOn === "nobody"
-      ? []
-      : (employees.data ?? [])
-          .filter((e) => e.id !== app.assigneeId && e.id !== lead?.id)
-          .map((e) => ({
-            key: `to-${e.id}`,
-            label: `Передать: ${e.name}`,
-            run: () =>
-              run({ type: "assign", assigneeId: e.id }, `Передано: ${e.name}`),
-          }));
-
-  const canHold =
-    !app.hold &&
-    app.status !== "rejected" &&
-    app.status !== "disbursed" &&
-    app.waitingOn !== "nobody";
-  const holdActions: Item[] = app.hold
-    ? [
-        {
-          key: "resume",
-          label: "Вернуть в работу",
-          loading: holding,
-          run: () =>
-            run(
-              { type: "resume", comment: "" },
-              "Заявка возвращена в работу",
-            ),
-        },
-      ]
-    : canHold
-      ? [
-          { key: "pause", label: dialogLabel.pause, run: () => open("pause") },
-          { key: "block", label: dialogLabel.block, run: () => open("block") },
-        ]
-      : [];
-
-  const terminal = app.status === "rejected" || app.status === "disbursed" || app.waitingOn === "nobody";
-  const contextActions: Item[] = app.hold || terminal
-    ? []
-    : [
-        { key: "comment", label: dialogLabel.comment, run: () => open("comment") },
-        { key: "handoff", label: dialogLabel.handoff, run: () => open("handoff") },
-        { key: "cancel", label: dialogLabel.cancel, run: () => open("cancel") },
-        {
-          key: "urgent",
-          label: app.urgent ? "Снять срочный режим" : "Включить срочный режим",
-          run: () => run({ type: "set_urgent", enabled: !app.urgent, reason: app.urgent ? "" : "Приоритетная обработка" }, app.urgent ? "Срочный режим снят" : "Заявка отмечена как срочная"),
-        },
-      ];
-
-  // Красная только у рекомендованного решения, и никогда у отказа.
-  // Если одобрить нельзя по лимиту, следующий шаг: передать руководителю.
-  const firstDecision = decisions[0];
-  let primary: Item | null = null;
-  if (
-    firstDecision &&
-    firstDecision.key !== "reject" &&
-    !firstDecision.disabled
-  ) {
-    primary = firstDecision;
-  } else if (toLead) {
-    primary = toLead;
-  } else if (take && app.waitingOn === "employee") {
-    primary = take;
-  }
-
-  // Пока ход за клиентом, процесс двигает только его ответ: он идёт вторым.
-  const rest = [demo, take, toLead, ...decisions, ...transfers, ...holdActions, ...contextActions].filter(
-    (i): i is Item => i !== null && i.key !== primary?.key,
-  );
-  const secondary = rest.find((i) => !i.disabled) ?? null;
-  const menu = rest.filter((i) => i !== secondary);
-
-  const hint = canDecide
-    ? null
-    : app.hold
-      ? "Заявка приостановлена. Верните её в работу, чтобы продолжить обработку."
-    : app.waitingOn === "system"
-      ? "Проверки идут автоматически. Решение станет доступно после рекомендации."
-      : app.waitingOn === "client"
-        ? "Ход за клиентом. Заявка вернётся к вам, когда он ответит."
-        : app.waitingOn === "nobody"
-          ? "Решение принято, действий не требуется."
-          : "Сначала повторите запрос в источник, который не ответил.";
-
-  const error = mutation.error ?? simulation.error;
+  const { canDecide, overLimit, primary, secondary, menu, hint } =
+    buildActionLayout({
+      app,
+      employee,
+      employees,
+      pendingType: mutation.isPending
+        ? (mutation.variables?.type ?? null)
+        : null,
+      open,
+      run,
+    });
 
   return (
     <Stack gap="xs">
@@ -299,9 +105,9 @@ export function ActionBar({
           <Text size="xs">{app.hold.reason}</Text>
         </Alert>
       )}
-      {error && !dialog && (
+      {mutation.error && !dialog && (
         <Text size="xs" c="var(--kk-danger)" role="alert">
-          {error.message}
+          {mutation.error.message}
         </Text>
       )}
       {(primary || secondary || menu.length > 0) && (
@@ -321,7 +127,7 @@ export function ActionBar({
               size="sm"
               variant="default"
               loading={secondary.loading}
-              leftSection={secondary.icon}
+              leftSection={secondary.destructive ? <RejectIcon /> : undefined}
               onClick={secondary.run}
               style={{ flex: "1 1 auto" }}
             >
@@ -341,15 +147,15 @@ export function ActionBar({
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown>
-                {menu.map((i) => (
+                {menu.map((item) => (
                   <Menu.Item
-                    key={i.key}
-                    leftSection={i.icon}
-                    disabled={i.disabled}
-                    onClick={i.run}
+                    key={item.key}
+                    leftSection={item.destructive ? <RejectIcon /> : undefined}
+                    disabled={item.disabled}
+                    onClick={item.run}
                   >
-                    {i.label}
-                    {i.disabled && " (выше лимита)"}
+                    {item.label}
+                    {item.disabled && " (выше лимита)"}
                   </Menu.Item>
                 ))}
               </Menu.Dropdown>
@@ -358,130 +164,17 @@ export function ActionBar({
         </Group>
       )}
 
-      {dialog === "approve" && (
-        <ApproveDialog
-          opened
-          app={app}
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={() => setDialog(null)}
-          onSubmit={(comment) =>
-            run(
-              { type: "approve", comment },
-              "Заявка одобрена, клиент получит договор",
-            )
-          }
-        />
-      )}
-      {dialog === "counter" && (
-        <CounterDialog
-          opened
-          app={app}
-          products={products}
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={() => setDialog(null)}
-          onSubmit={(action) =>
-            run(action, "Встречное предложение отправлено клиенту")
-          }
-        />
-      )}
-      {dialog === "request" && (
-        <RequestDialog
-          opened
-          app={app}
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={() => setDialog(null)}
-          onSubmit={(action) => run(action, "Запрос отправлен клиенту")}
-        />
-      )}
-      {dialog === "reject" && (
-        <RejectDialog
-          opened
-          app={app}
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={() => setDialog(null)}
-          onSubmit={(action) => run(action, "Отказ зафиксирован")}
-        />
-      )}
-      {(dialog === "pause" || dialog === "block") && (
-        <HoldDialog
-          opened
-          kind={dialog}
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={() => setDialog(null)}
-          onSubmit={(reason) =>
-            run(
-              { type: dialog, reason },
-              dialog === "pause"
-                ? "Заявка поставлена на паузу"
-                : "Заявка заблокирована",
-            )
-          }
-        />
-      )}
-      {dialog === "comment" && (
-        <CommentDialog
-          opened
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={() => setDialog(null)}
-          onSubmit={(action) => run(action, "Комментарий добавлен в историю")}
-        />
-      )}
-      {dialog === "handoff" && (
-        <HandoffDialog
-          opened
-          employees={(employees.data ?? []).filter((e) => e.id !== employee.id)}
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={() => setDialog(null)}
-          onSubmit={(action) => run(action, "Заявка передана с резюме")}
-        />
-      )}
-      {dialog === "cancel" && (
-        <CancelDialog
-          opened
-          pending={mutation.isPending}
-          error={mutation.error}
-          onClose={() => setDialog(null)}
-          onSubmit={(action) => run(action, "Заявка отменена")}
-        />
-      )}
+      <ActionDialogs
+        dialog={dialog}
+        app={app}
+        employee={employee}
+        employees={employees}
+        products={products}
+        pending={mutation.isPending}
+        error={mutation.error}
+        onClose={() => setDialog(null)}
+        run={run}
+      />
     </Stack>
   );
-}
-
-function showAlfiActionFeedback(action: EmployeeAction, message: string): void {
-  const options = { raw: action.type, withBorder: true };
-
-  switch (action.type) {
-    case "request_info": {
-      alfi.showNeedsInfo(message, options);
-      break;
-    }
-    case "approve":
-    case "counter_offer": {
-      alfi.showOfferReady(message, options);
-      break;
-    }
-    case "reject": {
-      alfi.showDocumentRejected(message, options);
-      break;
-    }
-    case "assign":
-    case "rerun_check": {
-      alfi.showSuccess(message, options);
-      break;
-    }
-    case "pause":
-    case "block":
-    case "resume": {
-      alfi.showSuccess(message, options);
-      break;
-    }
-  }
 }

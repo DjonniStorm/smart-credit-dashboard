@@ -5,8 +5,9 @@ create table if not exists applications (
   id text primary key, number text not null unique, inn text not null,
   product_id text not null, amount numeric not null, term_months integer not null,
   purpose text not null, status text not null, check_job_id text,
-  scoring jsonb, created_at timestamptz not null, updated_at timestamptz not null
+  scoring jsonb, decision jsonb, created_at timestamptz not null, updated_at timestamptz not null
 );
+alter table applications add column if not exists decision jsonb;
 create table if not exists scoring_jobs (
   id text primary key, application_id text not null references applications(id),
   status text not null, idempotency_key text not null, created_at timestamptz not null,
@@ -27,4 +28,8 @@ create table if not exists application_events (
 create table if not exists idempotency_keys (
   scope text not null, key text not null, resource_id text not null,
   created_at timestamptz not null default now(), primary key(scope, key)
+);
+create table if not exists autonomy_policies (
+  product_id text primary key,
+  payload jsonb not null
 );

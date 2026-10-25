@@ -4,65 +4,58 @@ import { z } from "zod";
 
 import { applicationStatusSchema, innSchema } from "@repo/contracts";
 
+import { apiAutonomySnapshotSchema } from "./api.ts";
+import {
+  actorSchema,
+  applicationCommentSchema,
+  applicationHandoffSchema,
+  applicationHoldSchema,
+  applicationStageSchema,
+  employeeRoleSchema,
+  offerTermsSchema,
+  rejectReasonSchema,
+  urgentRequestSchema,
+  urgentSourceSchema,
+  waitingOnSchema,
+} from "./application-parts.ts";
+import { autonomyCaseSchema } from "./autonomy.ts";
+import {
+  creditProductIdSchema,
+  creditPurposeSchema,
+} from "./product-catalog.ts";
+
 export const legalFormSchema = z.enum(["ip", "ooo"]);
 export type LegalForm = z.infer<typeof legalFormSchema>;
 
-export const creditProductIdSchema = z.enum([
-  "express",
-  "working_capital",
-  "credit_line",
-  "investment",
-  "cash_gap",
-  "equipment",
-  "development",
-]);
-export type CreditProductId = z.infer<typeof creditProductIdSchema>;
+export {
+  actorSchema,
+  applicationCommentSchema,
+  applicationHandoffSchema,
+  applicationHoldSchema,
+  applicationStageSchema,
+  commentVisibilitySchema,
+  employeeRoleSchema,
+  offerTermsSchema,
+  rejectReasonSchema,
+  waitingOnSchema,
+  type Actor,
+  type ApplicationComment,
+  type ApplicationHandoff,
+  type ApplicationHold,
+  type ApplicationStage,
+  type CommentVisibility,
+  type EmployeeRole,
+  type OfferTerms,
+  type RejectReason,
+  type WaitingOn,
+} from "./application-parts.ts";
 
-/** Кредитный продукт и его правила. Значения синтетические. */
-export const creditProductSchema = z.object({
-  id: creditProductIdSchema,
-  name: z.string(),
-  purpose: z.string(),
-  minAmount: z.number(),
-  maxAmount: z.number(),
-  minTermMonths: z.number().int(),
-  maxTermMonths: z.number().int(),
-  /** Базовая ставка, % годовых. */
-  ratePct: z.number(),
-  /** Минимальный балл скоринга для одобрения без изменения условий. */
-  minScore: z.number(),
-  /** Предел долговой нагрузки: долг после выдачи к годовой выручке. */
-  maxDebtLoad: z.number(),
-  /** Минимальный срок жизни бизнеса, месяцев. */
-  minBusinessAgeMonths: z.number().int(),
-  /** Обеспечение по продукту; null — не требуется. */
-  collateral: z.string().nullable().optional(),
-});
-export type CreditProduct = z.infer<typeof creditProductSchema>;
-
-/** Внутренний этап конвейера. */
-export const applicationStageSchema = z.enum([
-  "intake",
-  "completeness",
-  "enrichment",
-  "scoring",
-  "decision",
-  "signing",
-  "disbursement",
-]);
-export type ApplicationStage = z.infer<typeof applicationStageSchema>;
-
-/** За кем ход по заявке, с точки зрения сотрудника. */
-export const waitingOnSchema = z.enum([
-  "employee",
-  "client",
-  "system",
-  "nobody",
-]);
-export type WaitingOn = z.infer<typeof waitingOnSchema>;
-
-export const employeeRoleSchema = z.enum(["analyst", "lead"]);
-export type EmployeeRole = z.infer<typeof employeeRoleSchema>;
+export {
+  creditProductIdSchema,
+  creditProductSchema,
+  type CreditProduct,
+  type CreditProductId,
+} from "./product-catalog.ts";
 
 export const employeeSchema = z.object({
   id: z.string(),
@@ -91,7 +84,7 @@ export const loanRequestSchema = z.object({
   productId: creditProductIdSchema,
   amount: z.number(),
   termMonths: z.number().int(),
-  purpose: z.string(),
+  purpose: creditPurposeSchema,
 });
 export type LoanRequest = z.infer<typeof loanRequestSchema>;
 
@@ -136,9 +129,30 @@ export type RiskBand = z.infer<typeof riskBandSchema>;
 /** Скоринг: оценка риска, ещё не решение. */
 export const scoringResultSchema = z.object({
   model: z.string(),
+  modelVersion: z.string().optional(),
   base: z.number(),
   score: z.number(),
   band: riskBandSchema,
+  grade: z.enum(["A", "B", "C", "D"]).optional(),
+  pd: z.number().min(0).max(1).optional(),
+  healthIndex: z.number().min(0).max(100).optional(),
+  readinessIndex: z.number().min(0).max(100).optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  recommendation: z
+    .enum([
+      "approve",
+      "counter_offer",
+      "request_info",
+      "manual_review",
+      "reject",
+    ])
+    .optional(),
+  reasons: z.array(z.string()).optional(),
+  nextActions: z.array(z.string()).optional(),
+  explainability: z.array(z.string()).optional(),
+  policyVersion: z.string().optional(),
+  featureSnapshotId: z.string().optional(),
+  missingSources: z.array(z.string()).optional(),
   factors: z.array(scoreFactorSchema),
   computedAt: z.string(),
 });
@@ -155,18 +169,11 @@ export const decisionRuleSchema = z.object({
 });
 export type DecisionRule = z.infer<typeof decisionRuleSchema>;
 
-export const offerTermsSchema = z.object({
-  productId: creditProductIdSchema,
-  amount: z.number(),
-  termMonths: z.number().int(),
-  ratePct: z.number(),
-});
-export type OfferTerms = z.infer<typeof offerTermsSchema>;
-
 export const recommendationSchema = z.enum([
   "approve",
   "counter_offer",
   "request_info",
+  "manual_review",
   "reject",
 ]);
 export type Recommendation = z.infer<typeof recommendationSchema>;
@@ -180,16 +187,6 @@ export const creditDecisionSchema = z.object({
   computedAt: z.string(),
 });
 export type CreditDecision = z.infer<typeof creditDecisionSchema>;
-
-export const rejectReasonSchema = z.enum([
-  "company_inactive",
-  "bki_overdue",
-  "tax_debt",
-  "debt_load",
-  "low_score",
-  "other",
-]);
-export type RejectReason = z.infer<typeof rejectReasonSchema>;
 
 /** Действие сотрудника по заявке. */
 export const employeeActionSchema = z.discriminatedUnion("type", [
@@ -246,6 +243,15 @@ export const employeeActionSchema = z.discriminatedUnion("type", [
     enabled: z.boolean(),
     reason: z.string().max(500).default(""),
   }),
+  z.object({
+    type: z.literal("intercept_autonomy"),
+    reason: z.string().min(1).max(500),
+  }),
+  /** Отклонить запрос клиента на срочный режим; действующий режим не меняется. */
+  z.object({
+    type: z.literal("decline_urgent"),
+    reason: z.string().max(500),
+  }),
 ]);
 export type EmployeeAction = z.infer<typeof employeeActionSchema>;
 /** Команда АРМ: employeeActionSchema является версируемым command-контрактом. */
@@ -260,49 +266,6 @@ export const clientResponseSchema = z.enum([
 ]);
 export type ClientResponse = z.infer<typeof clientResponseSchema>;
 
-export const actorSchema = z.object({
-  kind: z.enum(["system", "employee", "client"]),
-  name: z.string(),
-});
-export type Actor = z.infer<typeof actorSchema>;
-
-export const commentVisibilitySchema = z.enum(["client", "internal", "handoff"]);
-export type CommentVisibility = z.infer<typeof commentVisibilitySchema>;
-
-export const applicationCommentSchema = z.object({
-  id: z.string(),
-  applicationId: z.string(),
-  at: z.string(),
-  author: actorSchema,
-  visibility: commentVisibilitySchema,
-  body: z.string().min(1).max(2_000),
-});
-export type ApplicationComment = z.infer<typeof applicationCommentSchema>;
-
-export const applicationHandoffSchema = z.object({
-  id: z.string(),
-  applicationId: z.string(),
-  at: z.string(),
-  from: actorSchema,
-  toEmployeeId: z.string(),
-  summary: z.string().min(1).max(1_000),
-  verifiedFacts: z.array(z.string()).max(20),
-  openQuestions: z.array(z.string()).max(20),
-  requestedItems: z.array(z.string()).max(20),
-  nextStep: z.string().min(1).max(500),
-});
-export type ApplicationHandoff = z.infer<typeof applicationHandoffSchema>;
-
-export const applicationHoldSchema = z.object({
-  state: z.enum(["paused", "blocked"]),
-  reason: z.string().min(1).max(500),
-  at: z.string(),
-  by: actorSchema,
-  previousWaitingOn: waitingOnSchema,
-  previousBlocker: z.string(),
-});
-export type ApplicationHold = z.infer<typeof applicationHoldSchema>;
-
 export const applicationEventSchema = z.object({
   id: z.string(),
   applicationId: z.string(),
@@ -314,7 +277,19 @@ export const applicationEventSchema = z.object({
   toStatus: applicationStatusSchema.nullable(),
   /** Тип аудита; optional для чтения старых событий. */
   kind: z
-    .enum(["status_changed", "action", "comment_added", "handoff", "hold"])
+    .enum([
+      "status_changed",
+      "action",
+      "comment_added",
+      "handoff",
+      "hold",
+      "autonomy_candidate",
+      "autonomy_auto_offer",
+      "autonomy_intercepted",
+      "autonomy_expired",
+      "autonomy_override",
+      "autonomy_policy_changed",
+    ])
     .optional(),
   /** Небольшой набор структурированных параметров без сырых payload. */
   metadata: z.record(z.string(), z.string()).optional(),
@@ -332,6 +307,9 @@ export const applicationSchema = z.object({
   hold: applicationHoldSchema.nullable().default(null),
   urgent: z.boolean().default(false),
   urgentReason: z.string().nullable().default(null),
+  urgentSource: urgentSourceSchema.nullable().default(null),
+  urgentRequest: urgentRequestSchema.nullable().default(null),
+  autonomy: apiAutonomySnapshotSchema.optional(),
   comments: z.array(applicationCommentSchema).default([]),
   handoff: applicationHandoffSchema.nullable().default(null),
   /** Что мешает решению, одной фразой. */
@@ -341,6 +319,7 @@ export const applicationSchema = z.object({
   request: loanRequestSchema,
   checks: z.array(sourceCheckSchema),
   scoring: scoringResultSchema.nullable(),
+  autonomyCase: autonomyCaseSchema.nullable().default(null),
   decision: creditDecisionSchema.nullable(),
   offer: offerTermsSchema.nullable(),
   requestedInfo: z.array(z.string()),

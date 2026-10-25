@@ -1,11 +1,10 @@
-import { Message } from "../message";
+import { Message } from "../message.ts";
 
 export const en = {
   [Message.CabinetTitle]: "Entrepreneur cabinet",
   [Message.CabinetDescription]:
     "Company check by INN: company registry extract, credit bureau and tax data, scoring.",
-  [Message.CabinetLead]:
-    "Scaffold. End-to-end path: client → api → mocks + scoring.",
+  [Message.CabinetLead]: "Scaffold. End-to-end path: client → api → scoring.",
   [Message.CabinetCheckTitle]: "Company check",
   [Message.CabinetCheckDescription]:
     "Enter an INN to get registry, credit bureau, tax data and a score.",

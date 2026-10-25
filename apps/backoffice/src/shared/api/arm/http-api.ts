@@ -1,22 +1,38 @@
 "use client";
 
 import {
-  type Application,
-  type CreditProduct,
-  type Employee,
-  applicationSchema,
-  creditProductSchema,
-  employeeSchema,
-} from "@repo/contracts/application";
+  type ApiApplicationContext,
+  type ApiAutonomyAudit,
+  type ApiAutonomySnapshot,
+  type ApiProductCatalog,
+  type ApiQueueItem,
+  apiApplicationContextSchema,
+  apiAutonomyAuditSchema,
+  apiAutonomySnapshotSchema,
+  apiProductCatalogSchema,
+  apiQueueItemSchema,
+  autonomyPolicyActionRequestSchema,
+} from "@repo/contracts/api";
+import { type Employee, employeeSchema } from "@repo/contracts/application";
 import {
-  companyProfileResponseSchema,
   type CompanyProfileResponse,
+  companyProfileResponseSchema,
 } from "@repo/contracts/company-profile";
+import {
+  managerReportResponseSchema,
+  type ManagerReportQuery,
+} from "@repo/contracts/reports";
 
+import {
+  toArmApplication,
+  toArmApplicationContext,
+  toArmProducts,
+  toEmployees,
+} from "./api-mapper";
 import type { ArmApi } from "./types";
 
 // Пути ручек согласовать с api. /api проксируется в Nest (next.config.js).
-const BASE = "/api/arm";
+const BASE = "/api/v1";
 
 async function request<T>(
   path: string,
@@ -38,16 +54,21 @@ async function request<T>(
   return schema.parse(await res.json());
 }
 
-const post = (body: unknown): RequestInit => ({
-  method: "POST",
-  body: JSON.stringify(body),
-});
-
 export const httpArmApi: ArmApi = {
-  listApplications: () =>
-    request<Application[]>("/applications", applicationSchema.array()),
-  getApplication: (id) =>
-    request<Application>(`/applications/${id}`, applicationSchema),
+  listApplications: async () => {
+    const items = await request<ApiQueueItem[]>(
+      "/applications/queue",
+      apiQueueItemSchema.array(),
+    );
+    return items.map((item) => toArmApplication(item));
+  },
+  getApplication: async (id) => {
+    const context = await request<ApiApplicationContext>(
+      `/applications/${id}/context`,
+      apiApplicationContextSchema,
+    );
+    return toArmApplicationContext(context);
+  },
   getCompanyProfile: (inn) =>
     request<CompanyProfileResponse>(
       `/v1/companies/${inn}/profile`,
@@ -55,19 +76,115 @@ export const httpArmApi: ArmApi = {
       undefined,
       "/api",
     ),
-  act: (id, action, employeeId) =>
-    request<Application>(
+  act: async (id, action) => {
+    const context = await request<ApiApplicationContext>(
       `/applications/${id}/actions`,
-      applicationSchema,
-      post({ action, employeeId }),
-    ),
-  simulateClient: () =>
-    Promise.reject(
-      new Error("Ответ клиента приходит из кабинета клиента, а не из АРМ"),
-    ),
-  listProducts: () =>
-    request<CreditProduct[]>("/products", creditProductSchema.array()),
+      apiApplicationContextSchema,
+      {
+        method: "POST",
+        body: JSON.stringify({ action, idempotencyKey: crypto.randomUUID() }),
+      },
+    );
+    return toArmApplicationContext(context);
+  },
+  simulateClient: async () => {
+    throw new Error("Ответ клиента приходит из кабинета клиента");
+  },
+  listProducts: async () => {
+    const catalog = await request<ApiProductCatalog>(
+      "/products",
+      apiProductCatalogSchema,
+    );
+    return toArmProducts(catalog);
+  },
   listEmployees: () =>
-    request<Employee[]>("/employees", employeeSchema.array()),
-  reset: () => Promise.resolve(),
+    request<Employee[]>("/employees", employeeSchema.array()).then(toEmployees),
+  signInEmployee: (employeeId) =>
+    request<Employee>("/auth/employee-sign-in", employeeSchema, {
+      method: "POST",
+      body: JSON.stringify({ employeeId }),
+    }),
+  signOutEmployee: async () => {
+    await fetch(`${BASE}/auth/employee-sign-out`, {
+      method: "POST",
+      credentials: "include",
+    });
+  },
+  currentEmployee: async () => {
+    const res = await fetch(`${BASE}/auth/employee-me`, {
+      credentials: "include",
+    });
+    if (res.status === 401) {
+      return null;
+    }
+    if (!res.ok) {
+      throw new Error(`Сервер ответил ${res.status}`);
+    }
+    return employeeSchema.parse(await res.json());
+  },
+  reset: async () => {
+    throw new Error("Сброс демо-данных выполняется командой db:seed");
+  },
+  listAutonomyPolicies: () =>
+    request<ApiAutonomySnapshot[]>(
+      "/autonomy/policies",
+      apiAutonomySnapshotSchema.array(),
+    ),
+  getAutonomyPolicy: (productId) =>
+    request<ApiAutonomySnapshot>(
+      `/autonomy/policies/${productId}`,
+      apiAutonomySnapshotSchema,
+    ),
+  listAutonomyAudit: (productId) =>
+    request<ApiAutonomyAudit[]>(
+      `/autonomy/policies/${productId}/audit`,
+      apiAutonomyAuditSchema.array(),
+    ),
+  applyAutonomyPolicyAction: (productId, body) => {
+    const parsedBody = autonomyPolicyActionRequestSchema.parse(body);
+    return request<ApiAutonomySnapshot>(
+      `/autonomy/policies/${productId}/actions`,
+      apiAutonomySnapshotSchema,
+      {
+        method: "POST",
+        body: JSON.stringify(parsedBody),
+      },
+    );
+  },
+  getManagerReport: (query?: Partial<ManagerReportQuery>) => {
+    const params = new URLSearchParams();
+    const scalarKeys = [
+      "from",
+      "to",
+      "timezone",
+      "view",
+      "bucket",
+      "cursor",
+      "search",
+      "limit",
+    ] as const;
+    for (const key of scalarKeys) {
+      const value = query?.[key];
+      if (value !== undefined) params.set(key, String(value));
+    }
+    const arrayKeys = [
+      ["product", query?.productIds],
+      ["status", query?.statuses],
+      ["assignee", query?.assigneeIds],
+      ["stage", query?.stages],
+      ["actor", query?.actorKinds],
+      ["recommendation", query?.recommendations],
+      ["autonomy", query?.autonomyModes],
+      ["autonomyDisposition", query?.autonomyDispositions],
+      ["sla", query?.slaStates],
+    ] as const;
+    for (const [key, values] of arrayKeys) {
+      if (values && values.length > 0) params.set(key, values.join(","));
+    }
+    const suffix = params.toString() ? `?${params.toString()}` : "";
+    return request<import("@repo/contracts/reports").ManagerReportResponse>(
+      `/reports/manager${suffix}`,
+      managerReportResponseSchema,
+    );
+  },
 };

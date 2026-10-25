@@ -1,7 +1,7 @@
-import { en } from "./dictionaries/en";
-import { ru } from "./dictionaries/ru";
-import { Locale } from "./locale";
-import { Message } from "./message";
+import { en } from "./dictionaries/en.ts";
+import { ru } from "./dictionaries/ru.ts";
+import { Locale } from "./locale.ts";
+import { Message } from "./message.ts";
 
 const dictionaries: Record<Locale, Record<Message, string>> = {
   [Locale.Ru]: ru,

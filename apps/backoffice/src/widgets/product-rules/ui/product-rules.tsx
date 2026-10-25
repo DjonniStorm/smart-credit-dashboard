@@ -7,7 +7,7 @@ import { StateBlock } from "@repo/ui/state-block";
 import { useProducts } from "@/entities/application";
 import { formatRub } from "@/shared/lib/money";
 
-// Описание совпадает с мок-моделью в shared/api/arm/mock/engine.ts.
+// Описание соответствует синтетическому baseline scoring в API.
 const FACTORS: [string, string][] = [
   ["Срок работы бизнеса", "от 3 лет +10, от 1 года +4, меньше года −8"],
   [
@@ -85,7 +85,7 @@ export function ProductRules() {
                         {p.name}
                       </Text>
                       <Text size="xs" c="dimmed">
-                        {p.purpose}
+                        {p.description}
                       </Text>
                     </Table.Td>
                     <Table.Td>
@@ -94,7 +94,9 @@ export function ProductRules() {
                     <Table.Td>
                       {p.minTermMonths}–{p.maxTermMonths} мес.
                     </Table.Td>
-                    <Table.Td>от {p.ratePct} %</Table.Td>
+                    <Table.Td>
+                      от {p.ratePct} %
+                    </Table.Td>
                     <Table.Td>{p.minScore}</Table.Td>
                     <Table.Td>до {Math.round(p.maxDebtLoad * 100)} %</Table.Td>
                     <Table.Td>от {p.minBusinessAgeMonths} мес.</Table.Td>

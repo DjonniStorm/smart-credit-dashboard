@@ -35,6 +35,9 @@ function snapshotFor(
     state,
     summary: check?.summary ?? "Проверка ещё не запускалась",
     facts,
+    discrepancies: [],
+    action: state === "pending" ? "none" : state === "manual_check" ? "manual_review" : "none",
+    reason: state === "manual_check" ? "Источник требует ручной проверки" : null,
     checkedAt,
   };
 }
@@ -61,6 +64,9 @@ export function companyProfileForApplication(
           checkedAt: app.updatedAt,
         },
       ],
+      discrepancies: [],
+      action: "none",
+      reason: null,
       checkedAt: app.updatedAt,
     },
   ];
@@ -73,6 +79,9 @@ export function companyProfileForApplication(
           state: "pending",
           summary: "БКИ доступно после согласия клиента",
           facts: [],
+          discrepancies: [],
+          action: "grant_bki_consent",
+          reason: "Данные БКИ доступны только после согласия клиента",
           checkedAt: null,
         },
   );

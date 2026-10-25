@@ -112,5 +112,8 @@ export function applyFilters(
   const sign = f.dir === "asc" ? 1 : -1;
   return filterApps(apps, f)
     .filter((a) => tab === "all" || queueGroup(a) === tab)
-    .sort((a, b) => sign * compare(a, b, f.sort));
+    .sort((a, b) => {
+      const urgentOrder = Number(b.urgent) - Number(a.urgent);
+      return urgentOrder || sign * compare(a, b, f.sort);
+    });
 }

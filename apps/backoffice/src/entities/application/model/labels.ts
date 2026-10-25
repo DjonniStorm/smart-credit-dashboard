@@ -10,6 +10,7 @@ import type {
   RuleOutcome,
   WaitingOn,
 } from "@repo/contracts/application";
+import { CREDIT_PRODUCTS } from "@repo/contracts/product-catalog";
 import type { Tone } from "@repo/ui/tone-badge";
 
 export const stageOrder: ApplicationStage[] = [
@@ -41,6 +42,7 @@ export const statusLabel: Record<ApplicationStatus, string> = {
   approved: "Одобрена",
   disbursed: "Выдан",
   rejected: "Отказ",
+  blocked: "Заблокирована",
 };
 
 export const statusTone: Record<ApplicationStatus, Tone> = {
@@ -51,6 +53,7 @@ export const statusTone: Record<ApplicationStatus, Tone> = {
   approved: "success",
   disbursed: "success",
   rejected: "danger",
+  blocked: "danger",
 };
 
 export const waitingLabel: Record<WaitingOn, string> = {
@@ -67,15 +70,9 @@ export const waitingOrder: Record<WaitingOn, number> = {
   nobody: 3,
 };
 
-export const productLabel: Record<CreditProductId, string> = {
-  express: "Экспресс-кредит",
-  working_capital: "Оборотный кредит",
-  credit_line: "Кредитная линия",
-  investment: "Инвестиционный кредит",
-  cash_gap: "Кассовый разрыв",
-  equipment: "Оборудование",
-  development: "Развитие",
-};
+export const productLabel: Record<CreditProductId, string> = Object.fromEntries(
+  CREDIT_PRODUCTS.map((product) => [product.id, product.name]),
+) as Record<CreditProductId, string>;
 
 export const sourceLabel: Record<CheckSource, string> = {
   egrul: "ЕГРЮЛ/ЕГРИП",
@@ -121,6 +118,7 @@ export const recommendationLabel: Record<Recommendation, string> = {
   approve: "Одобрить на условиях клиента",
   counter_offer: "Одобрить на других условиях",
   request_info: "Запросить документы",
+  manual_review: "Оставить на ручной проверке",
   reject: "Отказать",
 };
 
