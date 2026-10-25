@@ -1,12 +1,23 @@
 import hashlib
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Literal, Optional
 
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-from .ml_pipeline import drift_report, evaluate_model, synthetic_pd_dataset
+from .ml_pipeline import (
+    calibrate,
+    bootstrap_confidence_interval,
+    drift_report,
+    evaluate_model,
+    fit_isotonic_calibrator,
+    select_challenger,
+    synthetic_pd_dataset,
+    temporal_split,
+)
+from training.train_public_proxy import load_artifact, predict as predict_public_proxy
 
 app = FastAPI(title="alfa-future scoring", version="0.1.0")
 
@@ -46,6 +57,14 @@ class ScoreRequest(BaseModel):
     documentsComplete: bool = False
     consentBki: bool = False
     collateralConfirmed: bool = False
+
+
+class PublicProxyScoreRequest(BaseModel):
+    revenue: float = Field(gt=0)
+    dti_n: float = Field(ge=0)
+    loan_amnt: float = Field(gt=0)
+    fico_n: float = Field(ge=300, le=850)
+    experience_c: float = Field(ge=0, le=1)
 
 
 class ScoreFactor(BaseModel):
@@ -367,12 +386,93 @@ def score(req: ScoreRequest) -> ScoreResponse:
 
 @app.get("/v1/models/evaluation")
 def model_evaluation() -> dict[str, object]:
-    """Регрессионный champion/challenger отчёт для демо и мониторинга."""
-    scores, labels = synthetic_pd_dataset(size=200, seed=7)
-    probabilities = [max(0.01, min(0.5, 0.35 - value * 0.003)) for value in scores]
-    baseline = evaluate_model("rules-baseline-v2", labels, probabilities, scores)
-    challenger = evaluate_model("calibrated-challenger-v1", labels, probabilities, scores)
-    return {"champion": baseline.__dict__, "challenger": challenger.__dict__, "selected": baseline.model}
+    """Temporal champion/challenger evaluation с безопасным quality gate."""
+    proxy_artifact = load_artifact(Path(__file__).resolve().parent.parent / "artifacts" / "public-proxy-logistic.json")
+    scores, labels = synthetic_pd_dataset(size=600, seed=7)
+    split = temporal_split(scores, labels)
+    champion_probabilities = [max(0.01, min(0.5, 0.35 - value * 0.003)) for value in split.test]
+    calibrator = fit_isotonic_calibrator(split.calibration, split.calibration_labels)
+    challenger_probabilities = [calibrate(value, calibrator) for value in split.test]
+    champion = evaluate_model("rules-baseline-v2", split.test_labels, champion_probabilities, split.test)
+    challenger = evaluate_model(
+        "calibrated-challenger-v1", split.test_labels, challenger_probabilities, split.test
+    )
+    selection = select_challenger(champion, challenger)
+    return {
+        "split": {
+            "train": len(split.train),
+            "calibration": len(split.calibration),
+            "test": len(split.test),
+        },
+        "champion": champion.__dict__,
+        "challenger": challenger.__dict__,
+        "public_proxy": {
+            "model": proxy_artifact.model,
+            "version": proxy_artifact.version,
+            "dataset_scope": proxy_artifact.dataset_scope,
+            "production_eligible": proxy_artifact.production_eligible,
+            "validation": proxy_artifact.validation,
+        },
+        "confidence_intervals": {
+            "champion_brier": bootstrap_confidence_interval(
+                split.test_labels, champion_probabilities, metric="brier").__dict__,
+            "challenger_brier": bootstrap_confidence_interval(
+                split.test_labels, challenger_probabilities, metric="brier").__dict__,
+        },
+        "selection": selection.__dict__,
+        "selected": selection.selected,
+    }
+
+
+@app.get("/v1/models/registry")
+def model_registry() -> dict[str, object]:
+    """Минимальный registry contract; deployment хранит фактические artefacts отдельно."""
+    proxy_artifact = load_artifact(Path(__file__).resolve().parent.parent / "artifacts" / "public-proxy-logistic.json")
+    return {
+        "champion": {
+            "name": "rules-baseline-v2",
+            "version": "2026-10-23",
+            "status": "active",
+            "calibration": "demonstration-only",
+        },
+        "challengers": [
+            {
+                "name": "calibrated-challenger-v1",
+                "version": "synthetic-evaluation",
+                "status": "shadow",
+                "calibration": "isotonic",
+            },
+            {
+                "name": "public-proxy-logistic-v1",
+                "version": "2026-10-24",
+                "status": "shadow",
+                "calibration": "not-calibrated-for-russian-sme",
+                "dataset_scope": "public_proxy:lendingclub_granting_model",
+                "production_eligible": False,
+                "validation": proxy_artifact.validation,
+            },
+        ],
+        "policy": "policy-baseline-v2",
+        "fail_safe": "champion + manual_review on validation or dependency failure",
+    }
+
+
+@app.post("/v1/models/public-proxy/score")
+def public_proxy_score(payload: PublicProxyScoreRequest) -> dict[str, object]:
+    """Shadow-only inference against the trained public proxy artifact."""
+    artifact_path = Path(__file__).resolve().parent.parent / "artifacts" / "public-proxy-logistic.json"
+    artifact = load_artifact(artifact_path)
+    probability, contributions = predict_public_proxy(artifact, payload.model_dump())
+    return {
+        "model": artifact.model,
+        "model_version": artifact.version,
+        "dataset_scope": artifact.dataset_scope,
+        "production_eligible": artifact.production_eligible,
+        "validation": artifact.validation,
+        "pd": round(probability, 6),
+        "contributions": contributions,
+        "autonomy_mode": "shadow",
+    }
 
 
 @app.post("/v1/models/drift")

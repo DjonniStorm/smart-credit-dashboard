@@ -91,6 +91,13 @@ Scoring service остаётся заменяемым: baseline, обученн�
 
 ## Переход к ML
 
+В текущем коде реализован безопасный evaluation scaffold: temporal split без перемешивания,
+отдельный calibration split, isotonic challenger, bounded metrics, PR-AUC/KS,
+детерминированные bootstrap confidence intervals и quality gate. Пока нет
+размеченного production-датасета, endpoint оценки намеренно выбирает champion при любой
+неуверенности и оставляет challenger в shadow. Этот scaffold не считается обученной моделью и
+не используется для автоматического одобрения.
+
 ### Этап 1: качество данных
 
 - единая схема feature snapshot;
@@ -128,6 +135,11 @@ Scoring service остаётся заменяемым: baseline, обученн�
 - operations: manual-review rate, SLA, source timeout rate;
 - stability: PSI/CSI по ключевым признакам и drift PD;
 - fairness: разница TPR/FPR и approval rate по разрешённым группам. Чувствительные признаки не используются для решения; группы применяются только для аудита.
+
+В коде пока нет production training job, model artifact registry, group fairness отчёта и
+автоматического drift worker: эти части требуют реального датасета, target definition,
+разрешённых audit-групп и runtime-интеграции. Synthetic dataset используется только для
+регрессионного smoke-теста и не является доказательством качества кредитной модели.
 
 Порог качества фиксируется до эксперимента. Нельзя принимать модель по AUC при деградации calibration или росте отказов в отдельной группе.
 

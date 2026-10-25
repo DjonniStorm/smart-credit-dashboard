@@ -15,6 +15,8 @@ FROM python:3.12-slim AS runner
 WORKDIR /app
 COPY --from=build /app/.venv ./.venv
 COPY apps/scoring/app ./app
+COPY apps/scoring/training ./training
+COPY apps/scoring/artifacts ./artifacts
 
 ENV PATH="/app/.venv/bin:$PATH"
 RUN useradd --uid 1001 app
