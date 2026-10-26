@@ -17,6 +17,10 @@ function hashContent(content) {
   return createHash("sha256").update(content).digest("hex");
 }
 
+function hashSource(source) {
+  return hashContent(source.replace(/\r\n?/g, "\n"));
+}
+
 function readGeneratedMap(source, exportName) {
   const escapedName = exportName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const section = source.match(
@@ -74,7 +78,7 @@ async function main() {
       fs.readFile(sourcePath, "utf8"),
       fs.readFile(svgPath, "utf8"),
     ]);
-    const sourceHash = hashContent(source);
+    const sourceHash = hashSource(source);
     const outputHash = hashContent(svg);
 
     if (sourceHash !== entry.sourceHash) {

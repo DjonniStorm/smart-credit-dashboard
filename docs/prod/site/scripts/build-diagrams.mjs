@@ -47,7 +47,13 @@ const diagrams = [
 ];
 
 function hashSource(source) {
-  return createHash("sha256").update(source).digest("hex");
+  return createHash("sha256")
+    .update(source.replace(/\r\n?/g, "\n"))
+    .digest("hex");
+}
+
+function hashOutput(output) {
+  return createHash("sha256").update(output).digest("hex");
 }
 
 function escapeXml(value) {
@@ -205,7 +211,7 @@ async function renderDiagram(diagram, outputRoot, puppeteerConfigPath) {
     source: `${diagram.id}.mmd`,
     output: `${diagram.id}.svg`,
     sourceHash,
-    outputHash: hashSource(svg),
+    outputHash: hashOutput(svg),
     title: diagram.title,
     description: diagram.description,
   };

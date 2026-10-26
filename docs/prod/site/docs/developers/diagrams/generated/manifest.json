@@ -6,8 +6,8 @@
       "id": "component-overview",
       "source": "component-overview.mmd",
       "output": "component-overview.svg",
-      "sourceHash": "7294165c8eebf1182cddf6c92ff8aee6416c3e143221816943e329bd83eacb06",
-      "outputHash": "09cf81f74d91919d35a67ddedb07012f0426866ba20cb65c46b6e6b61cbcc756",
+      "sourceHash": "3e350ffc7ca72abbc62577e957209c528df6f20d26bd234de11ea16f28d8e917",
+      "outputHash": "d3706dbf9404ac0aa2e0dce3cad34a11f256d474713dad515b223fd2fa8b8da5",
       "title": "Component overview",
       "description": "C4 Level 2: предприниматель и сотрудник банка работают через два web-интерфейса, API вызывает scoring и хранит данные в PostgreSQL."
     },
