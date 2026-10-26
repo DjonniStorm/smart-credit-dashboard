@@ -19,6 +19,22 @@ services:
       edge:
         aliases:
           - alfa-backoffice
+  docs:
+    build:
+      context: ../../docs/prod/site
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost/"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    networks:
+      default: {}
+      edge:
+        aliases:
+          - alfa-docs
 
 networks:
   edge:
