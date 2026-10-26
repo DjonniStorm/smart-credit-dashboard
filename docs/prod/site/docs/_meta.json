@@ -1,5 +1,19 @@
 [
-  "index",
+  {
+    "type": "file",
+    "name": "index",
+    "label": "Главная"
+  },
+  {
+    "type": "file",
+    "name": "quick-start",
+    "label": "Быстрый старт"
+  },
+  {
+    "type": "dir-section-header",
+    "name": "submission",
+    "label": "Для жюри"
+  },
   {
     "type": "dir-section-header",
     "name": "entrepreneur",

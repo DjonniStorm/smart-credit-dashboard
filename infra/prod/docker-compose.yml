@@ -25,6 +25,19 @@ services:
       timeout: 3s
       retries: 30
 
+  demo-seed:
+    profiles: [seed]
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      target: seed
+    restart: "no"
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-alfa}:${POSTGRES_PASSWORD:-alfa}@postgres:5432/${POSTGRES_DB:-alfa}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   scoring:
     build:
       context: ../..

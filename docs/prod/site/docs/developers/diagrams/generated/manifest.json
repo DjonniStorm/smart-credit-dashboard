@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "generatedBy": "@mermaid-js/mermaid-cli@12.0.0",
+  "diagrams": [
+    {
+      "id": "component-overview",
+      "source": "component-overview.mmd",
+      "output": "component-overview.svg",
+      "sourceHash": "3e350ffc7ca72abbc62577e957209c528df6f20d26bd234de11ea16f28d8e917",
+      "outputHash": "d3706dbf9404ac0aa2e0dce3cad34a11f256d474713dad515b223fd2fa8b8da5",
+      "title": "Component overview",
+      "description": "C4 Level 2: предприниматель и сотрудник банка работают через два web-интерфейса, API вызывает scoring и хранит данные в PostgreSQL."
+    },
+    {
+      "id": "api-internals",
+      "source": "api-internals.mmd",
+      "output": "api-internals.svg",
+      "sourceHash": "b99d4b5f79a44f616d24cd280f1fb6b832739ce5ac2325dff07ba73cda049b26",
+      "outputHash": "04e65095144c9b1e6e7071b2c5a2084a61218eb707547508425afecc994fde23",
+      "title": "API internals",
+      "description": "C4 Level 3: API boundary, guards, workflow, QueueWorkerService, scoring_jobs, decision engine, audit и reports."
+    },
+    {
+      "id": "repository",
+      "source": "repository.mmd",
+      "output": "repository.svg",
+      "sourceHash": "49f4e94b214332de8f2605781557931d5686faab4fda1d7d15d9dbcc959547c6",
+      "outputHash": "b9e091ce4267d6f2d07c48f1f41adb4bdcd219d737204123b4149d91b16d27ee",
+      "title": "Repository and package view",
+      "description": "Mermaid flowchart: workspace applications, shared packages, tooling, generated OpenAPI flow и отдельный docs-site."
+    },
+    {
+      "id": "deployment",
+      "source": "deployment.mmd",
+      "output": "deployment.svg",
+      "sourceHash": "729856a11ff3f0689c09bc83b187a24a2ab304673196df097378276a2fafae30",
+      "outputHash": "d697809d77a3702dc244e7e82f548bd6a45667cacdaa1974d20d3f267057a988",
+      "title": "Deployment view",
+      "description": "C4 Deployment: browser actors, Docker host, Compose network, runtime containers, volumes и monitoring profile."
+    }
+  ]
+}

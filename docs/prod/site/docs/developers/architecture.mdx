@@ -1,20 +1,52 @@
+import { ArchitectureDiagrams } from "../../theme/ArchitectureDiagrams";
+
 # Архитектура
 
-Система состоит из двух интерфейсов, API и отдельного сервиса scoring. Интерфейсы обращаются к серверной части по HTTP, а API владеет состоянием заявки и хранением данных.
+Заявка начинается в кабинете предпринимателя, переходит в Backoffice для проверки и проходит через API до финального решения. Ниже видно, кто отвечает за каждый участок пути, где хранится состояние и как этот контур развёрнут. Диаграммы открываются по отдельности, поэтому каждую связь можно разобрать без перегруженного общего полотна.
 
-```text
-Кабинет предпринимателя ── HTTP ──┐
-                                  ├── API ── PostgreSQL
-Банковское АРМ ────────── HTTP ──┘    ├── фоновые задачи и проверки
-                                      └── scoring
+<ArchitectureDiagrams />
+
+## Как читать набор
+
+### Component overview, C4 Level 2
+
+Этот срез отвечает на вопрос «кто ведёт заявку». Предприниматель создаёт её в Client Web, сотрудник банка проверяет данные в Backoffice Web. Оба интерфейса обращаются к API по HTTP/JSON. API отправляет запрос в Scoring Service через `POST /v1/score`, получает score, recommendation и объяснение результата, затем применяет decision engine и сохраняет ход заявки в PostgreSQL.
+
+Полный ответ scoring включает factors, reasons, next actions, explainability и model metadata. Docker, порты, volumes и monitoring здесь не показаны: они нужны для deployment view, а не для разделения ответственности компонентов.
+
+### API internals, C4 Level 3
+
+Здесь видно, что происходит после HTTP-запроса. HTTP boundary пропускает команду через auth/session guards, command handlers передают её в application workflow, а state machine проверяет допустимый переход. `QueueWorkerService` работает внутри API и забирает записи из PostgreSQL `scoring_jobs` с блокировкой строки. Отдельного брокера и отдельного worker-контейнера нет.
+
+Decision engine сопоставляет результат scoring с autonomy policy. Workflow store выполняет транзакционную запись, application events и audit оставляют историю перехода, а reports готовят данные для просмотра сотрудником банка.
+
+### Repository and package view
+
+Эта схема показывает не сетевой маршрут, а границы кода. `apps/client`, `apps/backoffice` и `apps/api` используют общие contracts, SDK, UI и i18n через workspace imports. `apps/scoring` тоже входит в workspace, но не импортирует `packages/*`.
+
+OpenAPI-документ создаётся из контроллеров Nest API в `packages/sdk/openapi.json`; затем `openapi-ts` генерирует SDK. `packages/contracts` содержит общие типы и импортируется приложениями, но не является источником OpenAPI. ESLint, TypeScript config и root tooling обслуживают сборку, а не runtime. `docs/prod/site` находится вне pnpm workspace и имеет собственные зависимости.
+
+### Deployment view, C4 Deployment
+
+Здесь показан путь внешнего запроса. Браузер приходит на Caddy, Caddy отправляет UI в client или backoffice, а API и Swagger в api. Внутри Compose client и backoffice используют Next rewrite `/api/*`, API обращается к scoring и PostgreSQL.
+
+Monitoring profile включает Prometheus, Grafana, node-exporter, cAdvisor и blackbox-exporter. Prometheus собирает `/metrics` API и метрики инфраструктуры, blackbox проверяет client, backoffice, API `/health` и scoring `/health`, Grafana читает Prometheus HTTP API. Скрин Grafana будет рядом с этим срезом.
+
+## Ограничения текущего контура
+
+- Redis, RabbitMQ, Kafka, object storage, standalone mocks и отдельный worker не являются текущими сервисами Compose и не показаны.
+- API имеет локальный filesystem adapter, но он не используется текущим document workflow. Object storage не развёрнут.
+- Старые target-state описания worker и object storage в `docs/ARCHITECTURE.md` относятся к будущему состоянию и не должны читаться как текущий deployment.
+- Диаграмма состояний заявки остаётся custom SVG: её задача показать переходы и роли, а не инфраструктурные границы.
+
+## Сборка диаграмм
+
+Исходники лежат в `docs/developers/diagrams/*.mmd`, а committed SVG и manifest в `docs/developers/diagrams/generated/`.
+
+```bash
+npm run diagrams:build
+npm run diagrams:check
+npm run build
 ```
 
-## Границы компонентов
-
-- **Кабинет предпринимателя** собирает данные, документы и ответы клиента. Источник состояния заявки находится на стороне API.
-- **Банковское АРМ** показывает очередь и отправляет действия сотрудника.
-- **API** проверяет доступ, выполняет допустимые переходы, сохраняет данные и историю действий.
-- **Scoring** рассчитывает результат и объяснение. Сервис не меняет состояние заявки самостоятельно.
-- **PostgreSQL** хранит заявки и связанные с ними сведения.
-
-В демонстрационном окружении часть внешних проверок и переходов смоделирована. Эта схема описывает границы компонентов проекта, а не SLA размещённого сервиса.
+`diagrams:build` запускает pinned `@mermaid-js/mermaid-cli` и обновляет SVG, manifest и TypeScript-индекс. `diagrams:check` повторяет рендер и сравнивает его с сохранёнными файлами. Эти команды нужны при изменении диаграмм и выполняются в GitHub CI. Сборка Vercel просто собирает Rspress из готовых SVG и индекса, сохранённых в Git.

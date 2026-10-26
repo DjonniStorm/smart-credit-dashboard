@@ -1,0 +1,54 @@
+%% Smart Credit Dashboard | repository and package view
+flowchart LR
+  classDef app fill:#f7e4e5,stroke:#bd252d,color:#202124,stroke-width:1.5px
+  classDef package fill:#eeeae6,stroke:#746e68,color:#202124,stroke-width:1.2px
+  classDef tooling fill:#f3f1ee,stroke:#746e68,color:#202124,stroke-dasharray:5 4
+  classDef generated fill:#fff8df,stroke:#a56a00,color:#202124,stroke-width:1.2px
+  classDef external fill:#f3f1ee,stroke:#746e68,color:#202124,stroke-dasharray:7 4
+
+  subgraph apps["apps/* | workspace applications"]
+    client["apps/client<br/>Next.js"]:::app
+    backoffice["apps/backoffice<br/>Next.js"]:::app
+    api["apps/api<br/>NestJS"]:::app
+    scoring["apps/scoring<br/>Python + FastAPI"]:::app
+  end
+
+  subgraph packages["packages/* | compile-time shared packages"]
+    contracts@{ shape: folder, label: "packages/contracts<br/>API contracts" }
+    sdk@{ shape: folder, label: "packages/sdk<br/>generated API client" }
+    ui@{ shape: folder, label: "packages/ui<br/>shared UI" }
+    i18n@{ shape: folder, label: "packages/i18n<br/>localization" }
+    class contracts,sdk,ui,i18n package
+  end
+
+  subgraph configs["Configs and root tooling"]
+    eslint["packages/eslint-config<br/>lint config"]:::tooling
+    typescript["packages/typescript-config<br/>TS config"]:::tooling
+    root_tools["root tooling<br/>pnpm + turbo + CI"]:::tooling
+  end
+
+  subgraph docs_site["External boundary: docs/prod/site"]
+    docs["docs/prod/site<br/>Rspress documentation"]:::external
+    mmd["*.mmd<br/>source diagrams"]:::generated
+    svg@{ shape: doc, label: "generated/*.svg<br/>build artifact" }
+    class svg generated
+  end
+
+  client -. "workspace import" .-> contracts
+  client -. "workspace import" .-> sdk
+  client -. "workspace import" .-> ui
+  client -. "workspace import" .-> i18n
+  backoffice -. "workspace import" .-> contracts
+  backoffice -. "workspace import" .-> sdk
+  backoffice -. "workspace import" .-> ui
+  backoffice -. "workspace import" .-> i18n
+  api -. "workspace import" .-> contracts
+  openapi@{ shape: notch-rect, label: "packages/sdk/openapi.json<br/>generated OpenAPI document" }
+  class openapi generated
+  api -. "generate from Nest controllers" .-> openapi
+  openapi -. "openapi-ts" .-> sdk
+  root_tools -. "tooling dependencies" .-> eslint
+  root_tools -. "tooling dependencies" .-> typescript
+  docs -. "docs-site tooling" .-> mmd
+  mmd -. "diagrams:build" .-> svg
+  docs -. "renders committed SVG" .-> svg

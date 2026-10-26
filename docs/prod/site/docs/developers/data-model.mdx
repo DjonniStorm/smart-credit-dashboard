@@ -1,0 +1,30 @@
+---
+title: Модель данных
+description: Основные таблицы PostgreSQL и связи в текущем workflow заявки.
+---
+
+# Модель данных
+
+API хранит состояние заявки и историю действий в PostgreSQL. Ниже перечислены таблицы из действующих SQL-миграций `apps/api/src/common/database/migrations/`; JSONB-поля содержат снимки решений и действий, а не отдельные сервисы.
+
+| Таблица | Ключ и связь | Что хранит |
+| --- | --- | --- |
+| `applications` | `id`; уникальный `number` | Компания (`inn`), продукт, сумма, срок, текущий `status`, scoring и решение. Дополнительные колонки хранят предложение, запрос сведений, паузу, назначение сотрудника и сделку. |
+| `scoring_jobs` | `id`; `application_id → applications.id` | Очередь расчёта внутри API: статус, попытки, результат и ключ идемпотентности. Уникальна пара `application_id`, `idempotency_key`. |
+| `source_checks` | `id`; `job_id → scoring_jobs.id` | Результат или ошибка проверки источника для конкретного задания. |
+| `application_events` | `id`; `application_id → applications.id` | Неизменяемая история событий заявки: тип, JSONB-данные и время. |
+| `application_comments` | `id`; `application_id → applications.id` | Комментарии сотрудника с видимостью и автором. |
+| `idempotency_keys` | Составной ключ `scope`, `key` | Привязка повторной команды к уже созданному ресурсу. |
+| `autonomy_policies` | `product_id` | Настройки автономности продукта и их редакция. |
+| `autonomy_policy_audits` | `id`; необязательный `application_id → applications.id` | Кто и почему изменил уровень автономности, с метриками до и после. |
+| `company_source_checks` | `inn`, `source` | Время последней проверки источника по компании. |
+| `company_bki_consents` | `inn` | Дата согласия на обращение к БКИ. |
+| `manager_report_activity` | `report_seq`; уникальный `event_id` | Проекция событий для отчётов сотрудника банка. |
+
+`scoring_jobs` обрабатывает `QueueWorkerService` внутри API. Отдельного брокера сообщений нет. `hold` в `applications` фиксирует паузу или блокировку поверх бизнес-статуса; встречное предложение хранится как `counter_offer`.
+
+Демо-аккаунты, сессии, сотрудники и источники сохраняются скриптом `apps/api/scripts/seed-demo.ts` в таблицах `demo_accounts`, `demo_sessions`, `demo_employees` и `demo_sources`. Это данные демонстрационного входа и имитации источников, а не внешние интеграции.
+
+Созданная заявка сразу получает сохранённый статус `in_review`. Публичное представление показывает его как `UNDER_REVIEW`; этапы `SUBMITTED` и `VALIDATING` существуют в [модели маршрута](/submission/state-machine-demo), но не добавляют строку в таблицу статусов при создании заявки.
+
+Схему можно сверить с SQL-миграциями в [репозитории](https://github.com/DjonniStorm/smart-credit-dashboard/tree/dev/apps/api/src/common/database/migrations). API и PostgreSQL остаются единственным источником состояния заявки.

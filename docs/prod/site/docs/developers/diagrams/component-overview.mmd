@@ -1,0 +1,19 @@
+%% Smart Credit Dashboard | C4 Level 2 component overview
+C4Container
+title Smart Credit Dashboard | Component overview
+
+Person(entrepreneur, "Предприниматель", "Создаёт заявку и отвечает на запросы")
+Person(bank_employee, "Сотрудник банка", "Проверяет заявку и принимает решение")
+
+Container(client_web, "Client Web", "Next.js", "Кабинет предпринимателя")
+Container(backoffice_web, "Backoffice Web", "Next.js", "АРМ сотрудника банка")
+Container(api, "API", "NestJS + TypeORM", "Владеет состоянием заявки, decision engine и audit")
+Container(scoring, "Scoring Service", "Python + FastAPI", "Возвращает score, recommendation и explainability metadata")
+ContainerDb(postgres, "PostgreSQL", "PostgreSQL", "Заявки, scoring jobs, workflow и audit")
+
+Rel(entrepreneur, client_web, "Работает в")
+Rel(bank_employee, backoffice_web, "Работает в")
+Rel(client_web, api, "HTTP/JSON")
+Rel(backoffice_web, api, "HTTP/JSON")
+Rel(api, scoring, "POST /v1/score; score + explanation")
+Rel(api, postgres, "SQL / TypeORM")

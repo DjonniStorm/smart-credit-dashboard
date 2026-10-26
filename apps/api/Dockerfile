@@ -14,6 +14,10 @@ COPY --from=prune /app/out/full/ .
 RUN turbo run build --filter=api
 RUN pnpm --filter=api deploy --prod --legacy /prod/api
 
+# Separate one-shot image for creating reproducible demo data in Compose.
+FROM build AS seed
+CMD ["pnpm", "--filter", "api", "db:seed"]
+
 FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production     PORT=4000

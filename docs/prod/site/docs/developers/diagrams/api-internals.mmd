@@ -1,0 +1,53 @@
+%% Smart Credit Dashboard | C4 Level 3 API internals
+C4Component
+UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+title API internals | C4 Level 3
+
+Container_Boundary(api_boundary, "API boundary") {
+  Container_Boundary(request_path, "Request path") {
+    Component(http_api, "HTTP / API boundary", "NestJS controllers", "Exposes commands, queries, health and metrics")
+    Component(auth_guards, "Auth / session guards", "NestJS guards", "Checks identity, session and role")
+    Component(command_handlers, "Command handlers", "NestJS handlers", "Coordinates application commands")
+    Component(workflow, "Application workflow / state machine", "Application service", "Validates allowed transitions")
+  }
+
+  Container_Boundary(scoring_path, "Scoring path") {
+    Component(queue_worker, "QueueWorkerService", "NestJS service", "Claims scoring_jobs rows inside API")
+    Component(scoring_client, "Scoring HTTP client", "HTTP client", "Calls Scoring Service and maps the response")
+  }
+
+  Container_Boundary(decision_path, "Decision and persistence") {
+    Component(decision_engine, "Decision engine", "Domain service", "Owns the final decision from score and policy inputs")
+    Component(autonomy_policy, "Autonomy policy", "Domain policy", "Limits which decisions can be automated")
+    Component(demo_store, "DemoDataStore + company checks", "Application service", "Provides demo data and verification checks")
+    Component(workflow_store, "Workflow store / transaction", "TypeORM", "Persists state and transactional updates")
+    Component(events_audit, "Application events + audit", "Domain events", "Records state changes and decision evidence")
+    Component(reports, "Reports", "Application queries", "Builds review and decision reports")
+  }
+}
+
+Container_Boundary(postgres_boundary, "PostgreSQL tables") {
+  ComponentDb(scoring_jobs, "scoring_jobs", "PostgreSQL table", "Durable scoring work queue owned by API")
+  ComponentDb(application_db, "PostgreSQL", "PostgreSQL", "Applications, workflow, documents and audit")
+}
+
+Container_Ext(scoring_service, "Scoring Service", "HTTP service", "Returns score, recommendation and explainability metadata")
+
+Rel_R(http_api, auth_guards, "auth")
+Rel_R(auth_guards, command_handlers, "command")
+Rel_R(command_handlers, workflow, "transition")
+Rel_D(command_handlers, demo_store, "company checks")
+Rel_D(workflow, scoring_jobs, "enqueue")
+Rel_R(scoring_jobs, queue_worker, "claim row")
+Rel_D(scoring_jobs, application_db, "table")
+Rel_R(queue_worker, scoring_client, "run job")
+Rel_R(scoring_client, scoring_service, "POST /v1/score; score and metadata")
+Rel_D(scoring_client, decision_engine, "score result")
+Rel_R(decision_engine, autonomy_policy, "policy limits")
+
+Rel_D(workflow, workflow_store, "transaction")
+Rel_R(workflow_store, application_db, "SQL / TypeORM")
+Rel_D(workflow, events_audit, "state event")
+Rel_R(events_audit, workflow_store, "audit")
+Rel_D(http_api, reports, "report query")
+Rel_R(reports, workflow_store, "report data")
