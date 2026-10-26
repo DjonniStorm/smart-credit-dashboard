@@ -40,7 +40,6 @@ import { QueryError } from "@/shared/ui/query-state";
 import classes from "./application-detail.module.css";
 import { DecisionCard } from "./decision-card";
 import { StagePanel } from "./stage-panel";
-import { TermsSandbox } from "./terms-sandbox";
 
 const t = tx.application;
 
@@ -138,8 +137,6 @@ function Detail({ app }: { app: Application }) {
       <HealthIndices app={app} />
 
       <UrgentRequest app={app} />
-
-      {catalog.data && <TermsSandbox app={app} catalog={catalog.data} />}
 
       <div className={classes.layout}>
         <Stack gap="lg" className={classes.main}>

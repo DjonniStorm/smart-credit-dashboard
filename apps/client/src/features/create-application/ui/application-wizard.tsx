@@ -384,6 +384,15 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
       payment={preview?.payment ?? null}
       errors={errors}
       onChange={(next) => patch({ financials: next })}
+      terms={{
+        purpose: draft.purpose,
+        productId: draft.productId,
+        amount: draft.amount,
+        termMonths: draft.termMonths,
+        products: available,
+        keyRate: catalog.data.keyRate,
+        onChange: patch,
+      }}
     />,
 
     <DocumentsStep

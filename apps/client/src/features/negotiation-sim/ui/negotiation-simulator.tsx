@@ -9,7 +9,11 @@ import {
 } from "@mantine/core";
 import { useState } from "react";
 
-import type { Application, ProductCatalog } from "@repo/contracts/cabinet";
+import type {
+  CreditPurpose,
+  Financials,
+  ProductCatalog,
+} from "@repo/contracts/cabinet";
 import {
   type NegotiationOption,
   type NegotiationPriority,
@@ -50,14 +54,16 @@ function sameTerms(a: SandboxTerms, b: SandboxTerms) {
  * пересчитывается на месте.
  */
 export function NegotiationSimulator({
-  app,
+  purpose,
+  financials,
   catalog,
   current,
   currentPayment,
   onApply,
 }: {
-  app: Application;
-  catalog: ProductCatalog;
+  purpose: CreditPurpose;
+  financials: Financials;
+  catalog: Pick<ProductCatalog, "products" | "keyRate">;
   current: SandboxTerms;
   currentPayment: number;
   onApply: (option: NegotiationOption) => void;
@@ -70,11 +76,11 @@ export function NegotiationSimulator({
   const options = priority
     ? suggestNegotiationOptions({
         priority,
-        purpose: app.purpose,
+        purpose,
         current: base.terms,
         products: catalog.products,
         keyRate: catalog.keyRate,
-        financials: app.financials,
+        financials,
       })
     : [];
 
