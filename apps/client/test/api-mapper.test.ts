@@ -153,3 +153,30 @@ test("REJECTED банком: решение банка остаётся отка
   assert.equal(mapped.decision.outcome, "rejected");
   assert.match(mapped.decision.summary, /Доходы/);
 });
+
+test("события API попадают в историю заявки без id и в исходном порядке", () => {
+  const mapped = toCabinetApplication(
+    apiApp({
+      status: "OFFERED",
+      events: [
+        {
+          id: "e2",
+          at: "2026-10-05T12:00:00Z",
+          text: "Заявка одобрена",
+          actor: "bank",
+        },
+        {
+          id: "e1",
+          at: "2026-10-04T10:00:00Z",
+          text: "Заявка создана",
+          actor: "system",
+        },
+      ],
+    }),
+    session,
+  );
+  assert.deepEqual(mapped.events, [
+    { at: "2026-10-05T12:00:00Z", text: "Заявка одобрена", actor: "bank" },
+    { at: "2026-10-04T10:00:00Z", text: "Заявка создана", actor: "system" },
+  ]);
+});

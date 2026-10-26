@@ -110,6 +110,15 @@ export const apiScoringSchema = z.object({
 });
 export type ApiScoring = z.infer<typeof apiScoringSchema>;
 
+/** Публичное событие заявки для кабинета клиента: безопасный текст и автор. */
+export const apiClientEventSchema = z.object({
+  id: z.string(),
+  at: z.string(),
+  text: z.string(),
+  actor: z.enum(["client", "bank", "system"]),
+});
+export type ApiClientEvent = z.infer<typeof apiClientEventSchema>;
+
 export const apiDecisionRuleSchema = z.object({
   id: z.string(),
   outcome: z.enum(["pass", "attention", "fail"]),
@@ -223,6 +232,8 @@ export const apiApplicationSchema = z.object({
   urgentBy: urgentSourceSchema.shape.by.nullable().default(null),
   /** Комментарии сотрудника с видимостью client; внутренние сюда не попадают. */
   clientComments: z.array(applicationCommentSchema).default([]),
+  /** Публичные события заявки: кто что сделал, когда. Пусто для новых заявок. */
+  events: z.array(apiClientEventSchema).default([]),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

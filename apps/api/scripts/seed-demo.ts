@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { Pool } from "pg";
 
 import {
@@ -6,6 +8,24 @@ import {
   demoEmployees,
   demoSources,
 } from "../src/common/demo-data/demo-data.ts";
+
+// Сид запускается tsx-ом мимо Nest, поэтому .env сам не читается. Подтягиваем локальный .env вручную.
+function loadEnvFromFile(): void {
+  try {
+    const text = readFileSync(new URL("../.env", import.meta.url), "utf8");
+    for (const line of text.split("\n")) {
+      const match = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/.exec(line);
+      if (match && process.env[match[1]] === undefined) {
+        const value = match[2].replace(/^(["'])(.*)\1$/, "$2");
+        process.env[match[1]] = value;
+      }
+    }
+  } catch {
+    // Нет .env — остаются переменные окружения или дефолты.
+  }
+}
+
+loadEnvFromFile();
 
 const databaseUrl =
   process.env.DATABASE_URL ?? "postgres://alfa:alfa@localhost:5432/alfa";
@@ -136,14 +156,219 @@ async function seedApplications(
       status: "rejected",
     },
   ];
+
+  /**
+   * Результаты скоринга seed-заявок. Значения получены вызовом scoring-сервиса
+   * (POST /v1/score) с теми же входными данными, которые отправляет проверка
+   * компании (источники demo_sources + сумма и срок заявки), и зафиксированы
+   * здесь, чтобы демо показывало индексы без запуска конвейера.
+   */
+  const demoScoring: Record<
+    string,
+    { score: number; model: string; recommendation: string; details: unknown }
+  > = {
+    "seed-app-bakery": {
+      score: 75,
+      model: "rules-baseline-v2",
+      recommendation: "request_info",
+      details: {
+        score: 75,
+        model: "rules-baseline-v2",
+        modelVersion: "2026-10-23",
+        policyVersion: "policy-baseline-v2",
+        featureSnapshotId: "fs-c9b9610409e32c8b0a2e921c",
+        computedAt: "2026-10-05T12:00:00.000Z",
+        grade: "A",
+        riskBand: "low",
+        pd: 0.125,
+        healthIndex: 67,
+        readinessIndex: 25,
+        confidence: 0.35,
+        recommendation: "request_info",
+        reasons: ["Недостаточно подтверждённых данных"],
+        nextActions: [
+          "Предоставить: согласие на запрос БКИ, подтверждающие документы, годовая выручка",
+        ],
+        explainability: [
+          "Факторы отсортированы по абсолютному влиянию на baseline score",
+          "Рекомендация не заменяет решение сотрудника банка",
+        ],
+        missingSources: ["БКИ"],
+        autonomyMode: "shadow",
+        factors: [
+          {
+            id: "egrul_status",
+            label: "Статус ЕГРЮЛ",
+            value: "Действующее",
+            impact: 15,
+            confidence: 1,
+            source: "egrul",
+          },
+          {
+            id: "bki_overdue",
+            label: "Просрочки БКИ",
+            value: "Нет данных",
+            impact: 0,
+            confidence: 0,
+            source: "bki",
+          },
+          {
+            id: "fns_tax_debt",
+            label: "Налоговый долг",
+            value: "Задолженности нет",
+            impact: 10,
+            confidence: 1,
+            source: "fns",
+          },
+          {
+            id: "bki_active_loans",
+            label: "Активные кредиты",
+            value: "Нет данных",
+            impact: 0,
+            confidence: 0,
+            source: "bki",
+          },
+        ],
+      },
+    },
+    "seed-app-workshop": {
+      score: 60,
+      model: "rules-baseline-v2",
+      recommendation: "request_info",
+      details: {
+        score: 60,
+        model: "rules-baseline-v2",
+        modelVersion: "2026-10-23",
+        policyVersion: "policy-baseline-v2",
+        featureSnapshotId: "fs-9367269e2264af2362863947",
+        computedAt: "2026-10-14T09:00:00.000Z",
+        grade: "B",
+        riskBand: "moderate",
+        pd: 0.17,
+        healthIndex: 44,
+        readinessIndex: 25,
+        confidence: 0.35,
+        recommendation: "request_info",
+        reasons: ["Недостаточно подтверждённых данных"],
+        nextActions: [
+          "Предоставить: согласие на запрос БКИ, подтверждающие документы, годовая выручка",
+        ],
+        explainability: [
+          "Факторы отсортированы по абсолютному влиянию на baseline score",
+          "Рекомендация не заменяет решение сотрудника банка",
+        ],
+        missingSources: ["БКИ"],
+        autonomyMode: "shadow",
+        factors: [
+          {
+            id: "egrul_status",
+            label: "Статус ЕГРЮЛ",
+            value: "Действующее",
+            impact: 15,
+            confidence: 1,
+            source: "egrul",
+          },
+          {
+            id: "bki_overdue",
+            label: "Просрочки БКИ",
+            value: "Нет данных",
+            impact: 0,
+            confidence: 0,
+            source: "bki",
+          },
+          {
+            id: "fns_tax_debt",
+            label: "Налоговый долг",
+            value: "Долг 46,300 ₽",
+            impact: -5,
+            confidence: 1,
+            source: "fns",
+          },
+          {
+            id: "bki_active_loans",
+            label: "Активные кредиты",
+            value: "Нет данных",
+            impact: 0,
+            confidence: 0,
+            source: "bki",
+          },
+        ],
+      },
+    },
+    "seed-app-logistics": {
+      score: 75,
+      model: "rules-baseline-v2",
+      recommendation: "request_info",
+      details: {
+        score: 75,
+        model: "rules-baseline-v2",
+        modelVersion: "2026-10-23",
+        policyVersion: "policy-baseline-v2",
+        featureSnapshotId: "fs-316b626ad608bf4581ecea59",
+        computedAt: "2026-10-19T12:00:00.000Z",
+        grade: "A",
+        riskBand: "low",
+        pd: 0.125,
+        healthIndex: 67,
+        readinessIndex: 25,
+        confidence: 0.35,
+        recommendation: "request_info",
+        reasons: ["Недостаточно подтверждённых данных"],
+        nextActions: [
+          "Предоставить: согласие на запрос БКИ, подтверждающие документы, годовая выручка",
+        ],
+        explainability: [
+          "Факторы отсортированы по абсолютному влиянию на baseline score",
+          "Рекомендация не заменяет решение сотрудника банка",
+        ],
+        missingSources: ["БКИ"],
+        autonomyMode: "shadow",
+        factors: [
+          {
+            id: "egrul_status",
+            label: "Статус ЕГРЮЛ",
+            value: "Действующее",
+            impact: 15,
+            confidence: 1,
+            source: "egrul",
+          },
+          {
+            id: "bki_overdue",
+            label: "Просрочки БКИ",
+            value: "Нет данных",
+            impact: 0,
+            confidence: 0,
+            source: "bki",
+          },
+          {
+            id: "fns_tax_debt",
+            label: "Налоговый долг",
+            value: "Задолженности нет",
+            impact: 10,
+            confidence: 1,
+            source: "fns",
+          },
+          {
+            id: "bki_active_loans",
+            label: "Активные кредиты",
+            value: "Нет данных",
+            impact: 0,
+            confidence: 0,
+            source: "bki",
+          },
+        ],
+      },
+    },
+  };
+
   for (const application of applications) {
     const now = new Date("2026-10-24T00:00:00.000Z").toISOString();
     await client.query(
       `insert into applications(id,number,inn,product_id,amount,term_months,purpose,status,check_job_id,scoring,decision,created_at,updated_at)
-       values($1,$2,$3,$4,$5,$6,$7,$8,null,null,null,$9,$9)
+       values($1,$2,$3,$4,$5,$6,$7,$8,null,$10,null,$9,$9)
        on conflict(id) do update set status=excluded.status, product_id=excluded.product_id, amount=excluded.amount,
        term_months=excluded.term_months, purpose=excluded.purpose, check_job_id=excluded.check_job_id,
-       scoring=null, decision=null`,
+       scoring=excluded.scoring, decision=null`,
       [
         application.id,
         application.number,
@@ -154,6 +379,7 @@ async function seedApplications(
         application.purpose,
         application.status,
         now,
+        demoScoring[application.id],
       ],
     );
   }
@@ -183,11 +409,11 @@ async function seedApplications(
         set event_key = payload->>'seedKey'
       where event_key is null and payload->>'seedKey' is not null`,
   );
-    await client.query(`drop index if exists application_events_event_key_idx`);
-    await client.query(
-      `create unique index application_events_event_key_idx
+  await client.query(`drop index if exists application_events_event_key_idx`);
+  await client.query(
+    `create unique index application_events_event_key_idx
        on application_events(event_key)`,
-    );
+  );
   await client.query(
     `create unique index if not exists application_events_event_key_all_idx
        on application_events(event_key)`,
@@ -207,13 +433,13 @@ async function seedApplications(
         application.id,
         `seed-check-v1-${application.id}`,
         "2026-10-04T09:00:00.000Z",
-        { seeded: true },
+        demoScoring[application.id],
       ],
     );
-    await client.query(
-      `update applications set check_job_id=$2 where id=$1`,
-      [application.id, jobId],
-    );
+    await client.query(`update applications set check_job_id=$2 where id=$1`, [
+      application.id,
+      jobId,
+    ]);
   }
   await seedReportEvents(client);
 }
@@ -388,13 +614,7 @@ async function seedReportEvents(
          kind=excluded.kind,
          payload=excluded.payload,
          created_at=excluded.created_at`,
-      [
-        event.key,
-        event.applicationId,
-        event.kind,
-        event.payload,
-        event.at,
-      ],
+      [event.key, event.applicationId, event.kind, event.payload, event.at],
     );
   }
 }
