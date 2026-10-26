@@ -1307,9 +1307,9 @@
   gap: 0.75rem;
 }
 
-.architecture-diagrams__evidence-grid--single {
-  grid-template-columns: minmax(0, 1fr);
-  max-width: 32rem;
+.architecture-diagrams__evidence-grid--infrastructure {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: none;
 }
 
 .docs-screenshot-slot {
@@ -1333,6 +1333,17 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.docs-screenshot-slot--wide .docs-screenshot-slot__media {
+  display: block;
+  min-height: 0;
+  aspect-ratio: auto;
+}
+
+.docs-screenshot-slot--wide .docs-screenshot-slot__media img {
+  height: auto;
+  object-fit: contain;
 }
 
 .docs-screenshot-slot__placeholder {
@@ -1422,9 +1433,6 @@
     grid-template-columns: 1fr;
   }
 
-  .architecture-diagrams__evidence-grid--single {
-    max-width: none;
-  }
 }
 
 @media print {

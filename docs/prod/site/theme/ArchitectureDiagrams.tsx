@@ -3,7 +3,10 @@ import { useEffect, useState } from "react";
 import { ScreenshotSlot } from "./ScreenshotSlot";
 import backofficeWebStand from "./assets/stand/backoffice-web.png";
 import clientWebStand from "./assets/stand/client-web-application-status.png";
+import dockerDesktopStand from "./assets/stand/docker-desktop.png";
 import grafanaStand from "./assets/stand/grafana.png";
+import podmanDesktopStand from "./assets/stand/podman-desktop.png";
+import productionHostStand from "./assets/stand/production-host-containers.png";
 import swaggerStand from "./assets/stand/swagger.png";
 import {
   type ArchitectureDiagramId,
@@ -42,6 +45,7 @@ type EvidenceSlot = {
   alt: string;
   group: "web" | "infrastructure";
   src?: string;
+  layout?: "card" | "wide";
 };
 
 const externalLinks: ExternalLink[] = [
@@ -91,6 +95,24 @@ const evidenceSlots: EvidenceSlot[] = [
     src: swaggerStand,
   },
   {
+    id: "podman-desktop",
+    title: "Podman Desktop",
+    description:
+      "В Compose-группе alfa-future работают 11 контейнеров приложения и мониторинга.",
+    alt: "Podman Desktop со всеми 11 работающими контейнерами Compose-группы alfa-future",
+    group: "infrastructure",
+    src: podmanDesktopStand,
+  },
+  {
+    id: "docker-desktop",
+    title: "Docker Desktop",
+    description:
+      "В группе alfa-future запущены Caddy, клиентские интерфейсы, API, scoring и PostgreSQL.",
+    alt: "Docker Desktop с запущенными контейнерами production Compose-группы alfa-future",
+    group: "infrastructure",
+    src: dockerDesktopStand,
+  },
+  {
     id: "grafana",
     title: "Grafana",
     description:
@@ -98,6 +120,16 @@ const evidenceSlots: EvidenceSlot[] = [
     alt: "Grafana с проверками доступности сервисов и графиками загрузки хоста",
     group: "infrastructure",
     src: grafanaStand,
+  },
+  {
+    id: "production-host",
+    title: "Контейнеры на сервере",
+    description:
+      "На сервере client, backoffice, API, PostgreSQL и scoring имеют статус healthy; Caddy работает.",
+    alt: "Статусы production-контейнеров на сервере: client, backoffice, API, PostgreSQL и scoring healthy",
+    group: "infrastructure",
+    src: productionHostStand,
+    layout: "wide",
   },
 ];
 
@@ -441,6 +473,7 @@ function EvidenceSlotFigure({ slot }: { slot: EvidenceSlot }): JSX.Element {
       description={slot.description}
       alt={slot.alt}
       src={slot.src}
+      layout={slot.layout}
     />
   );
 }
@@ -464,8 +497,8 @@ function EvidenceSection(): JSX.Element {
           <h3 id="architecture-evidence-title">Скрины рабочего контура</h3>
         </div>
         <p>
-          Здесь будут реальные кадры интерфейсов и мониторинга. Пока для них
-          оставлены честные места, чтобы структура страницы уже была готова.
+          Здесь собраны кадры интерфейсов, локальных Compose-запусков,
+          production-сервера и мониторинга.
         </p>
       </div>
 
@@ -480,7 +513,7 @@ function EvidenceSection(): JSX.Element {
 
       <div className="architecture-diagrams__evidence-group architecture-diagrams__evidence-group--infrastructure">
         <h4>Инфраструктура</h4>
-        <div className="architecture-diagrams__evidence-grid architecture-diagrams__evidence-grid--single">
+        <div className="architecture-diagrams__evidence-grid architecture-diagrams__evidence-grid--infrastructure">
           {infrastructureSlots.map((slot) => (
             <EvidenceSlotFigure key={slot.id} slot={slot} />
           ))}

@@ -30,7 +30,7 @@ OpenAPI-документ создаётся из контроллеров Nest A
 
 Здесь показан путь внешнего запроса. Браузер приходит на Caddy, Caddy отправляет UI в client или backoffice, а API и Swagger в api. Внутри Compose client и backoffice используют Next rewrite `/api/*`, API обращается к scoring и PostgreSQL.
 
-Monitoring profile включает Prometheus, Grafana, node-exporter, cAdvisor и blackbox-exporter. Prometheus собирает `/metrics` API и метрики инфраструктуры, blackbox проверяет client, backoffice, API `/health` и scoring `/health`, Grafana читает Prometheus HTTP API. Скрин Grafana будет рядом с этим срезом.
+Monitoring profile включает Prometheus, Grafana, node-exporter, cAdvisor и blackbox-exporter. Prometheus собирает `/metrics` API и метрики инфраструктуры, blackbox проверяет client, backoffice, API `/health` и scoring `/health`, Grafana читает Prometheus HTTP API. Ниже показаны Grafana, локальные Compose-запуски в Podman и Docker Desktop, а также статусы контейнеров на сервере.
 
 ## Ограничения текущего контура
 
