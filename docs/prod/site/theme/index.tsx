@@ -39,7 +39,7 @@ function HomeWorkingContour(): JSX.Element {
           Кабинет сотрудника банка
         </a>
         <a
-          href="https://api.sales.eegov.net/docs"
+          href="https://sales.eegov.net/api/docs"
           target="_blank"
           rel="noreferrer"
         >

@@ -1,4 +1,5 @@
 import { ScreenshotSlot } from "../../theme/ScreenshotSlot";
+import swaggerStand from "../../theme/assets/stand/swagger.png";
 
 # API
 
@@ -6,14 +7,15 @@ Client Web и Backoffice Web меняют заявку через HTTP API. Се
 
 <ScreenshotSlot
   id="developers-api"
-  title="Swagger и HTTP-контракт"
-  alt="Скриншот Swagger API"
-  description="Место для кадра с актуальными операциями, схемами запроса и ответами API."
+  title="Операции и схемы API в Swagger"
+  alt="Swagger UI со списком операций и раскрытой схемой GET /v1/applications/{id}"
+  description="На экране раскрыта операция GET /v1/applications/{id}: указан обязательный параметр id и показана схема успешного ответа."
+  src={swaggerStand}
 />
 
 ## Контракт и документация
 
-OpenAPI-документ строится из серверных контроллеров и схем. При локальном запуске Swagger UI доступен по адресу [`http://localhost:4000/docs`](http://localhost:4000/docs). Для развернутого контура используйте [Swagger API](https://api.sales.eegov.net/docs). Эти ссылки дополняют друг друга: первая проверяет локальный запуск, вторая показывает опубликованный API.
+OpenAPI-документ строится из серверных контроллеров и схем. При локальном запуске Swagger UI доступен по адресу [`http://localhost:4000/docs`](http://localhost:4000/docs). Для развернутого контура используйте [Swagger API](https://sales.eegov.net/api/docs). Эти ссылки дополняют друг друга: первая проверяет локальный запуск, вторая показывает опубликованный API.
 
 АРМ использует сессию сотрудника. Действия с заявкой передают команду и ключ идемпотентности; сервер проверяет допустимость перехода и сохраняет его вместе с записью истории.
 

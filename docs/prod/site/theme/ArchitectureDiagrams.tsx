@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
 import { ScreenshotSlot } from "./ScreenshotSlot";
+import backofficeWebStand from "./assets/stand/backoffice-web.png";
+import clientWebStand from "./assets/stand/client-web-application-status.png";
+import grafanaStand from "./assets/stand/grafana.png";
+import swaggerStand from "./assets/stand/swagger.png";
 import {
   type ArchitectureDiagramId,
   diagramSvgs,
@@ -53,7 +57,7 @@ const externalLinks: ExternalLink[] = [
   },
   {
     label: "Swagger API",
-    href: "https://api.sales.eegov.net/docs",
+    href: "https://sales.eegov.net/api/docs",
     description: "Операции API, схемы запросов и ответы сервиса.",
   },
 ];
@@ -62,30 +66,38 @@ const evidenceSlots: EvidenceSlot[] = [
   {
     id: "client-web",
     title: "Client Web",
-    description: "Экран создания заявки и её движение по статусам.",
-    alt: "Скриншот Client Web",
+    description:
+      "Карточка заявки показывает сумму, срок, цель и этапы от подачи до зачисления средств.",
+    alt: "Кабинет предпринимателя со статусом и этапами обработки кредитной заявки",
     group: "web",
+    src: clientWebStand,
   },
   {
     id: "backoffice-web",
     title: "Backoffice Web",
-    description: "Рабочее место банка для проверки и решения по заявке.",
-    alt: "Скриншот Backoffice Web",
+    description:
+      "Карточка заявки объединяет сведения о компании, результаты проверок и ожидаемое действие клиента.",
+    alt: "Банковское АРМ с данными компании, проверками источников и запросом согласия на БКИ",
     group: "web",
+    src: backofficeWebStand,
   },
   {
     id: "swagger",
     title: "Swagger",
-    description: "Документация API, которую можно открыть по рабочей ссылке.",
-    alt: "Скриншот Swagger API",
+    description:
+      "Swagger UI показывает группы операций и схему ответа для GET /v1/applications/{id}.",
+    alt: "Swagger UI со списком API-операций и раскрытым запросом приложения по идентификатору",
     group: "web",
+    src: swaggerStand,
   },
   {
     id: "grafana",
     title: "Grafana",
-    description: "Дашборд состояния API, сервисов и инфраструктурных метрик.",
-    alt: "Скриншот Grafana",
+    description:
+      "Дашборд показывает доступность API, кабинетов и scoring, а также загрузку процессора и памяти хоста.",
+    alt: "Grafana с проверками доступности сервисов и графиками загрузки хоста",
     group: "infrastructure",
+    src: grafanaStand,
   },
 ];
 
