@@ -1,12 +1,6 @@
 services:
   caddy:
     profiles: ["off"]
-  api:
-    networks:
-      default: {}
-      edge:
-        aliases:
-          - alfa-api
   client:
     networks:
       default: {}
