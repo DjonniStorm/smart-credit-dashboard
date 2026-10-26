@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 
 import { ScreenshotSlot } from "./ScreenshotSlot";
+import backofficeWebStand from "./assets/stand/backoffice-web.png";
+import clientWebStand from "./assets/stand/client-web-application-status.png";
+import dockerDesktopStand from "./assets/stand/docker-desktop.png";
+import grafanaStand from "./assets/stand/grafana.png";
+import podmanDesktopStand from "./assets/stand/podman-desktop.png";
+import productionHostStand from "./assets/stand/production-host-containers.png";
+import swaggerStand from "./assets/stand/swagger.png";
 import {
   type ArchitectureDiagramId,
   diagramSvgs,
@@ -38,6 +45,7 @@ type EvidenceSlot = {
   alt: string;
   group: "web" | "infrastructure";
   src?: string;
+  layout?: "card" | "wide";
 };
 
 const externalLinks: ExternalLink[] = [
@@ -53,7 +61,7 @@ const externalLinks: ExternalLink[] = [
   },
   {
     label: "Swagger API",
-    href: "https://api.sales.eegov.net/docs",
+    href: "https://sales.eegov.net/api/docs",
     description: "Операции API, схемы запросов и ответы сервиса.",
   },
 ];
@@ -62,30 +70,66 @@ const evidenceSlots: EvidenceSlot[] = [
   {
     id: "client-web",
     title: "Client Web",
-    description: "Экран создания заявки и её движение по статусам.",
-    alt: "Скриншот Client Web",
+    description:
+      "Карточка заявки показывает сумму, срок, цель и этапы от подачи до зачисления средств.",
+    alt: "Кабинет предпринимателя со статусом и этапами обработки кредитной заявки",
     group: "web",
+    src: clientWebStand,
   },
   {
     id: "backoffice-web",
     title: "Backoffice Web",
-    description: "Рабочее место банка для проверки и решения по заявке.",
-    alt: "Скриншот Backoffice Web",
+    description:
+      "Карточка заявки объединяет сведения о компании, результаты проверок и ожидаемое действие клиента.",
+    alt: "Банковское АРМ с данными компании, проверками источников и запросом согласия на БКИ",
     group: "web",
+    src: backofficeWebStand,
   },
   {
     id: "swagger",
     title: "Swagger",
-    description: "Документация API, которую можно открыть по рабочей ссылке.",
-    alt: "Скриншот Swagger API",
+    description:
+      "Swagger UI показывает группы операций и схему ответа для GET /v1/applications/{id}.",
+    alt: "Swagger UI со списком API-операций и раскрытым запросом приложения по идентификатору",
     group: "web",
+    src: swaggerStand,
+  },
+  {
+    id: "podman-desktop",
+    title: "Podman Desktop",
+    description:
+      "В Compose-группе alfa-future работают 11 контейнеров приложения и мониторинга.",
+    alt: "Podman Desktop со всеми 11 работающими контейнерами Compose-группы alfa-future",
+    group: "infrastructure",
+    src: podmanDesktopStand,
+  },
+  {
+    id: "docker-desktop",
+    title: "Docker Desktop",
+    description:
+      "В группе alfa-future запущены Caddy, клиентские интерфейсы, API, scoring и PostgreSQL.",
+    alt: "Docker Desktop с запущенными контейнерами production Compose-группы alfa-future",
+    group: "infrastructure",
+    src: dockerDesktopStand,
   },
   {
     id: "grafana",
     title: "Grafana",
-    description: "Дашборд состояния API, сервисов и инфраструктурных метрик.",
-    alt: "Скриншот Grafana",
+    description:
+      "Дашборд показывает доступность API, кабинетов и scoring, а также загрузку процессора и памяти хоста.",
+    alt: "Grafana с проверками доступности сервисов и графиками загрузки хоста",
     group: "infrastructure",
+    src: grafanaStand,
+  },
+  {
+    id: "production-host",
+    title: "Контейнеры на сервере",
+    description:
+      "На сервере client, backoffice, API, PostgreSQL и scoring имеют статус healthy; Caddy работает.",
+    alt: "Статусы production-контейнеров на сервере: client, backoffice, API, PostgreSQL и scoring healthy",
+    group: "infrastructure",
+    src: productionHostStand,
+    layout: "wide",
   },
 ];
 
@@ -429,6 +473,7 @@ function EvidenceSlotFigure({ slot }: { slot: EvidenceSlot }): JSX.Element {
       description={slot.description}
       alt={slot.alt}
       src={slot.src}
+      layout={slot.layout}
     />
   );
 }
@@ -452,8 +497,8 @@ function EvidenceSection(): JSX.Element {
           <h3 id="architecture-evidence-title">Скрины рабочего контура</h3>
         </div>
         <p>
-          Здесь будут реальные кадры интерфейсов и мониторинга. Пока для них
-          оставлены честные места, чтобы структура страницы уже была готова.
+          Здесь собраны кадры интерфейсов, локальных Compose-запусков,
+          production-сервера и мониторинга.
         </p>
       </div>
 
@@ -468,7 +513,7 @@ function EvidenceSection(): JSX.Element {
 
       <div className="architecture-diagrams__evidence-group architecture-diagrams__evidence-group--infrastructure">
         <h4>Инфраструктура</h4>
-        <div className="architecture-diagrams__evidence-grid architecture-diagrams__evidence-grid--single">
+        <div className="architecture-diagrams__evidence-grid architecture-diagrams__evidence-grid--infrastructure">
           {infrastructureSlots.map((slot) => (
             <EvidenceSlotFigure key={slot.id} slot={slot} />
           ))}
