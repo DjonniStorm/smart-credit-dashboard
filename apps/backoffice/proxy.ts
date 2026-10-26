@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Метрики и Swagger у API не должны быть доступны через публичный домен.
-const internalApiPath = /^\/api\/(metrics|docs)(\/|$)/;
+// Метрики API не должны быть доступны через публичный домен.
+const internalApiPath = /^\/api\/metrics(\/|$)/;
 
 export function proxy(request: NextRequest) {
   if (internalApiPath.test(request.nextUrl.pathname)) {
