@@ -1,16 +1,10 @@
 "use client";
 
-import {
-  Button,
-  Card,
-  type MantineColorScheme,
-  SegmentedControl,
-  Stack,
-  Text,
-  Title,
-  useMantineColorScheme,
-} from "@mantine/core";
+import { Button, Card, Stack, Text, Title } from "@mantine/core";
 import { useRouter } from "next/navigation";
+
+import { backofficeText, i18n } from "@repo/i18n";
+import { ThemeSelector } from "@repo/ui/theme-selector";
 
 import { roleLabel, signOut, useSignedInEmployee } from "@/entities/employee";
 import { formatRub } from "@/shared/lib/money";
@@ -18,23 +12,26 @@ import { formatRub } from "@/shared/lib/money";
 import { AutonomyPolicySettings } from "./autonomy-policy-settings";
 import classes from "./settings.module.css";
 
-/** Настройки сотрудника: учётка, тема, сброс демо-данных. */
+const bx = backofficeText(i18n.defaultLocale);
+
+/** Настройки сотрудника: учётка, тема, автономия. */
 export function Settings() {
   const employee = useSignedInEmployee();
   const router = useRouter();
-  const { colorScheme, setColorScheme } = useMantineColorScheme();
 
   return (
     <div className={classes.grid}>
       <Card>
         <Stack gap="xs" align="flex-start">
           <Title order={2} fz={16}>
-            Учётная запись
+            {bx.settings.accountTitle}
           </Title>
           <Text fw={600}>{employee.name}</Text>
           <Text size="sm" c="dimmed">
-            {roleLabel[employee.role]}, одобряет до{" "}
-            {formatRub(employee.approvalLimit)}
+            {bx.profile.roleAndLimit(
+              roleLabel[employee.role],
+              formatRub(employee.approvalLimit),
+            )}
           </Text>
           <Button
             variant="default"
@@ -44,7 +41,7 @@ export function Settings() {
               router.replace("/login");
             }}
           >
-            Сменить учётную запись
+            {bx.settings.switchAccount}
           </Button>
         </Stack>
       </Card>
@@ -52,17 +49,15 @@ export function Settings() {
       <Card>
         <Stack gap="xs" align="flex-start">
           <Title order={2} fz={16} id="theme-title">
-            Тема
+            {bx.theme.title}
           </Title>
-          <SegmentedControl
-            aria-labelledby="theme-title"
-            value={colorScheme}
-            onChange={(v) => setColorScheme(v as MantineColorScheme)}
-            data={[
-              { value: "light", label: "Светлая" },
-              { value: "dark", label: "Тёмная" },
-              { value: "auto", label: "Как в системе" },
-            ]}
+          <ThemeSelector
+            labelId="theme-title"
+            labels={{
+              light: bx.theme.light,
+              dark: bx.theme.dark,
+              auto: bx.theme.auto,
+            }}
           />
         </Stack>
       </Card>

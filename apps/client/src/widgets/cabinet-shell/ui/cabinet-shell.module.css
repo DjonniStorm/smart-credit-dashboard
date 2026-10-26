@@ -6,54 +6,34 @@
 .navbar {
   background: var(--kk-bg-rail);
   border-right: 1px solid var(--kk-line);
+  /* Ширина меняется при сворачивании и ресайзле меню. */
+  transition-property: transform, top, height, width;
+  transition-duration: 200ms;
 }
 
 .main {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
+  /* Поле контента от правого края окна: у .content правое поле 24px, а сама
+     область ограничена 1320px поверх меню (ширина задаётся ресайзлом через
+     --app-shell-navbar-width), поэтому при сверхшироких экранах вычитаем
+     max-width. 100% = ширина вьюпорта без полосы прокрутки, как у right у
+     дока. Альфи читает --content-pad. */
+  --content-pad: calc(
+    max(0px, 100% - var(--app-shell-navbar-width, 220px) - 1320px) + 24px
+  );
 }
 
-/* Рабочая область: поля 24px, на телефоне 16px. */
+/* Рабочая область: поля 24px, на телефоне 16px. Колонка, чтобы страница
+   могла растянуться на всю высоту (например подвал мастера заявки). */
 .content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 1320px;
   padding: var(--mantine-spacing-lg) 24px var(--mantine-spacing-xl);
-}
-
-.note {
-  padding: 0 24px var(--mantine-spacing-lg);
-  max-width: 720px;
-}
-
-.logo {
-  display: inline-flex;
-  gap: 8px;
-  flex: none;
-  min-height: 44px;
-  align-items: center;
-  color: var(--mantine-color-text);
-  text-decoration: none;
-  font-weight: 700;
-  font-size: var(--mantine-font-size-lg);
-}
-
-.logoMark {
-  display: inline-flex;
-  /* Наушники знака берут цвет текста темы, буква остаётся фирменной. */
-  color: var(--mantine-color-text);
-}
-
-.logoBank {
-  color: var(--kk-brand-text);
-}
-
-.logoCabinet {
-  padding-left: 8px;
-  border-left: 1px solid var(--kk-line);
-  font-weight: 500;
-  line-height: 18px;
 }
 
 .searchSlot {
@@ -109,6 +89,12 @@
   text-align: end;
 }
 
+.navList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .navLink {
   border-radius: var(--mantine-radius-md);
   min-height: 40px;
@@ -121,26 +107,34 @@
   color: var(--mantine-color-dimmed);
 }
 
+/* Свёрнутое меню: только иконки по центру, подписи и счётчики скрыты.
+   Классы Mantine глобальные, поэтому обёрнуты в :global. */
+.railCollapsed .navLink {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.railCollapsed .navLink :global(.mantine-NavLink-body) {
+  display: none;
+}
+
+.railCollapsed
+  .navLink
+  :global(.mantine-NavLink-section[data-position="right"]) {
+  display: none;
+}
+
 @media (max-width: 48em) {
+  .main {
+    /* Меню скрыто, контент от левого края: остаётся только поле 16px. */
+    --content-pad: 16px;
+  }
+
   .content {
     padding: var(--mantine-spacing-md) 16px var(--mantine-spacing-xl);
   }
 
-  .note {
-    padding: 0 16px var(--mantine-spacing-lg);
-  }
-
-  .logoCabinet {
-    display: none;
-  }
-
   .searchSlot {
     justify-content: flex-end;
-  }
-}
-
-@media (max-width: 22em) {
-  .logoBank {
-    display: none;
   }
 }

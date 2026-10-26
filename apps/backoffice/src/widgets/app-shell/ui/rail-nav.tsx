@@ -1,18 +1,18 @@
 "use client";
 
-import { Divider, Text } from "@mantine/core";
+import { Divider } from "@mantine/core";
 import {
   IconBooks,
-  IconClipboardCheck,
   IconClockHour4,
   IconFileText,
   IconHome,
-  IconListCheck,
   IconSettings,
+  IconUserCircle,
 } from "@tabler/icons-react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { usePathname } from "next/navigation";
+
+import { backofficeText, i18n } from "@repo/i18n";
 
 import { countByGroup, useApplications } from "@/entities/application";
 
@@ -26,13 +26,15 @@ type Item = {
   active: boolean;
 };
 
-function Items({ items }: { items: Item[] }) {
+function Items({ items, collapsed }: { items: Item[]; collapsed: boolean }) {
   return items.map((it) => (
     <Link
       key={it.href}
       href={it.href}
       className={classes.navItem}
       aria-current={it.active ? "page" : undefined}
+      aria-label={collapsed ? it.label : undefined}
+      title={collapsed ? it.label : undefined}
     >
       <it.icon size={20} stroke={1.5} aria-hidden />
       <span className={classes.navLabel}>{it.label}</span>
@@ -43,7 +45,12 @@ function Items({ items }: { items: Item[] }) {
   ));
 }
 
-function Nav({ tab }: { tab: string | null }) {
+/**
+ * Меню слева: разделы АРМ. Статусные вкладки («На проверке», «Решения» и
+ * остальные группы) живут только на странице очереди, чтобы не дублировать
+ * один и тот же фильтр в двух местах.
+ */
+function Nav({ collapsed }: { collapsed: boolean }) {
   const pathname = usePathname();
   const apps = useApplications();
   const counts = apps.data ? countByGroup(apps.data) : null;
@@ -61,21 +68,7 @@ function Nav({ tab }: { tab: string | null }) {
       label: "Очередь заявок",
       icon: IconFileText,
       count: counts?.all,
-      active: onQueue && tab !== "review" && tab !== "decision",
-    },
-    {
-      href: "/?tab=review",
-      label: "На проверке",
-      icon: IconListCheck,
-      count: counts?.review,
-      active: pathname === "/" && tab === "review",
-    },
-    {
-      href: "/?tab=decision",
-      label: "Решения",
-      icon: IconClipboardCheck,
-      count: counts?.decision,
-      active: pathname === "/" && tab === "decision",
+      active: onQueue,
     },
     {
       href: "/journal",
@@ -92,6 +85,12 @@ function Nav({ tab }: { tab: string | null }) {
       active: pathname === "/products",
     },
     {
+      href: "/profile",
+      label: backofficeText(i18n.defaultLocale).nav.profile,
+      icon: IconUserCircle,
+      active: pathname === "/profile",
+    },
+    {
       href: "/settings",
       label: "Настройки",
       icon: IconSettings,
@@ -101,25 +100,19 @@ function Nav({ tab }: { tab: string | null }) {
 
   return (
     <nav className={classes.nav} aria-label="Разделы АРМ">
-      <Text className={classes.navCaption}>Кредитный конвейер</Text>
-      <Items items={main} />
+      <Items items={main} collapsed={collapsed} />
       <Divider my="sm" color="var(--kk-line)" />
-      <Items items={secondary} />
+      <Items items={secondary} collapsed={collapsed} />
     </nav>
   );
 }
 
-function NavWithParams() {
-  return <Nav tab={useSearchParams().get("tab")} />;
-}
-
-/** Меню слева: разделы со счётчиками заявок. */
-export function RailNav() {
+export function RailNav({ collapsed }: { collapsed: boolean }) {
   return (
-    <div className={classes.rail}>
-      <Suspense fallback={<Nav tab={null} />}>
-        <NavWithParams />
-      </Suspense>
+    <div
+      className={`${classes.rail} ${collapsed ? classes.railCollapsed : ""}`}
+    >
+      <Nav collapsed={collapsed} />
     </div>
   );
 }

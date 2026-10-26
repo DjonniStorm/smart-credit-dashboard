@@ -136,6 +136,24 @@ test("CANCELLED сотрудником после подписания: реше
   assert.equal(mapped.decision, null);
 });
 
+test("OFFERED с оффером: решение одобрено, условия ждут клиента", () => {
+  const mapped = toCabinetApplication(
+    apiApp({
+      status: "OFFERED",
+      offerKind: "initial",
+      scoring: scoring(),
+      offer,
+    }),
+    session,
+  );
+  assert.equal(mapped.status, "approved");
+  assert.equal(mapped.deal, null);
+  assert.ok(mapped.decision);
+  assert.equal(mapped.decision.outcome, "approved");
+  assert.ok(mapped.decision.offer);
+  assert.equal(mapped.decision.offer.ratePercent, offer.ratePct);
+});
+
 test("REJECTED банком: решение банка остаётся отказом", () => {
   const mapped = toCabinetApplication(
     apiApp({
@@ -152,4 +170,31 @@ test("REJECTED банком: решение банка остаётся отка
   assert.ok(mapped.decision);
   assert.equal(mapped.decision.outcome, "rejected");
   assert.match(mapped.decision.summary, /Доходы/);
+});
+
+test("события API попадают в историю заявки без id и в исходном порядке", () => {
+  const mapped = toCabinetApplication(
+    apiApp({
+      status: "OFFERED",
+      events: [
+        {
+          id: "e2",
+          at: "2026-10-05T12:00:00Z",
+          text: "Заявка одобрена",
+          actor: "bank",
+        },
+        {
+          id: "e1",
+          at: "2026-10-04T10:00:00Z",
+          text: "Заявка создана",
+          actor: "system",
+        },
+      ],
+    }),
+    session,
+  );
+  assert.deepEqual(mapped.events, [
+    { at: "2026-10-05T12:00:00Z", text: "Заявка одобрена", actor: "bank" },
+    { at: "2026-10-04T10:00:00Z", text: "Заявка создана", actor: "system" },
+  ]);
 });

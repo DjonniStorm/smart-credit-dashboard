@@ -7,6 +7,10 @@
     "./motion": "./src/motion.ts",
     "./document": "./src/document.ts",
     "./money": "./src/money.ts",
+    "./uuid": "./src/uuid.ts",
+    "./resizable-width": "./src/resizable-width.ts",
+    "./sidebar-resizer": "./src/sidebar-resizer.tsx",
+    "./use-sidebar-collapse": "./src/use-sidebar-collapse.ts",
     "./*": "./src/*.tsx"
   },
   "scripts": {

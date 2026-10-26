@@ -4,6 +4,7 @@ import { IconFileText, IconPaperclip, IconTrash } from "@tabler/icons-react";
 import { useState } from "react";
 
 import type { AttachedDocument } from "@repo/contracts/cabinet";
+import { uuid } from "@repo/ui/uuid";
 
 import { lx, tx } from "@/shared/i18n";
 
@@ -43,7 +44,7 @@ export function DocumentsStep({
             onChange([
               ...documents,
               ...files.map((f) => ({
-                id: crypto.randomUUID(),
+                id: uuid(),
                 name: f.name,
                 kind: "other" as const,
                 sizeBytes: f.size,

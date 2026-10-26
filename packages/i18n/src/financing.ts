@@ -3,7 +3,6 @@ import { Locale } from "./locale.ts";
 const ru = {
   title: "Финансирование бизнеса",
   next: "Ваш следующий шаг",
-  demo: "Демо: синтетические данные",
   newApplication: "Новая заявка",
   company: "Ваша компания",
   source: "Известные данные профиля клиента",
@@ -87,7 +86,6 @@ export type FinancingText = typeof ru;
 const en: FinancingText = {
   title: "Business financing",
   next: "Your next step",
-  demo: "Demo: synthetic data",
   newApplication: "New application",
   company: "Your business",
   source: "Known information from the customer profile",

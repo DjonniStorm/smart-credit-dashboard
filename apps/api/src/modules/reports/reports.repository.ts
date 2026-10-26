@@ -146,7 +146,7 @@ function eventFromRow(row: Row): ReportEventRow {
 function applicationFromRow(row: Row): ReportApplicationRow {
   return {
     applicationId: String(row.id),
-    applicationNumber: String(row.number),
+    applicationNumber: String(row.application_number),
     createdAt: iso(row.created_at),
     productId: String(row.product_id),
     amount: Number(row.amount),
@@ -167,12 +167,12 @@ export class ReportsRepository {
     watermark: ReportWatermark | null,
   ): Promise<ReportData> {
     return this.db.transaction(async (manager) => {
-      const currentWatermark = watermark ?? (await this.findWatermark(query, manager));
+      const currentWatermark =
+        watermark ?? (await this.findWatermark(query, manager));
       const params = [
         query.from,
         query.to,
         currentWatermark?.snapshotSeq ?? "0",
-        currentWatermark?.eventId ?? null,
         query.productIds,
         query.statuses,
         query.assigneeIds,

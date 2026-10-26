@@ -9,7 +9,11 @@ import {
 } from "@mantine/core";
 import { useState } from "react";
 
-import type { Application, ProductCatalog } from "@repo/contracts/cabinet";
+import type {
+  CreditPurpose,
+  Financials,
+  ProductCatalog,
+} from "@repo/contracts/cabinet";
 import {
   type NegotiationOption,
   type NegotiationPriority,
@@ -45,18 +49,21 @@ function sameTerms(a: SandboxTerms, b: SandboxTerms) {
 }
 
 /**
- * Симулятор переговоров: по приоритету клиента предлагает до трёх вариантов
- * условий. Ничего не отправляет, вариант только подставляется в песочницу.
+ * Варианты условий для заявки: по приоритету клиента предлагает до трёх
+ * вариантов. Применение подставляет вариант в условия блока, сводка
+ * пересчитывается на месте.
  */
 export function NegotiationSimulator({
-  app,
+  purpose,
+  financials,
   catalog,
   current,
   currentPayment,
   onApply,
 }: {
-  app: Application;
-  catalog: ProductCatalog;
+  purpose: CreditPurpose;
+  financials: Financials;
+  catalog: Pick<ProductCatalog, "products" | "keyRate">;
   current: SandboxTerms;
   currentPayment: number;
   onApply: (option: NegotiationOption) => void;
@@ -69,11 +76,11 @@ export function NegotiationSimulator({
   const options = priority
     ? suggestNegotiationOptions({
         priority,
-        purpose: app.purpose,
+        purpose,
         current: base.terms,
         products: catalog.products,
         keyRate: catalog.keyRate,
-        financials: app.financials,
+        financials,
       })
     : [];
 
@@ -138,6 +145,9 @@ export function NegotiationSimulator({
               </Button>
             )}
           </Group>
+          <Text size="sm" c="dimmed">
+            {t.legend}
+          </Text>
           <SimpleGrid
             component="ul"
             cols={{ base: 1, md: options.length }}
@@ -167,9 +177,6 @@ export function NegotiationSimulator({
               );
             })}
           </SimpleGrid>
-          <Text size="xs" c="dimmed">
-            {t.applyHint}
-          </Text>
         </>
       )}
     </Stack>

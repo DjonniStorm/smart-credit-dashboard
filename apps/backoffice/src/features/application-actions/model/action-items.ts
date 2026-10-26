@@ -62,6 +62,8 @@ interface BuildInput {
 export interface ActionLayout {
   canDecide: boolean;
   overLimit: boolean;
+  /** Клиент ответил на запрос документов: заявка снова ждёт решения. */
+  clientReplied: boolean;
   primary: ActionItem | null;
   secondary: ActionItem | null;
   menu: ActionItem[];
@@ -77,6 +79,12 @@ export function buildActionLayout(input: BuildInput): ActionLayout {
   const closed = app.waitingOn === "nobody";
   const canDecide =
     !app.hold && app.stage === "decision" && app.waitingOn === "employee";
+  // Документы запрошены, клиент ответил, заявка вернулась на рассмотрение:
+  // рекомендация «запросить документы» уже выполнена, снова предлагать её как
+  // главное действие нельзя.
+  const docsWereRequested = app.requestedInfo.length > 0;
+  const clientReplied =
+    docsWereRequested && app.waitingOn === "employee" && !app.hold;
   const canIntercept =
     !app.hold &&
     app.autonomyCase?.disposition === "auto_offer_sent" &&
@@ -112,8 +120,11 @@ export function buildActionLayout(input: BuildInput): ActionLayout {
         }
       : null;
 
+  const rec = app.decision?.recommendation;
   const recommended =
-    recommendedDialog[app.decision?.recommendation ?? "approve"];
+    clientReplied && (rec === "request_info" || rec === "manual_review")
+      ? "approve"
+      : recommendedDialog[rec ?? "approve"];
   const decisions: ActionItem[] = canDecide
     ? [
         recommended,
@@ -220,6 +231,7 @@ export function buildActionLayout(input: BuildInput): ActionLayout {
   return {
     canDecide,
     overLimit,
+    clientReplied,
     primary,
     secondary,
     menu: rest.filter((i) => i !== secondary),

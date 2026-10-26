@@ -10,15 +10,15 @@ import {
   Stack,
   Text,
   UnstyledButton,
-  useComputedColorScheme,
-  useMantineColorScheme,
 } from "@mantine/core";
 import {
   IconBell,
   IconChevronDown,
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarLeftExpand,
   IconLogout,
-  IconMoon,
-  IconSun,
+  IconSettings,
+  IconUserCircle,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -95,8 +95,6 @@ function Notifications({ waiting }: { waiting: Application[] }) {
 function Account({ account }: { account: DemoAccount }) {
   const router = useRouter();
   const signOut = useSignOut();
-  const { setColorScheme } = useMantineColorScheme();
-  const scheme = useComputedColorScheme("light");
 
   return (
     <Menu position="bottom-end" width={280} shadow="md">
@@ -127,16 +125,18 @@ function Account({ account }: { account: DemoAccount }) {
           {account.company.name}, {lx.account.inn(account.company.inn)}
         </Text>
         <Menu.Item
-          leftSection={
-            scheme === "dark" ? (
-              <IconSun size={16} stroke={1.5} />
-            ) : (
-              <IconMoon size={16} stroke={1.5} />
-            )
-          }
-          onClick={() => setColorScheme(scheme === "dark" ? "light" : "dark")}
+          component={Link}
+          href="/profile"
+          leftSection={<IconUserCircle size={16} stroke={1.5} />}
         >
-          {scheme === "dark" ? lx.account.lightTheme : lx.account.theme}
+          {tx.account.profile}
+        </Menu.Item>
+        <Menu.Item
+          component={Link}
+          href="/settings"
+          leftSection={<IconSettings size={16} stroke={1.5} />}
+        >
+          {tx.account.settings}
         </Menu.Item>
         <Menu.Divider />
         <Menu.Item
@@ -170,10 +170,14 @@ export function CabinetHeader({
   account,
   navOpened,
   onToggleNav,
+  navCollapsed,
+  onToggleCollapsed,
 }: {
   account: DemoAccount | null | undefined;
   navOpened: boolean;
   onToggleNav: () => void;
+  navCollapsed: boolean;
+  onToggleCollapsed: () => void;
 }) {
   return (
     <Group h="100%" px={{ base: "xs", sm: "md" }} gap="sm" wrap="nowrap">
@@ -185,6 +189,22 @@ export function CabinetHeader({
         aria-label={navOpened ? lx.nav.close : lx.nav.open}
       />
       <Logo />
+      <ActionIcon
+        visibleFrom="sm"
+        type="button"
+        variant="subtle"
+        color="gray"
+        size={36}
+        onClick={onToggleCollapsed}
+        aria-label={navCollapsed ? lx.nav.expand : lx.nav.collapse}
+        aria-expanded={!navCollapsed}
+      >
+        {navCollapsed ? (
+          <IconLayoutSidebarLeftExpand size={18} stroke={1.5} />
+        ) : (
+          <IconLayoutSidebarLeftCollapse size={18} stroke={1.5} />
+        )}
+      </ActionIcon>
       <div className={classes.searchSlot}>{account && <CabinetSearch />}</div>
       {account && <HeaderActions account={account} />}
     </Group>

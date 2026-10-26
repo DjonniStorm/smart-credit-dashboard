@@ -13,6 +13,7 @@ import { formatRub } from "@repo/ui/money";
 import { formatDate, lx, tx } from "@/shared/i18n";
 
 import classes from "./application-wizard.module.css";
+import { TermsBlock, type TermsBlockProps } from "./terms-block";
 
 const t = lx.wizard;
 const below = ["label", "input", "description", "error"] as const;
@@ -148,19 +149,21 @@ function DebtLoad({
   );
 }
 
-/** Шаг «Финансы»: поля из контракта, срок деятельности из ЕГРЮЛ, нагрузка на оборот. */
+/** Шаг «Финансы»: поля из контракта, срок деятельности из ЕГРЮЛ, нагрузка на оборот, условия. */
 export function FinanceStep({
   financials,
   registeredAt,
   payment,
   errors,
   onChange,
+  terms,
 }: {
   financials: FinancialsForm;
   registeredAt: string;
   payment: number | null;
   errors: Partial<Record<string, string>>;
   onChange: (next: FinancialsForm) => void;
+  terms: Omit<TermsBlockProps, "financials">;
 }) {
   return (
     <Stack gap="xl">
@@ -194,6 +197,7 @@ export function FinanceStep({
         />
       </SimpleGrid>
       <DebtLoad financials={financials} payment={payment} />
+      <TermsBlock {...terms} financials={financials} />
     </Stack>
   );
 }

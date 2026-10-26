@@ -7,7 +7,8 @@
   min-width: 0;
 }
 
-/* Широкий экран: панель стоит рядом, таблица сужается и остаётся видна. */
+/* Широкий экран: панель стоит рядом, таблица сужается и остаётся видна.
+   Ширину задаёт JS через --panel-width, пользователь меняет её разделителем. */
 .aside {
   position: fixed;
   top: 52px;
@@ -15,14 +16,53 @@
   bottom: 0;
   z-index: 150;
   /* Панель читаемая, но не забирает у очереди половину экрана. */
-  width: 360px;
+  width: var(--panel-width, 360px);
   border-left: 1px solid var(--kk-line);
   animation: slide-in 200ms ease-out;
 }
 
 @media (min-width: 75em) {
   .screen[data-panel] .main {
-    margin-right: 360px;
+    margin-right: var(--panel-width, 360px);
+  }
+}
+
+/* Разделитель очереди и панели: полоса с прозрачной областью захвата,
+   по центру линии сдвига. Показывается только там, где панель стоит рядом. */
+.resizer {
+  position: fixed;
+  top: 52px;
+  bottom: 0;
+  width: 10px;
+  transform: translateX(50%);
+  z-index: 160;
+  cursor: col-resize;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.resizer::after {
+  content: "";
+  position: absolute;
+  inset: 0 4px;
+  background: transparent;
+  transition: background 120ms ease;
+}
+
+.resizer:hover::after,
+.resizer:focus-visible::after {
+  background: var(--kk-brand);
+}
+
+.resizer:focus-visible {
+  outline: 2px solid var(--kk-brand);
+  outline-offset: -2px;
+  border-radius: 2px;
+}
+
+@media (max-width: 74.99em) {
+  .resizer {
+    display: none;
   }
 }
 

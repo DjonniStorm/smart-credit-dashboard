@@ -40,7 +40,6 @@ import { QueryError } from "@/shared/ui/query-state";
 import classes from "./application-detail.module.css";
 import { DecisionCard } from "./decision-card";
 import { StagePanel } from "./stage-panel";
-import { TermsSandbox } from "./terms-sandbox";
 
 const t = tx.application;
 
@@ -139,16 +138,9 @@ function Detail({ app }: { app: Application }) {
 
       <UrgentRequest app={app} />
 
-      {catalog.data && <TermsSandbox app={app} catalog={catalog.data} />}
-
       <div className={classes.layout}>
         <Stack gap="lg" className={classes.main}>
-          <Stack
-            gap="lg"
-            id="next-step"
-            style={{ scrollMarginTop: 72 }}
-            data-alfi-target={alfiTargets.nextStep}
-          >
+          <Stack gap="lg" id="next-step" style={{ scrollMarginTop: 72 }}>
             <Card component="section" aria-labelledby="path-title">
               <Stack gap="md">
                 <Title order={2} size="h3" id="path-title">

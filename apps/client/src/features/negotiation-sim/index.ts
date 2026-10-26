@@ -1,1 +1,4 @@
-export { NegotiationSimulator } from "./ui/negotiation-simulator";
+export {
+  NegotiationSimulator,
+  type SandboxTerms,
+} from "./ui/negotiation-simulator";

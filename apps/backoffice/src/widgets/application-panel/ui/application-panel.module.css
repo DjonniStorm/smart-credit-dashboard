@@ -87,17 +87,59 @@
   padding-top: 2px;
 }
 
+.workflowRoadmap {
+  position: relative;
+  container-type: inline-size;
+}
+
 .workflowGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 24px;
+  row-gap: 18px;
   margin: 0;
   padding: 0;
   list-style: none;
+  position: relative;
 }
 
 .workflowItem {
   min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.workflowConnectors {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.workflowSegment {
+  fill: none;
+  stroke: var(--kk-line);
+  stroke-width: 1.5;
+}
+
+.workflowSegmentAnimated {
+  fill: none;
+  stroke: var(--kk-brand-graphic);
+  stroke-width: 1.75;
+  stroke-dasharray: 6 7;
+  animation: workflow-dash-advance 1.2s linear infinite;
+}
+
+.workflowArrowHead {
+  fill: var(--kk-line);
+}
+
+@keyframes workflow-dash-advance {
+  to {
+    stroke-dashoffset: -13;
+  }
 }
 
 .workflowCard {
@@ -207,13 +249,20 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .workflowCard[data-state="current"]::before {
+  .workflowCard[data-state="current"]::before,
+  .workflowSegmentAnimated {
     animation: none;
+  }
+
+  .workflowSegmentAnimated {
+    stroke-dasharray: 3 4;
   }
 }
 
 .workflowDetail {
-  margin-top: 6px;
+  /* Одинаковый отступ сверху и снизу: блок не прижат ни к сетке этапов,
+     ни к следующему блоку (паспорт компании под сводкой). */
+  margin-block: 10px;
   padding: 9px 10px;
   display: flex;
   align-items: center;
@@ -233,7 +282,20 @@
   font-size: 10px;
 }
 
-@media (max-width: 42em) {
+@container (max-width: 34em) {
+  .workflowGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 20px;
+  }
+}
+
+@container (max-width: 24em) {
+  .workflowGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (max-width: 16em) {
   .workflowGrid {
     grid-template-columns: 1fr;
   }
@@ -436,5 +498,29 @@
   .pageTitle {
     font-size: 22px;
     line-height: 28px;
+  }
+}
+
+/*
+ * Альфи на странице заявки не перекрывает блок действий справа. Док и его
+ * свёрнутая кнопка выравниваются по правому краю окна, а справа стоит
+ * колонка сводки с действиями. Широкий экран: сдвигаем док влево от этой
+ * колонки; на узких экранах колонка поднимается над контентом, поэтому док
+ * приподнят над низом страницы. Локально для АРМ, общий пакет не меняем.
+ */
+:global(body:has([data-alfi-workspace]))
+  :is([aria-label="Подсказка Альфи"], [aria-label="Показать подсказку Альфи"]) {
+  right: calc(var(--content-pad, 24px) + 344px);
+  bottom: 16px;
+}
+
+@media (min-width: 36em) and (max-width: 75em) {
+  :global(body:has([data-alfi-workspace]))
+    :is(
+      [aria-label="Подсказка Альфи"],
+      [aria-label="Показать подсказку Альфи"]
+    ) {
+    right: var(--content-pad, 16px);
+    bottom: 96px;
   }
 }

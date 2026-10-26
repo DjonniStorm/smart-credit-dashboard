@@ -1,11 +1,25 @@
 "use client";
 
-import { AppShell, Burger, Button, Group, Text } from "@mantine/core";
+import {
+  ActionIcon,
+  AppShell,
+  Burger,
+  Button,
+  Group,
+  Text,
+} from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import {
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarLeftExpand,
+} from "@tabler/icons-react";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
 
+import { useResizableWidth } from "@repo/ui/resizable-width";
+import { SidebarResizer } from "@repo/ui/sidebar-resizer";
 import { StateBlock } from "@repo/ui/state-block";
+import { useSidebarCollapse } from "@repo/ui/use-sidebar-collapse";
 
 import { SignedInProvider, useCurrentEmployee } from "@/entities/employee";
 import { ArmAlfi } from "@/features/alfi-assistant";
@@ -17,12 +31,26 @@ import { InboxBell } from "./inbox-bell";
 import { ProfileMenu } from "./profile-menu";
 import { RailNav } from "./rail-nav";
 
+const NAV_MIN = 200;
+const NAV_MAX = 360;
+const NAV_DEFAULT = 220;
+const NAV_COLLAPSED = 64;
+
 /** Каркас АРМ: шапка 52px, меню 220px, рабочая область. Без входа отправляет на /login. */
 export function ArmShell({ children }: { children: ReactNode }) {
   const { id, employee, isLoading, error, retry } = useCurrentEmployee();
   const router = useRouter();
   const pathname = usePathname();
   const [opened, { toggle, close }] = useDisclosure();
+  const { collapsed: navCollapsed, toggle: toggleNav } = useSidebarCollapse({
+    storageKey: "arm-nav-collapsed",
+  });
+  const { width: navWidth, setWidth: setNavWidth } = useResizableWidth({
+    storageKey: "arm-nav-width",
+    defaultValue: NAV_DEFAULT,
+    min: NAV_MIN,
+    max: NAV_MAX,
+  });
 
   useEffect(() => {
     if (id === null || (!isLoading && !error && !employee)) {
@@ -56,7 +84,7 @@ export function ArmShell({ children }: { children: ReactNode }) {
     <AppShell
       header={{ height: 52 }}
       navbar={{
-        width: 220,
+        width: navCollapsed ? NAV_COLLAPSED : navWidth,
         breakpoint: "sm",
         collapsed: { mobile: !opened },
       }}
@@ -76,6 +104,22 @@ export function ArmShell({ children }: { children: ReactNode }) {
             aria-label={opened ? "Закрыть меню" : "Открыть меню"}
           />
           <BrandMark />
+          <ActionIcon
+            visibleFrom="sm"
+            type="button"
+            variant="subtle"
+            color="gray"
+            size={36}
+            onClick={toggleNav}
+            aria-label={navCollapsed ? "Развернуть меню" : "Свернуть меню"}
+            aria-expanded={!navCollapsed}
+          >
+            {navCollapsed ? (
+              <IconLayoutSidebarLeftExpand size={18} stroke={1.5} />
+            ) : (
+              <IconLayoutSidebarLeftCollapse size={18} stroke={1.5} />
+            )}
+          </ActionIcon>
           <div className={classes.search}>{employee && <HeaderSearch />}</div>
           {employee && (
             <Group gap="xs" wrap="nowrap" ml="auto">
@@ -88,7 +132,7 @@ export function ArmShell({ children }: { children: ReactNode }) {
 
       <AppShell.Navbar>
         {employee ? (
-          <RailNav />
+          <RailNav collapsed={navCollapsed} />
         ) : (
           <Text size="sm" c="dimmed" p="md">
             Меню появится после входа
@@ -106,6 +150,16 @@ export function ArmShell({ children }: { children: ReactNode }) {
           <div className={classes.page}>{content}</div>
         )}
       </AppShell.Main>
+
+      {employee && !navCollapsed && (
+        <SidebarResizer
+          width={navWidth}
+          min={NAV_MIN}
+          max={NAV_MAX}
+          onChange={setNavWidth}
+          label="Изменить ширину меню"
+        />
+      )}
     </AppShell>
   );
 }

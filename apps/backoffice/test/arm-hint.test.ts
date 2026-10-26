@@ -79,7 +79,8 @@ test("в заявке, где решение за сотрудником, кно
   );
 });
 
-test("в заявке ждущей клиента кнопки действий нет, контекст уходит в подсказку", () => {
+test("в заявке ждущей клиента кнопки действий нет и сценарий сотрудника не вызывается", () => {
+  const callsBefore = seen.length;
   const hint = armHint(
     "/applications/app-1",
     [
@@ -93,11 +94,11 @@ test("в заявке ждущей клиента кнопки действий 
     guide,
   );
   assert.equal(hint.action, undefined);
-  assert.equal(hint.message, "Сверьте факторы Выберите действие.");
-  const context = seen.at(-1);
-  assert.equal(context?.role, "employee");
-  assert.equal(context?.waitingOn, "client");
-  assert.equal(context?.recommendation, undefined);
+  assert.equal(
+    hint.message,
+    "Запрос отправлен: клиент прикрепляет файлы и отвечает по нему. Когда он ответит, заявка вернётся на рассмотрение.",
+  );
+  assert.equal(seen.length, callsBefore);
 });
 
 test("ошибка загрузки очереди не выдаётся за разобранную очередь", () => {
