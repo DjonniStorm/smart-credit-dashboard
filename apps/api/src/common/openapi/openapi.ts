@@ -9,6 +9,7 @@ export function buildOpenApiDocument(app: INestApplication) {
       .setTitle("alfa-future api")
       .setDescription("Заявки, статусы, кредитное решение")
       .setVersion("0.1.0")
+      .addServer(process.env.NODE_ENV === "production" ? "/api" : "/")
       .build(),
   );
   return cleanupOpenApiDoc(raw);
