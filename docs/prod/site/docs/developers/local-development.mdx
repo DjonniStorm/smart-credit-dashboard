@@ -1,15 +1,29 @@
 import { ScreenshotSlot } from "../../theme/ScreenshotSlot";
+import dockerDesktopScreenshot from "../../theme/assets/stand/docker-desktop.png";
+import podmanDesktopScreenshot from "../../theme/assets/stand/podman-desktop.png";
 
 # Локальная разработка
 
 Локальный контур поднимает те же роли, которые описаны в пользовательских разделах: Client Web, банковское АРМ, API и scoring. Для запуска нужны Node.js 24, pnpm 11.25.0, Python 3.12, `uv` и запущенный Docker. Команда scoring запускает `uv run --locked uvicorn`.
 
-<ScreenshotSlot
-  id="developers-local-development"
-  title="Локальный контур разработки"
-  alt="Скриншот локального контура разработки"
-  description="Место для кадра с запущенными сервисами и локальными адресами Client Web, Backoffice и Swagger."
-/>
+<div className="local-development-container-shots">
+  <ScreenshotSlot
+    id="local-development-podman"
+    title="Podman Desktop"
+    alt="Podman Desktop со списком работающих контейнеров группы alfa-future"
+    description="В Podman запущены 11 контейнеров Compose-контура alfa-future, включая приложение и мониторинг."
+    src={podmanDesktopScreenshot}
+    layout="wide"
+  />
+  <ScreenshotSlot
+    id="local-development-docker"
+    title="Docker Desktop"
+    alt="Docker Desktop с запущенными контейнерами Caddy, client, backoffice, API, scoring и PostgreSQL"
+    description="В Docker видны контейнеры приложения: Caddy, оба интерфейса, API, scoring и PostgreSQL."
+    src={dockerDesktopScreenshot}
+    layout="wide"
+  />
+</div>
 
 Из корня репозитория выполните:
 

@@ -4,7 +4,7 @@ export type ScreenshotSlotProps = {
   description: string;
   alt: string;
   src?: string;
-  layout?: "card" | "wide";
+  layout?: "card" | "wide" | "portrait";
 };
 
 export function ScreenshotSlot({
@@ -15,10 +15,7 @@ export function ScreenshotSlot({
   src,
   layout = "card",
 }: ScreenshotSlotProps): JSX.Element {
-  const className =
-    layout === "wide"
-      ? "docs-screenshot-slot docs-screenshot-slot--wide"
-      : "docs-screenshot-slot";
+  const className = `docs-screenshot-slot docs-screenshot-slot--${layout}`;
 
   return (
     <figure className={className} data-screenshot-slot={id}>
