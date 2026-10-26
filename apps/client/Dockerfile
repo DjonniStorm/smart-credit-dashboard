@@ -12,6 +12,9 @@ FROM base AS build
 COPY --from=prune /app/out/json/ .
 RUN pnpm install --frozen-lockfile --ignore-scripts
 COPY --from=prune /app/out/full/ .
+# rewrites из next.config фиксируются при сборке, поэтому адрес API нужен здесь
+ARG API_URL=http://api:4000
+ENV API_URL=${API_URL}
 RUN turbo run build --filter=client
 
 FROM node:24-alpine AS runner
