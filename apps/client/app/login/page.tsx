@@ -24,9 +24,6 @@ export default function LoginPage() {
             </Text>
           </Stack>
           <DemoSignIn />
-          <Text size="xs" c="dimmed">
-            {tx.demo.footer}
-          </Text>
         </Stack>
       </main>
     </div>

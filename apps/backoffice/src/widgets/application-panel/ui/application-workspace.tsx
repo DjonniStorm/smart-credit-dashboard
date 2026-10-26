@@ -126,7 +126,7 @@ function Workspace({
   const companyProfile = useCompanyProfile(applicant.inn);
 
   return (
-    <div className={classes.page}>
+    <div className={classes.page} data-alfi-workspace>
       <Stack gap="lg">
         <Stack gap="xs">
           <BackLink />

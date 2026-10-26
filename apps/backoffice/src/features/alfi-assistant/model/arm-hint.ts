@@ -47,6 +47,12 @@ function applicationHint(
   app: Application,
   guide: GuidanceSource,
 ): AlfiDockHint {
+  // Ход за клиентом: общая подсказка говорит «Нужно действие клиента», но
+  // запрос часто инициировал сам сотрудник, поэтому показываем состояние,
+  // а не требование что-то делать.
+  if (app.waitingOn === "client") {
+    return clientTurnHint(app);
+  }
   const recommendation = app.scoring?.recommendation;
   const guidance = guide({
     role: "employee",
@@ -70,6 +76,30 @@ function applicationHint(
     action: actionable
       ? { label: t.showActions, target: armActionsTarget }
       : undefined,
+  };
+}
+
+/** Состояние, когда заявка ждёт клиента: только информация, без действий. */
+function clientTurnHint(app: Application): AlfiDockHint {
+  const turn = t.clientTurn;
+  if (app.status === "needs_client") {
+    return {
+      state: "explain",
+      title: turn.documents.title,
+      message: turn.documents.message,
+    };
+  }
+  if (app.status === "approved" || app.status === "counter_offer") {
+    return {
+      state: "explain",
+      title: turn.offer.title,
+      message: turn.offer.message,
+    };
+  }
+  return {
+    state: "explain",
+    title: turn.signing.title,
+    message: turn.signing.message,
   };
 }
 

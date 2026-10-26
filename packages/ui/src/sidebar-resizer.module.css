@@ -1,0 +1,39 @@
+/* Разделитель левого меню: полоса с прозрачной областью захвата,
+   по центру линии сдвига. Скрыт на мобильном, где меню поверх. */
+.resizer {
+  position: fixed;
+  top: 52px;
+  bottom: 0;
+  width: 10px;
+  transform: translateX(-50%);
+  /* Выше навбара и Альфи, чтобы вся полоса ловила перетаскивание. */
+  z-index: 210;
+  cursor: col-resize;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.resizer::after {
+  content: "";
+  position: absolute;
+  inset: 0 4px;
+  background: transparent;
+  transition: background 120ms ease;
+}
+
+.resizer:hover::after,
+.resizer:focus-visible::after {
+  background: var(--kk-brand);
+}
+
+.resizer:focus-visible {
+  outline: 2px solid var(--kk-brand);
+  outline-offset: -2px;
+  border-radius: 2px;
+}
+
+@media (max-width: 47.99em) {
+  .resizer {
+    display: none;
+  }
+}

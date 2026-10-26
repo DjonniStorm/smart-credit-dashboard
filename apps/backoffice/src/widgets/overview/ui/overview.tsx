@@ -1,6 +1,6 @@
 "use client";
 
-import { Anchor, Button, Group, Progress, Text } from "@mantine/core";
+import { Anchor, Button, Group, Text } from "@mantine/core";
 import Link from "next/link";
 
 import { StateBlock } from "@repo/ui/state-block";
@@ -13,6 +13,7 @@ import {
 } from "@/entities/application";
 
 import classes from "./overview.module.css";
+import { StageRoadmap } from "./stage-roadmap";
 
 const decisionLabels = [
   ["approve", "Одобрено"],
@@ -65,10 +66,9 @@ export function Overview() {
   }
 
   const data = report.data;
-  const maxStage = Math.max(
-    1,
-    ...data.population.byStage.map((item) => item.count),
-  );
+  const topStage = [...data.population.byStage].sort(
+    (a, b) => b.count - a.count,
+  )[0];
   const latestBucket = data.timeseries.at(-1);
   const journalParams = new URLSearchParams({
     from: data.query.from,
@@ -86,7 +86,8 @@ export function Overview() {
     <div className={classes.grid}>
       <Group justify="space-between" align="center" wrap="wrap">
         <Text size="sm" c="dimmed">
-          Отчёт за период {formatDate(data.query.from, data.query.timezone)} — {formatDate(data.query.to, data.query.timezone)}.
+          Отчёт за период {formatDate(data.query.from, data.query.timezone)} —{" "}
+          {formatDate(data.query.to, data.query.timezone)}.
         </Text>
         <Anchor component={Link} href={journalHref} underline="always">
           Открыть журнал событий
@@ -124,21 +125,15 @@ export function Overview() {
           Путь заявок
         </h2>
         <Text size="sm" c="dimmed" mb="md">
-          Текущий срез по этапам, без пересчёта на клиенте.
+          Сколько заявок сейчас на каждом этапе обработки.
         </Text>
-        <ol className={classes.stages}>
-          {data.population.byStage.map((item) => (
-            <li key={item.stage} className={classes.stage}>
-              <span>{stageLabel[item.stage]}</span>
-              <Progress
-                value={(item.count / maxStage) * 100}
-                color="dark"
-                aria-label={`${stageLabel[item.stage]}: ${item.count}`}
-              />
-              <span className={classes.stageCount}>{item.count}</span>
-            </li>
-          ))}
-        </ol>
+        <StageRoadmap byStage={data.population.byStage} />
+        {topStage && topStage.count > 0 && (
+          <Text size="sm" c="dimmed" mt="md">
+            Больше всего заявок на этапе «{stageLabel[topStage.stage]}»:{" "}
+            {topStage.count}.
+          </Text>
+        )}
       </section>
 
       <section className={classes.card} aria-labelledby="decisions-title">
@@ -147,7 +142,8 @@ export function Overview() {
         </h2>
         <Text size="sm" c="dimmed" mb="md">
           Решения считаются по событиям. Рекомендация берётся из события
-          скоринга или помечается как неизвестная, если исторического контекста нет.
+          скоринга или помечается как неизвестная, если исторического контекста
+          нет.
         </Text>
         <div className={classes.metricList}>
           {decisionLabels.map(([key, label]) => {
@@ -240,7 +236,8 @@ export function Overview() {
         </div>
         {latestBucket && (
           <Text size="xs" c="dimmed" mt="md">
-            Последний бакет: {formatDate(latestBucket.bucketStart, data.query.timezone)} ·{" "}
+            Последний бакет:{" "}
+            {formatDate(latestBucket.bucketStart, data.query.timezone)} ·{" "}
             {latestBucket.events} событий
           </Text>
         )}
@@ -273,7 +270,7 @@ export function Overview() {
         <div className={classes.metricList}>
           {data.population.byStatus.map((item) => (
             <div key={item.status} className={classes.metricRow}>
-            <span>{reportStatusLabel[item.status] ?? "Неизвестно"}</span>
+              <span>{reportStatusLabel[item.status] ?? "Неизвестно"}</span>
               <strong>{item.count}</strong>
               <span className={classes.metricShare}>
                 {formatShare(item.share)}

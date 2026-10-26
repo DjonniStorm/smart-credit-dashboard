@@ -2,6 +2,7 @@
 **/dist
 **/.next
 **/src/generated
+**/.claude
 pnpm-lock.yaml
 apps/scoring
 coverage

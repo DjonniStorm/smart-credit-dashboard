@@ -7,7 +7,7 @@ import { StateBlock } from "@repo/ui/state-block";
 import { useProducts } from "@/entities/application";
 import { formatRub } from "@/shared/lib/money";
 
-// Описание соответствует синтетическому baseline scoring в API.
+// Описание соответствует правилам скоринга в API.
 const FACTORS: [string, string][] = [
   ["Срок работы бизнеса", "от 3 лет +10, от 1 года +4, меньше года −8"],
   [
@@ -60,8 +60,7 @@ export function ProductRules() {
         <Stack gap="md">
           <Title order={3}>Продукты</Title>
           <Text size="sm" c="dimmed">
-            Условия синтетические, для демонстрации. Правила продукта
-            применяются к заявке после скоринга.
+            Правила продукта применяются к заявке после скоринга.
           </Text>
           <div style={{ overflowX: "auto" }}>
             <Table miw={980} aria-label="Продукты и правила">
@@ -94,9 +93,7 @@ export function ProductRules() {
                     <Table.Td>
                       {p.minTermMonths}–{p.maxTermMonths} мес.
                     </Table.Td>
-                    <Table.Td>
-                      от {p.ratePct} %
-                    </Table.Td>
+                    <Table.Td>от {p.ratePct} %</Table.Td>
                     <Table.Td>{p.minScore}</Table.Td>
                     <Table.Td>до {Math.round(p.maxDebtLoad * 100)} %</Table.Td>
                     <Table.Td>от {p.minBusinessAgeMonths} мес.</Table.Td>

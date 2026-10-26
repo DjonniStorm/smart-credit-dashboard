@@ -11,6 +11,7 @@ export default defineConfig([
     "**/dist/**",
     "**/.next/**",
     "**/src/generated/**",
+    "**/.claude/**",
     "apps/scoring/**",
     "pnpm-lock.yaml",
   ]),

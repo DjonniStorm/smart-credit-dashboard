@@ -10,10 +10,15 @@ const t = ax.cabinet;
 /** Элементы страницы заявки, к которым ведёт кнопка «Показать». */
 export const alfiTargets = {
   nextStep: "next-step",
+  offerDecision: "offer-decision",
   decision: "decision",
 } as const;
 
 const showNextStep = { label: t.showNextStep, target: alfiTargets.nextStep };
+const showOfferDecision = {
+  label: t.showNextStep,
+  target: alfiTargets.offerDecision,
+};
 
 /** Подсказка, когда заявки не загрузились: честно про ошибку. */
 export function loadErrorHint(reason: string): AlfiDockHint {
@@ -60,7 +65,7 @@ function applicationHint(app: Application): AlfiDockHint {
       return {
         state: "explain",
         ...t.counterOffer,
-        action: showNextStep,
+        action: showOfferDecision,
       };
     case "approved":
       if (app.deal?.stage === "signing") {
@@ -75,7 +80,7 @@ function applicationHint(app: Application): AlfiDockHint {
         state: "success",
         title: app.deal ? t.approved.signedTitle : t.approved.title,
         message: nextStepOf(app),
-        action: app.deal ? undefined : showNextStep,
+        action: app.deal ? undefined : showOfferDecision,
       };
     case "in_review":
       return {

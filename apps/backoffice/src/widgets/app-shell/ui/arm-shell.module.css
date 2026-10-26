@@ -6,55 +6,24 @@
 .navbar {
   background: var(--kk-bg-rail);
   border-right: 1px solid var(--kk-line);
+  /* Ширина меняется при сворачивании меню, анимируем её вместе с Mantine. */
+  transition-property: transform, top, height, width;
+  transition-duration: 200ms;
 }
 
 .main {
   background: var(--mantine-color-body);
   min-height: 100dvh;
+  /* Поле контента от края окна: страницы АРМ используют 24px, на телефоне
+     16px. Альфи читает --content-pad, чтобы не торчать за контент. */
+  --content-pad: 24px;
 }
 
 .page {
   padding: 24px;
 }
 
-/* Логотип: знак, название банка, через черту название кабинета. */
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  color: var(--mantine-color-text);
-  text-decoration: none;
-  border-radius: var(--mantine-radius-sm);
-}
-
-.brand:focus-visible {
-  outline: 2px solid var(--kk-brand);
-  outline-offset: 4px;
-}
-
-.brandSign {
-  display: inline-flex;
-  /* Наушники знака берут цвет текста темы, буква остаётся фирменной. */
-  color: var(--mantine-color-text);
-}
-
-.brandName {
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--kk-brand-bright);
-}
-
-.brandProduct {
-  padding-left: 14px;
-  margin-left: 6px;
-  border-left: 1px solid var(--kk-line);
-  font-size: 14px;
-  color: var(--mantine-color-dimmed);
-  white-space: nowrap;
-}
-
+/* Логотип: единый знак банка в packages/ui/src/brand-lockup. */
 .search {
   flex: 1;
   display: flex;
@@ -139,13 +108,6 @@
   gap: 2px;
 }
 
-.navCaption {
-  padding: 0 8px 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--mantine-color-dimmed);
-}
-
 .navItem {
   position: relative;
   display: flex;
@@ -209,15 +171,21 @@
   font-weight: 600;
 }
 
+/* Свёрнутое меню: только иконки по центру, подписи и счётчики скрыты. */
+.railCollapsed .navItem {
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+}
+
+.railCollapsed .navLabel,
+.railCollapsed .navCount {
+  display: none;
+}
+
 .railNote {
   margin-top: auto;
   padding: 16px 8px 0;
-}
-
-@media (max-width: 62em) {
-  .brandProduct {
-    display: none;
-  }
 }
 
 @media (max-width: 48em) {
@@ -234,6 +202,9 @@
   }
   .search {
     justify-content: flex-end;
+  }
+  .main {
+    --content-pad: 16px;
   }
   .page {
     padding: 16px;

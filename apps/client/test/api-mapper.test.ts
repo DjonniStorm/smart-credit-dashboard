@@ -136,6 +136,24 @@ test("CANCELLED сотрудником после подписания: реше
   assert.equal(mapped.decision, null);
 });
 
+test("OFFERED с оффером: решение одобрено, условия ждут клиента", () => {
+  const mapped = toCabinetApplication(
+    apiApp({
+      status: "OFFERED",
+      offerKind: "initial",
+      scoring: scoring(),
+      offer,
+    }),
+    session,
+  );
+  assert.equal(mapped.status, "approved");
+  assert.equal(mapped.deal, null);
+  assert.ok(mapped.decision);
+  assert.equal(mapped.decision.outcome, "approved");
+  assert.ok(mapped.decision.offer);
+  assert.equal(mapped.decision.offer.ratePercent, offer.ratePct);
+});
+
 test("REJECTED банком: решение банка остаётся отказом", () => {
   const mapped = toCabinetApplication(
     apiApp({

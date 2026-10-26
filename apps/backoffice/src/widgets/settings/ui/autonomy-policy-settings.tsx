@@ -14,6 +14,7 @@ import { useState } from "react";
 
 import type { ApiAutonomySnapshot } from "@repo/contracts/api";
 import { backofficeText, i18n } from "@repo/i18n";
+import { uuid } from "@repo/ui/uuid";
 
 import {
   useAutonomyAudit,
@@ -61,7 +62,7 @@ export function AutonomyPolicySettings() {
                   level: selectedLevel,
                   reason: reason.trim(),
                 },
-          idempotencyKey: crypto.randomUUID(),
+          idempotencyKey: uuid(),
           expectedRevision: policy.config.revision,
         },
       },

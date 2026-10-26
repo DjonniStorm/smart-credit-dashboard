@@ -1,0 +1,128 @@
+.root {
+  position: relative;
+}
+
+.roadmap {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 28px;
+  row-gap: 12px;
+  position: relative;
+}
+
+.stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--kk-line);
+  border-radius: var(--mantine-radius-md);
+  background: transparent;
+}
+
+.stageLabel {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--mantine-color-dimmed);
+  overflow-wrap: anywhere;
+}
+
+.stageCount {
+  font-size: 22px;
+  line-height: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stageShare {
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--mantine-color-dimmed);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Пройденные этапы: спокойная подложка, весь текст читаемый. */
+.stage[data-state="done"] {
+  background: var(--kk-surface-sunken);
+}
+
+.stage[data-state="done"] .stageLabel,
+.stage[data-state="done"] .stageShare {
+  color: var(--mantine-color-text);
+}
+
+/* Текущий этап: фирменный красный и белый текст. Контраст 4.6:1 в обеих темах. */
+.stage[data-state="current"] {
+  background: var(--kk-brand);
+  border-color: var(--kk-brand);
+}
+
+.stage[data-state="current"] .stageLabel,
+.stage[data-state="current"] .stageCount,
+.stage[data-state="current"] .stageShare {
+  color: var(--mantine-color-white);
+}
+
+.empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--mantine-color-dimmed);
+}
+
+.connectors {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.segment {
+  fill: none;
+  stroke: var(--kk-line);
+  stroke-width: 1.5;
+}
+
+.segmentAnimated {
+  fill: none;
+  stroke: var(--kk-brand-graphic);
+  stroke-width: 1.75;
+  stroke-dasharray: 6 7;
+  animation: dash-advance 1.2s linear infinite;
+}
+
+.arrowHead {
+  fill: var(--kk-line);
+}
+
+@keyframes dash-advance {
+  to {
+    stroke-dashoffset: -13;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segmentAnimated {
+    animation: none;
+    stroke-dasharray: 3 4;
+  }
+}
+
+@media (max-width: 62em) {
+  .roadmap {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 24px;
+  }
+}
+
+@media (max-width: 30em) {
+  .roadmap {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

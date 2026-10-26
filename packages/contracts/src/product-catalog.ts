@@ -84,7 +84,7 @@ export const CREDIT_PRODUCTS: readonly CreditProduct[] = [
     name: "Кассовый разрыв",
     purposes: ["cash_gap", "working_capital"],
     description:
-      "Короткие деньги, пока покупатели не оплатили отгрузку. Небольшая сумма на срок до года.",
+      "Короткие деньги, пока покупатели не оплатили отгрузку. Небольшая сумма на срок до\u00A0года.",
     minAmount: 100_000,
     maxAmount: 3_000_000,
     minTermMonths: 1,

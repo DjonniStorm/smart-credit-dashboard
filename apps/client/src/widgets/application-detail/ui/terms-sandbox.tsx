@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Badge,
   Card,
   Group,
   NumberInput,
@@ -14,68 +13,111 @@ import {
 import { useState } from "react";
 
 import type {
-  Application,
   CreditProduct,
+  CreditPurpose,
+  Financials,
   ProductCatalog,
 } from "@repo/contracts/cabinet";
 import type { NegotiationOption } from "@repo/contracts/negotiation";
 import { formatRub } from "@repo/ui/money";
 
 import { estimate } from "@/entities/product";
-import { NegotiationSimulator } from "@/features/negotiation-sim";
+import {
+  NegotiationSimulator,
+  type SandboxTerms,
+} from "@/features/negotiation-sim";
+import { tx } from "@/shared/i18n";
 
 import classes from "./terms-sandbox.module.css";
+
+const t = tx.termsSandbox;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
 function productOption(product: CreditProduct) {
-  return `${product.name} · ${product.minTermMonths}–${product.maxTermMonths} мес.`;
+  return t.productOption(
+    product.name,
+    product.minTermMonths,
+    product.maxTermMonths,
+  );
 }
 
-/** Локальная песочница условий: не меняет заявку и не вызывает API. */
+export interface TermsInput {
+  purpose: CreditPurpose;
+  productId: string;
+  amount: number;
+  termMonths: number;
+  financials: Financials;
+}
+
+/**
+ * Блок условий: параметры, расчёт платежа и варианты от банка. Начальные
+ * значения берутся из terms один раз; правки уходят наружу через onTermsChange.
+ */
 export function TermsSandbox({
-  app,
+  terms,
   catalog,
+  onTermsChange,
 }: {
-  app: Application;
-  catalog: ProductCatalog;
+  terms: TermsInput;
+  catalog: Pick<ProductCatalog, "products" | "keyRate">;
+  onTermsChange?: (next: SandboxTerms) => void;
 }) {
   const initialProduct =
-    catalog.products.find((product) => product.id === app.productId) ??
+    catalog.products.find((product) => product.id === terms.productId) ??
     catalog.products[0];
   const [productId, setProductId] = useState(
-    initialProduct?.id ?? app.productId,
+    initialProduct?.id ?? terms.productId,
   );
-  const [amount, setAmount] = useState(app.amount);
-  const [termMonths, setTermMonths] = useState(app.termMonths);
+  const [amount, setAmount] = useState(terms.amount);
+  const [termMonths, setTermMonths] = useState(terms.termMonths);
+  const [appliedVariant, setAppliedVariant] =
+    useState<NegotiationOption | null>(null);
   const product =
     catalog.products.find((item) => item.id === productId) ?? initialProduct;
   if (!initialProduct || !product) return null;
   const result = estimate(product, catalog.keyRate, amount, termMonths);
-  const amountToRevenue = amount / Math.max(app.financials.revenueLastYear, 1);
+  const amountToRevenue =
+    amount / Math.max(terms.financials.revenueLastYear, 1);
   const ready = clamp(
     100 - (amountToRevenue > 0.5 ? 25 : 0) - (result.clamped ? 20 : 0),
     25,
     100,
   );
 
+  const update = (
+    next: SandboxTerms,
+    variant: NegotiationOption | null = null,
+  ) => {
+    setProductId(next.productId);
+    setAmount(next.amount);
+    setTermMonths(next.termMonths);
+    setAppliedVariant(variant);
+    onTermsChange?.(next);
+  };
+
   const selectProduct = (value: string | null) => {
     if (!value) return;
     const next = catalog.products.find((item) => item.id === value);
     if (!next) return;
-    setProductId(next.id);
-    setAmount((current) => clamp(current, next.minAmount, next.maxAmount));
-    setTermMonths((current) =>
-      clamp(current, next.minTermMonths, next.maxTermMonths),
-    );
+    update({
+      productId: next.id,
+      amount: clamp(amount, next.minAmount, next.maxAmount),
+      termMonths: clamp(termMonths, next.minTermMonths, next.maxTermMonths),
+    });
   };
 
   const applyOption = (option: NegotiationOption) => {
-    setProductId(option.productId);
-    setAmount(option.amount);
-    setTermMonths(option.termMonths);
+    update(
+      {
+        productId: option.productId,
+        amount: option.amount,
+        termMonths: option.termMonths,
+      },
+      option,
+    );
   };
 
   return (
@@ -84,19 +126,17 @@ export function TermsSandbox({
         <Group justify="space-between" align="flex-start" gap="sm">
           <div>
             <Title order={2} size="h3" id="terms-sandbox-title">
-              Песочница условий
+              {t.title}
             </Title>
             <Text size="sm" c="dimmed">
-              Меняйте параметры и смотрите ориентир до отправки новой заявки.
+              {t.lead}
             </Text>
           </div>
-          <Badge variant="light" color="gray">
-            Демо-режим
-          </Badge>
         </Group>
         <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="sm">
           <Select
-            label="Продукт"
+            label={t.product}
+            size="md"
             value={product.id}
             onChange={selectProduct}
             data={catalog.products.map((item) => ({
@@ -105,48 +145,71 @@ export function TermsSandbox({
             }))}
           />
           <NumberInput
-            label="Сумма"
+            label={t.amount}
             value={amount}
-            onChange={(value) => setAmount(Number(value) || 0)}
+            onChange={(value) =>
+              update({
+                productId: product.id,
+                amount: Number(value) || 0,
+                termMonths,
+              })
+            }
             min={product.minAmount}
             max={product.maxAmount}
             step={50_000}
-            thousandSeparator=" "
-            suffix=" ₽"
+            thousandSeparator=" "
+            suffix={t.amountSuffix}
           />
           <NumberInput
-            label="Срок"
+            label={t.term}
             value={termMonths}
-            onChange={(value) => setTermMonths(Number(value) || 0)}
+            onChange={(value) =>
+              update({
+                productId: product.id,
+                amount,
+                termMonths: Number(value) || 0,
+              })
+            }
             min={product.minTermMonths}
             max={product.maxTermMonths}
-            suffix=" мес."
+            suffix={t.termSuffix}
           />
         </SimpleGrid>
-        <div className={classes.result}>
+        <div className={classes.result} aria-live="polite">
           <Group justify="space-between" align="flex-end" gap="md">
             <div>
               <Text size="sm" c="dimmed">
-                Ориентировочный платёж
+                {t.paymentTitle}
               </Text>
               <Text className={classes.payment}>
-                {formatRub(result.payment)} / мес.
+                {t.paymentValue(formatRub(result.payment))}
               </Text>
             </div>
             <div className={classes.ready}>
               <Text size="sm" c="dimmed">
-                Готовность условий
+                {t.readinessTitle}
               </Text>
-              <Text fw={700}>{ready}/100</Text>
+              <Text fw={700}>{t.readinessScore(ready)}</Text>
             </div>
           </Group>
+          {appliedVariant && (
+            <Text size="sm" mt="xs" data-testid="applied-variant">
+              {t.appliedBanner(
+                catalog.products.find(
+                  (item) => item.id === appliedVariant.productId,
+                )?.name ?? appliedVariant.productId,
+                formatRub(appliedVariant.amount),
+                tx.common.months(appliedVariant.termMonths),
+              )}
+            </Text>
+          )}
           <Text size="xs" c="dimmed" mt="xs">
-            Ставка от {result.rate}% годовых. Расчёт ориентировочный и не
-            является обещанием одобрения; параметры заявки не изменены.
+            {t.rateNote(result.rate)}
           </Text>
         </div>
         <NegotiationSimulator
-          app={app}
+          purpose={terms.purpose}
+          financials={terms.financials}
           catalog={catalog}
           current={{ productId: product.id, amount, termMonths }}
           currentPayment={result.payment}

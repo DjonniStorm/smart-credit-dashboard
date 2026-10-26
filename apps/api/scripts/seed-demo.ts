@@ -3,6 +3,12 @@ import { readFileSync } from "node:fs";
 import { Pool } from "pg";
 
 import {
+  CREDIT_PRODUCTS,
+  DEFAULT_KEY_RATE,
+  productRate,
+} from "@repo/contracts/product-catalog";
+
+import {
   demoAccounts,
   demoAutonomyPolicies,
   demoEmployees,
@@ -62,7 +68,7 @@ async function seed(): Promise<void> {
         id text primary key, number text not null unique, inn text not null,
         product_id text not null, amount numeric not null, term_months integer not null,
         purpose text not null, status text not null, check_job_id text,
-        scoring jsonb, decision jsonb, created_at timestamptz not null, updated_at timestamptz not null
+        scoring jsonb, decision jsonb, offer jsonb, created_at timestamptz not null, updated_at timestamptz not null
       );
       create table if not exists scoring_jobs (
         id text primary key, application_id text not null references applications(id),
@@ -78,6 +84,7 @@ async function seed(): Promise<void> {
       );
       alter table application_events add column if not exists event_key text;
       alter table applications add column if not exists decision jsonb;
+      alter table applications add column if not exists offer jsonb;
     `);
     for (const account of demoAccounts) {
       await client.query(
@@ -121,6 +128,71 @@ async function seed(): Promise<void> {
   }
 }
 
+/** Скоринг одобренной демо-заявки: рекомендация approve, факторы и причина. */
+function approvedScoring() {
+  return {
+    model: "rules-baseline-v2",
+    score: 75,
+    recommendation: "approve",
+    details: {
+      score: 75,
+      grade: "A",
+      riskBand: "low",
+      pd: 0.125,
+      healthIndex: 67,
+      readinessIndex: 60,
+      confidence: 0.7,
+      computedAt: "2026-10-05T12:00:00.000Z",
+      model: "rules-baseline-v2",
+      modelVersion: "2026-10-23",
+      policyVersion: "policy-baseline-v2",
+      featureSnapshotId: "fs-c9b9610409e32c8b0a2e921c",
+      recommendation: "approve",
+      reasons: ["Финансовое состояние устойчивое"],
+      factors: [
+        {
+          id: "egrul_status",
+          label: "Статус ЕГРЮЛ",
+          value: "Действующее",
+          impact: 15,
+          source: "egrul",
+          confidence: 1,
+        },
+        {
+          id: "fns_tax_debt",
+          label: "Налоговый долг",
+          value: "Задолженности нет",
+          impact: 10,
+          source: "fns",
+          confidence: 1,
+        },
+        {
+          id: "bki_overdue",
+          label: "Просрочки БКИ",
+          value: "Нет просрочек",
+          impact: 5,
+          source: "bki",
+          confidence: 1,
+        },
+      ],
+      nextActions: [],
+      explainability: [],
+      missingSources: [],
+    },
+  };
+}
+
+/** Оффер одобренной демо-заявки: как в конвейере, по продукту и ключевой ставке. */
+function approvedOffer() {
+  const product = CREDIT_PRODUCTS.find((item) => item.id === "working_capital");
+  return {
+    productId: "working_capital" as const,
+    amount: 2_000_000,
+    termMonths: 12,
+    ratePct: product ? productRate(product, DEFAULT_KEY_RATE.value) : 19,
+  };
+}
+
 async function seedApplications(
   client: import("pg").PoolClient,
 ): Promise<void> {
@@ -134,6 +206,8 @@ async function seedApplications(
       termMonths: 12,
       purpose: "working_capital",
       status: "approved",
+      offer: approvedOffer(),
+      scoring: approvedScoring(),
     },
     {
       id: "seed-app-workshop",
@@ -144,6 +218,8 @@ async function seedApplications(
       termMonths: 24,
       purpose: "equipment",
       status: "needs_client",
+      offer: null,
+      scoring: null,
     },
     {
       id: "seed-app-logistics",
@@ -154,6 +230,8 @@ async function seedApplications(
       termMonths: 6,
       purpose: "cash_gap",
       status: "rejected",
+      offer: null,
+      scoring: null,
     },
   ];
 
@@ -364,11 +442,11 @@ async function seedApplications(
   for (const application of applications) {
     const now = new Date("2026-10-24T00:00:00.000Z").toISOString();
     await client.query(
-      `insert into applications(id,number,inn,product_id,amount,term_months,purpose,status,check_job_id,scoring,decision,created_at,updated_at)
-       values($1,$2,$3,$4,$5,$6,$7,$8,null,$10,null,$9,$9)
+      `insert into applications(id,number,inn,product_id,amount,term_months,purpose,status,check_job_id,scoring,decision,offer,created_at,updated_at)
+       values($1,$2,$3,$4,$5,$6,$7,$8,null,$9,null,$10,$11,$11)
        on conflict(id) do update set status=excluded.status, product_id=excluded.product_id, amount=excluded.amount,
        term_months=excluded.term_months, purpose=excluded.purpose, check_job_id=excluded.check_job_id,
-       scoring=excluded.scoring, decision=null`,
+       scoring=excluded.scoring, decision=null, offer=excluded.offer`,
       [
         application.id,
         application.number,
@@ -378,6 +456,8 @@ async function seedApplications(
         application.termMonths,
         application.purpose,
         application.status,
+        application.scoring ? JSON.stringify(application.scoring) : null,
+        application.offer ? JSON.stringify(application.offer) : null,
         now,
         demoScoring[application.id],
       ],
