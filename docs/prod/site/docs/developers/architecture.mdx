@@ -49,4 +49,4 @@ npm run diagrams:check
 npm run build
 ```
 
-`diagrams:build` запускает pinned `@mermaid-js/mermaid-cli` и обновляет SVG, manifest и TypeScript-индекс. `diagrams:check` повторяет рендер и сравнивает его с сохранёнными файлами. Обычная сборка сайта проверяет хэши и согласованность готовых SVG, не запуская Chromium; Vercel публикует те же проверенные артефакты из Git.
+`diagrams:build` запускает pinned `@mermaid-js/mermaid-cli` и обновляет SVG, manifest и TypeScript-индекс. `diagrams:check` повторяет рендер и сравнивает его с сохранёнными файлами. Эти команды нужны при изменении диаграмм и выполняются в GitHub CI. Сборка Vercel просто собирает Rspress из готовых SVG и индекса, сохранённых в Git.

@@ -75,7 +75,9 @@ async function main() {
         fs.readFile(regeneratedPath, "utf8"),
       ]);
 
-      const sourceHash = createHash("sha256").update(source).digest("hex");
+      const sourceHash = createHash("sha256")
+        .update(source.replace(/\r\n?/g, "\n"))
+        .digest("hex");
       if (sourceHash !== entry.sourceHash) {
         throw new Error(
           `${entry.source}: исходник изменился, запустите npm run diagrams:build`,

@@ -7,14 +7,14 @@ npm ci
 npm run dev
 ```
 
-Проверка готовых SVG и production-сборка сайта:
+Production-сборка сайта и локальный просмотр:
 
 ```bash
 npm run build
 npm run preview
 ```
 
-Rspress складывает сайт в `doc_build/`. Production-сборка использует SVG и generated TypeScript-индекс, уже сохранённые в репозитории; она не запускает Mermaid CLI или Chromium.
+Rspress складывает сайт в `doc_build/`. Сборка использует SVG и TypeScript-индекс диаграмм, уже сохранённые в репозитории; повторная проверка и рендер диаграмм в процессе сборки не запускаются.
 
 Если меняются исходники `.mmd`, обновите артефакты локально и проверьте воспроизводимость:
 
@@ -24,7 +24,7 @@ npm run diagrams:check
 npm run build
 ```
 
-`diagrams:check:artifacts` проверяет соответствие исходников, хэшей, SVG и generated-индекса без запуска браузера. Полный `diagrams:check` повторно рендерит SVG pinned-версией Mermaid CLI и нужен при изменении диаграмм.
+`diagrams:build` повторно создаёт SVG и TypeScript-индекс. `diagrams:check` сравнивает рендер Mermaid с сохранёнными SVG. Эти команды запускаются при изменении диаграмм и в GitHub CI; Vercel собирает сайт из готовых файлов.
 
 ## Публикация в Vercel
 
