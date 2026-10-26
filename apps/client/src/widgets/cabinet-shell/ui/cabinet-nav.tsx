@@ -6,6 +6,7 @@ import {
   IconCreditCard,
   IconFileText,
   IconFiles,
+  IconHome,
   IconSettings,
   IconUserCircle,
   type Icon as TablerIcon,
@@ -31,6 +32,12 @@ const isApplication = (p: string) =>
 
 // Порядок как в business.jpg. Разделы, которых нет в прототипе, скрыты.
 const items: Item[] = [
+  {
+    label: t.home,
+    icon: IconHome,
+    href: "/home",
+    active: (p) => p === "/home" || p.startsWith("/home/"),
+  },
   {
     label: t.credits,
     icon: IconCreditCard,
