@@ -45,7 +45,6 @@ export const lx = {
     titleFor: (product: string) =>
       `Заявка на ${product.charAt(0).toLowerCase()}${product.slice(1)}`,
     continue: "Продолжить",
-    draftSaved: "Черновик сохранён на этом устройстве",
     purposeTitle: "Цель и сумма",
     purposeLead:
       "Выберите, на что нужны деньги, продукт, сумму и срок. Параметры можно поменять до отправки.",

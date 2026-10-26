@@ -5,10 +5,11 @@
 .page {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas:
     "top side"
     "panel side"
-    "footer side";
+    "footer footer";
   column-gap: 24px;
   row-gap: var(--mantine-spacing-lg);
   align-items: start;
@@ -385,6 +386,7 @@
 @media (max-width: 75em) {
   .page {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
     grid-template-areas:
       "top"
       "side"

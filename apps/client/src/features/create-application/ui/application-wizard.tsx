@@ -548,9 +548,6 @@ export function ApplicationWizard({ account }: { account: DemoAccount }) {
             {tx.common.back}
           </Button>
         )}
-        <Text size="sm" c="dimmed" visibleFrom="sm">
-          {w.draftSaved}
-        </Text>
         <Group gap="sm" wrap="nowrap" className={classes.footerEnd}>
           {draft.step === LAST ? (
             <Button onClick={submit} loading={create.isPending}>
