@@ -102,7 +102,9 @@ async function main() {
     }
   }
 
-  console.log(`Проверены готовые SVG: ${manifest.diagrams.length}`);
+  console.log(
+    `Проверены готовые SVG без запуска Chromium: ${manifest.diagrams.length}`,
+  );
 }
 
 await main().catch((error) => {
